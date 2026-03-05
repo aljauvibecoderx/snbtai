@@ -6,7 +6,7 @@ import { getPublishedTryouts, getTryoutQuestions } from './firebase-admin';
 import { ImageUploader } from './ImageUploader';
 import { SUBTESTS, getSubtestLabel } from './subtestHelper';
 import { PTNPediaView } from './ptnpedia';
-import { getVocabList, deleteVocab, getVocabStats, updateVocab } from './vocab-firebase';
+import { getVocabList, deleteVocab, getVocabStats, updateVocab, saveVocab, subscribeToVocabList } from './vocab-firebase';
 
 
 export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisionGenerate }) => {
@@ -42,6 +42,8 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
   const [subtestFilter, setSubtestFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
   const [editingVocab, setEditingVocab] = useState(null);
+  const [showAddVocab, setShowAddVocab] = useState(false);
+  const [newVocab, setNewVocab] = useState({ word: '', meaning: '', example: '' });
   
   // Vision feature states
   const [showVisionModal, setShowVisionModal] = useState(false);
@@ -54,6 +56,17 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
   useEffect(() => {
     if (user) {
       loadData();
+      
+      // Setup real-time listener for vocab
+      const unsubscribeVocab = subscribeToVocabList(user.uid, (vocabList) => {
+        setVocabList(vocabList);
+        // Update stats when vocab changes
+        getVocabStats(user.uid).then(stats => setVocabStats(stats));
+      });
+      
+      return () => {
+        unsubscribeVocab();
+      };
     }
   }, [user, location.pathname]);
 
@@ -872,6 +885,26 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
       }
     };
 
+    const handleAddVocab = async () => {
+      if (!newVocab.word || !newVocab.meaning) {
+        alert('Kata dan arti harus diisi');
+        return;
+      }
+      try {
+        await saveVocab(user.uid, {
+          word: newVocab.word.trim(),
+          meaning: newVocab.meaning.trim(),
+          example: newVocab.example.trim(),
+          source: 'manual'
+        });
+        setShowAddVocab(false);
+        setNewVocab({ word: '', meaning: '', example: '' });
+        loadData();
+      } catch (error) {
+        alert('Gagal menambah vocab');
+      }
+    };
+
     if (vocabList.length === 0) {
       return (
         <div className="text-center py-16 text-slate-400">
@@ -884,6 +917,56 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
 
     return (
       <div className="space-y-6">
+        {showAddVocab && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900">Tambah Vocab Baru</h3>
+                <button onClick={() => { setShowAddVocab(false); setNewVocab({ word: '', meaning: '', example: '' }); }} className="p-2 hover:bg-slate-100 rounded-lg">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Kata *</label>
+                  <input
+                    type="text"
+                    value={newVocab.word}
+                    onChange={(e) => setNewVocab({...newVocab, word: e.target.value})}
+                    placeholder="Masukkan kata bahasa Inggris"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Arti *</label>
+                  <input
+                    type="text"
+                    value={newVocab.meaning}
+                    onChange={(e) => setNewVocab({...newVocab, meaning: e.target.value})}
+                    placeholder="Arti dalam bahasa Indonesia"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Contoh (opsional)</label>
+                  <input
+                    type="text"
+                    value={newVocab.example}
+                    onChange={(e) => setNewVocab({...newVocab, example: e.target.value})}
+                    placeholder="Contoh kalimat"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleAddVocab}
+                className="w-full px-4 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Tambah Vocab
+              </button>
+            </div>
+          </div>
+        )}
         {editingVocab && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
@@ -951,15 +1034,23 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
         </div>
 
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Cari kata..." 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-            />
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Cari kata..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+              />
+            </div>
+            <button
+              onClick={() => setShowAddVocab(true)}
+              className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors text-sm whitespace-nowrap"
+            >
+              + Tambah Vocab
+            </button>
           </div>
           {searchQuery && <p className="text-xs text-slate-500 mt-2">Ditemukan {filteredVocab.length} dari {vocabList.length} kata</p>}
         </div>

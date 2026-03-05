@@ -287,8 +287,17 @@ const useBackgroundMusic = () => {
 
   const play = () => {
     if (audioRef.current) {
-      audioRef.current.play().catch(e => console.log('Audio play failed:', e));
-      setIsPlaying(true);
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(e => {
+            // Silently handle autoplay restrictions
+            if (e.name !== 'AbortError') {
+              console.log('Audio play failed:', e.name);
+            }
+          });
+      }
     }
   };
 
@@ -2854,7 +2863,9 @@ const CBTView = ({
   const [isCheckingWishlist, setIsCheckingWishlist] = useState(false);
 
   // Vocab Mode States (English Literacy Only)
-  const isEnglishLiteracy = subtestId === 'lit_ing';
+  // CRITICAL FIX: Detect English Literacy from subtestId OR from questions array
+  const isEnglishLiteracy = subtestId === 'lit_ing' || 
+    (questions && questions.length > 0 && questions[0]?.subtest === 'lit_ing');
   const [vocabPanelOpen, setVocabPanelOpen] = useState(false);
   const [highlightPopup, setHighlightPopup] = useState(null);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -2868,7 +2879,7 @@ const CBTView = ({
   }, []);
 
   // Handle text selection for vocab (English Literacy only)
-  const handleTextSelection = () => {
+  const handleTextSelection = async () => {
     if (!isEnglishLiteracy || !user) return;
     
     const selection = window.getSelection();
@@ -2878,10 +2889,15 @@ const CBTView = ({
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       
+      // Check if word exists in vocab
+      const { getVocabByWord } = await import('./vocab-firebase');
+      const existingVocab = await getVocabByWord(user.uid, selectedText.toLowerCase());
+      
       setHighlightPopup({
         word: selectedText,
         x: rect.left + rect.width / 2,
-        y: rect.top - 10
+        y: rect.top - 10,
+        existingVocab: existingVocab
       });
     } else {
       setHighlightPopup(null);
@@ -3476,6 +3492,7 @@ const CBTView = ({
               word={highlightPopup.word}
               x={highlightPopup.x}
               y={highlightPopup.y}
+              existingVocab={highlightPopup.existingVocab}
               onSave={handleSaveVocab}
               onClose={() => setHighlightPopup(null)}
             />

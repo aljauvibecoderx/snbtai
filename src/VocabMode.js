@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Book, Search, X, Bookmark, TrendingUp, Award, Flame } from 'lucide-react';
-import { saveVocab, getVocabList, updateVocabReview, getVocabStats, deleteVocab } from './vocab-firebase';
+import { saveVocab, getVocabList, updateVocabReview, getVocabStats, deleteVocab, subscribeToVocabList } from './vocab-firebase';
 
 // Vocab Panel (Desktop Only - Sidebar)
 export const VocabPanel = ({ isOpen, onClose, userId, onSearchClick }) => {
@@ -9,7 +9,14 @@ export const VocabPanel = ({ isOpen, onClose, userId, onSearchClick }) => {
 
   useEffect(() => {
     if (userId) {
-      loadStats();
+      // Setup real-time listener for stats
+      const unsubscribe = subscribeToVocabList(userId, () => {
+        loadStats();
+      });
+      
+      return () => {
+        unsubscribe();
+      };
     }
   }, [userId]);
 
@@ -80,12 +87,17 @@ export const VocabPanel = ({ isOpen, onClose, userId, onSearchClick }) => {
 };
 
 // Highlight Popup (Desktop & Mobile)
-export const HighlightPopup = ({ word, x, y, onSave, onClose }) => {
-  const [meaning, setMeaning] = useState('');
+export const HighlightPopup = ({ word, x, y, onSave, onClose, existingVocab }) => {
+  const [meaning, setMeaning] = useState(existingVocab?.meaning || '');
   const [loading, setLoading] = useState(false);
-  const [showInput, setShowInput] = useState(false);
+  const [showInput, setShowInput] = useState(!existingVocab);
 
   const handleSave = async () => {
+    if (existingVocab) {
+      onClose();
+      return;
+    }
+
     if (!showInput) {
       setShowInput(true);
       return;
@@ -113,42 +125,69 @@ export const HighlightPopup = ({ word, x, y, onSave, onClose }) => {
 
   return (
     <div
-      className="fixed z-50 bg-white rounded-xl shadow-2xl border-2 border-indigo-200 p-3 animate-fade-in"
+      className="fixed z-50 bg-white rounded-xl shadow-2xl border-2 border-indigo-200 animate-fade-in"
       style={{
         top: `${y}px`,
         left: `${x}px`,
-        transform: 'translate(-50%, -120%)'
+        transform: 'translate(-50%, -120%)',
+        minWidth: '200px',
+        maxWidth: '320px'
       }}
     >
-      <div className="text-xs font-bold text-slate-700 px-2 py-1 mb-2">"{word}"</div>
-      
-      {showInput && (
-        <input
-          type="text"
-          value={meaning}
-          onChange={(e) => setMeaning(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSave()}
-          placeholder="Masukkan arti..."
-          autoFocus
-          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-        />
-      )}
+      <div className="p-3">
+        <div className="text-xs font-bold text-slate-700 mb-2">"{word}"</div>
+        
+        {existingVocab ? (
+          <div className="space-y-2">
+            <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                <span className="text-xs font-bold text-teal-700">Tersimpan</span>
+              </div>
+              <p className="text-sm text-slate-800 font-medium mb-1">{existingVocab.meaning}</p>
+              {existingVocab.example && (
+                <p className="text-xs text-slate-600 italic mt-2">"{existingVocab.example}"</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="w-full px-3 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              Tutup
+            </button>
+          </div>
+        ) : (
+          <>
+            {showInput && (
+              <input
+                type="text"
+                value={meaning}
+                onChange={(e) => setMeaning(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSave()}
+                placeholder="Masukkan arti..."
+                autoFocus
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            )}
 
-      <div className="flex gap-2">
-        <button
-          onClick={handleSave}
-          disabled={loading || (showInput && !meaning.trim())}
-          className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Bookmark size={12} />
-          {loading ? 'Saving...' : showInput ? 'Simpan' : 'Save'}
-        </button>
-        <button
-          onClick={onClose}
-          className="px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <X size={12} />
-        </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                disabled={loading || (showInput && !meaning.trim())}
+                className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Bookmark size={12} />
+                {loading ? 'Saving...' : showInput ? 'Simpan' : 'Save'}
+              </button>
+              <button
+                onClick={onClose}
+                className="px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Eye, TrendingUp, ArrowLeft, Trash2, CheckCircle, Edit, Clock, ChevronUp, ChevronDown } from 'lucide-react';
+import { Shield, Plus, Eye, TrendingUp, ArrowLeft, Trash2, CheckCircle, Edit, Clock, ChevronUp, ChevronDown, Key, Check, X as XIcon } from 'lucide-react';
 import { checkAdminRole, getGlobalQuestions, createTryout, getDraftTryouts, getPublishedTryouts, publishTryout, deleteTryout, updateTryout, getTryoutById } from './firebase-admin';
 import { ManageQuestionsPanel } from './ManageQuestionsPanel';
+import { getAllKeys, addApiKey, deleteApiKey, updateKeyStatus, testApiKey } from './api-key-manager';
+import { resetKeyCache } from './config';
 
 export const AdminDashboard = ({ user, onBack, showToast }) => {
   const [view, setView] = useState('overview');
@@ -269,6 +271,13 @@ export const AdminDashboard = ({ user, onBack, showToast }) => {
             <Eye size={16} className="inline mr-2" />
             Bank Soal
           </button>
+          <button 
+            onClick={() => setView('apikeys')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${view === 'apikeys' ? 'bg-rose-100 text-rose-700' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
+            <Shield size={16} className="inline mr-2" />
+            API Keys
+          </button>
         </div>
       </nav>
       
@@ -277,6 +286,7 @@ export const AdminDashboard = ({ user, onBack, showToast }) => {
         {view === 'builder' && <TryoutBuilderPanel user={user} onSuccess={() => setView('manage')} />}
         {view === 'manage' && <ManageTryoutPanel user={user} />}
         {view === 'questions' && <ManageQuestionsPanel user={user} showToast={showToast} />}
+        {view === 'apikeys' && <ApiKeysPanel user={user} showToast={showToast} />}
       </main>
     </div>
   );
@@ -779,3 +789,226 @@ const EditTryoutModal = ({ tryout, onSave, onCancel }) => {
   );
 };
 
+
+
+const ApiKeysPanel = ({ user, showToast }) => {
+  const [keys, setKeys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newKey, setNewKey] = useState({ name: '', key: '', type: 'gemini' });
+  const [testing, setTesting] = useState({});
+
+  useEffect(() => {
+    loadKeys();
+  }, []);
+
+  const loadKeys = async () => {
+    setLoading(true);
+    const allKeys = await getAllKeys();
+    setKeys(allKeys);
+    setLoading(false);
+  };
+
+  const handleAddKey = async () => {
+    if (!newKey.name || !newKey.key) {
+      showToast('Nama dan key harus diisi', 'warning');
+      return;
+    }
+
+    try {
+      await addApiKey({
+        name: newKey.name,
+        key: newKey.key,
+        type: newKey.type,
+        createdBy: user.uid
+      });
+      showToast('✅ API key berhasil ditambahkan', 'success');
+      setNewKey({ name: '', key: '', type: 'gemini' });
+      setShowAddModal(false);
+      resetKeyCache();
+      loadKeys();
+    } catch (error) {
+      showToast('❌ Gagal menambahkan key: ' + error.message, 'error');
+    }
+  };
+
+  const handleDelete = async (keyId) => {
+    if (!window.confirm('Hapus API key ini?')) return;
+    try {
+      await deleteApiKey(keyId);
+      showToast('✅ API key berhasil dihapus', 'success');
+      resetKeyCache();
+      loadKeys();
+    } catch (error) {
+      showToast('❌ Gagal menghapus key', 'error');
+    }
+  };
+
+  const handleToggleStatus = async (keyId, currentStatus) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    try {
+      await updateKeyStatus(keyId, newStatus);
+      showToast(`✅ Status diubah ke ${newStatus}`, 'success');
+      resetKeyCache();
+      loadKeys();
+    } catch (error) {
+      showToast('❌ Gagal mengubah status', 'error');
+    }
+  };
+
+  const handleTest = async (keyId, key, type) => {
+    setTesting({ ...testing, [keyId]: true });
+    const isValid = await testApiKey(key, type);
+    setTesting({ ...testing, [keyId]: false });
+    
+    if (isValid) {
+      showToast('✅ API key valid', 'success');
+    } else {
+      showToast('❌ API key tidak valid atau expired', 'error');
+      await updateKeyStatus(keyId, 'expired');
+      loadKeys();
+    }
+  };
+
+  const maskKey = (key) => {
+    if (!key || key.length < 10) return '***';
+    return `${key.substring(0, 8)}...${key.substring(key.length - 4)}`;
+  };
+
+  if (loading) {
+    return <div className="text-center py-12">Loading...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">API Key Management</h2>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Tambah Key
+        </button>
+      </div>
+
+      <div className="grid gap-4">
+        {keys.length === 0 ? (
+          <div className="bg-white p-12 rounded-xl text-center border border-slate-200">
+            <Key size={48} className="mx-auto text-slate-300 mb-4" />
+            <p className="text-slate-500">Belum ada API key. Tambahkan key pertama Anda!</p>
+          </div>
+        ) : (
+          keys.map(key => (
+            <div key={key.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-bold text-slate-900">{key.name}</h3>
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                      key.status === 'active' ? 'bg-teal-100 text-teal-700' :
+                      key.status === 'expired' ? 'bg-rose-100 text-rose-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>
+                      {key.status?.toUpperCase()}
+                    </span>
+                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-bold">
+                      {key.type?.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-sm font-mono text-slate-600 mb-2">{maskKey(key.key)}</p>
+                  <p className="text-xs text-slate-500">
+                    Digunakan: {key.usageCount || 0} kali
+                    {key.lastUsed && ` • Terakhir: ${new Date(key.lastUsed.seconds * 1000).toLocaleDateString()}`}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleTest(key.id, key.key, key.type)}
+                    disabled={testing[key.id]}
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm disabled:opacity-50"
+                  >
+                    {testing[key.id] ? 'Testing...' : 'Test'}
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(key.id, key.status)}
+                    className={`px-3 py-2 rounded-lg text-sm ${
+                      key.status === 'active'
+                        ? 'bg-amber-600 text-white hover:bg-amber-700'
+                        : 'bg-teal-600 text-white hover:bg-teal-700'
+                    }`}
+                  >
+                    {key.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(key.id)}
+                    className="px-3 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 text-sm"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold">Tambah API Key Baru</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Nama Key</label>
+                <input
+                  type="text"
+                  value={newKey.name}
+                  onChange={(e) => setNewKey({ ...newKey, name: e.target.value })}
+                  placeholder="Aljauhari, Inilab, dll"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">API Key</label>
+                <input
+                  type="text"
+                  value={newKey.key}
+                  onChange={(e) => setNewKey({ ...newKey, key: e.target.value })}
+                  placeholder="AIza..."
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Tipe</label>
+                <select
+                  value={newKey.type}
+                  onChange={(e) => setNewKey({ ...newKey, type: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500"
+                >
+                  <option value="gemini">Gemini</option>
+                  <option value="gemma">Gemma</option>
+                </select>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex gap-3">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAddKey}
+                className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+              >
+                Tambah
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

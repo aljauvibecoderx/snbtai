@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, addDoc, query, where, getDocs, updateDoc, doc, deleteDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc, deleteDoc, serverTimestamp, orderBy, onSnapshot } from 'firebase/firestore';
 
 // Save vocab word
 export const saveVocab = async (userId, vocabData) => {
@@ -160,6 +160,33 @@ export const checkVocabExists = async (userId, word) => {
   } catch (error) {
     console.error('Error checking vocab exists:', error);
     return false;
+  }
+};
+
+// Real-time listener for vocab list
+export const subscribeToVocabList = (userId, callback) => {
+  try {
+    const vocabRef = collection(db, 'vocab');
+    const q = query(vocabRef, where('userId', '==', userId), orderBy('savedAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const vocabList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        savedAt: doc.data().savedAt?.toDate(),
+        lastReviewed: doc.data().lastReviewed?.toDate(),
+        nextReview: doc.data().nextReview?.toDate?.() || new Date(doc.data().nextReview)
+      }));
+      callback(vocabList);
+    }, (error) => {
+      console.error('Error in vocab listener:', error);
+      callback([]);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error setting up vocab listener:', error);
+    return () => {};
   }
 };
 

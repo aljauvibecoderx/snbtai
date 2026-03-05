@@ -9,9 +9,10 @@
       "action": "deploy",
       "steps": [
         "git add .",
-        "git commit -m 'Deploy: [timestamp]'",
+        "git commit -m '[descriptive message based on changes]'",
         "git push origin main"
-      ]
+      ],
+      "note": "Commit message must describe the actual changes made"
     },
     "bikin branch": {
       "action": "create_branch",
@@ -38,6 +39,7 @@
   "rules": [
     "Minimal code implementation",
     "No verbose solutions",
-    "Direct problem solving"
+    "Direct problem solving",
+    "Commit messages must describe actual changes made, not generic messages"
   ]
 }
