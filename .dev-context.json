@@ -20,6 +20,14 @@
     "kembali ke branch": {
       "action": "switch_branch",
       "command": "git checkout [branch_name]"
+    },
+    "git remote add origin": {
+      "action": "setup_and_push",
+      "steps": [
+        "git remote add origin [url]",
+        "git branch -M main",
+        "git push -u origin main"
+      ]
     }
   },
   "git": {
