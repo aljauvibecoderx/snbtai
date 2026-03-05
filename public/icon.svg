@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="circuitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#brainGradient)" stroke="#1e293b" stroke-width="2"/>
+  
+  <!-- Brain Shape -->
+  <path d="M25 35 C20 30, 20 25, 25 22 C30 20, 35 22, 38 25 C42 20, 48 20, 52 22 C58 20, 65 22, 70 25 C75 22, 80 25, 80 30 C82 35, 80 40, 75 42 C80 45, 82 50, 80 55 C82 60, 80 65, 75 68 C70 70, 65 68, 62 65 C58 70, 52 70, 48 68 C42 70, 35 68, 32 65 C28 68, 22 65, 20 60 C18 55, 20 50, 25 48 C20 45, 18 40, 20 35 Z" 
+        fill="white" opacity="0.9"/>
+  
+  <!-- AI Circuit Lines -->
+  <g stroke="url(#circuitGradient)" stroke-width="2" fill="none" opacity="0.8">
+    <!-- Horizontal lines -->
+    <line x1="30" y1="40" x2="45" y2="40"/>
+    <line x1="55" y1="40" x2="70" y2="40"/>
+    <line x1="30" y1="50" x2="40" y2="50"/>
+    <line x1="60" y1="50" x2="70" y2="50"/>
+    <line x1="35" y1="60" x2="50" y2="60"/>
+    <line x1="55" y1="60" x2="65" y2="60"/>
+    
+    <!-- Vertical connections -->
+    <line x1="40" y1="45" x2="40" y2="55"/>
+    <line x1="60" y1="45" x2="60" y2="55"/>
+    <line x1="50" y1="35" x2="50" y2="45"/>
+  </g>
+  
+  <!-- Circuit Nodes -->
+  <g fill="url(#circuitGradient)">
+    <circle cx="40" cy="40" r="2"/>
+    <circle cx="60" cy="40" r="2"/>
+    <circle cx="40" cy="50" r="2"/>
+    <circle cx="60" cy="50" r="2"/>
+    <circle cx="50" cy="60" r="2"/>
+    <circle cx="50" cy="40" r="2"/>
+  </g>
+  
+  <!-- SNBT Text -->
+  <text x="50" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">SNBT AI</text>
+</svg>

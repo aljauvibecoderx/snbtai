@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.svg" type="image/svg+xml" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#5B50D6" />
+    <meta name="description" content="SNBT AI - Ubah Ceritamu Jadi Soal SNBT dengan AI" />
+    <title>SNBT AI - AI-Powered Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#5B50D6",
+              "primary-hover": "#4a40b9",
+              "accent-neon": "#a8a2f9",
+            },
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+              serif: ['"Playfair Display"', 'serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            },
+            animation: {
+              'spin-slow': 'spin 3s linear infinite',
+              'loading-bar': 'loading-bar 3s ease-in-out infinite'
+            },
+            keyframes: {
+              'loading-bar': {
+                '0%': { width: '0%' },
+                '50%': { width: '70%' },
+                '100%': { width: '100%' }
+              }
+            },
+            boxShadow: {
+              'glow': '0 0 15px rgba(91, 80, 214, 0.3)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .glass-panel {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+      ::-webkit-scrollbar-thumb:hover { background: #5B50D6; }
+      
+      /* Highlight flash animation for wishlist scroll-to */
+      @keyframes highlight-flash {
+        0%, 100% { background-color: transparent; }
+        50% { background-color: rgba(236, 72, 153, 0.1); }
+      }
+      .highlight-flash {
+        animation: highlight-flash 2s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

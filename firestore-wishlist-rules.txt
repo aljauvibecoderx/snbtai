@@ -1,0 +1,28 @@
+// FIRESTORE SECURITY RULES - WISHLIST COLLECTION
+// Copy rules ini ke Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Wishlist Collection Rules
+    match /wishlist/{wishlistId} {
+      // Allow read if user owns the wishlist item
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Allow create if user is authenticated and userId matches
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.userId
+                    && request.resource.data.keys().hasAll(['userId', 'questionSetId', 'questionIndex', 'subtest', 'setTitle', 'question', 'savedAt']);
+      
+      // Allow delete if user owns the wishlist item
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // No updates allowed (delete and recreate instead)
+      allow update: if false;
+    }
+    
+    // Existing rules for other collections...
+    // (Keep your existing rules for users, questions, question_sets, etc.)
+  }
+}

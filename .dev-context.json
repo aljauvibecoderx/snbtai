@@ -1,0 +1,35 @@
+{
+  "project": {
+    "name": "SNBT AI",
+    "type": "React Web Application",
+    "description": "AI-Powered SNBT Learning Platform"
+  },
+  "commands": {
+    "publish": {
+      "action": "deploy",
+      "steps": [
+        "git add .",
+        "git commit -m 'Deploy: [timestamp]'",
+        "git push origin main"
+      ]
+    },
+    "bikin branch": {
+      "action": "create_branch",
+      "command": "git checkout -b [branch_name]"
+    },
+    "kembali ke branch": {
+      "action": "switch_branch",
+      "command": "git checkout [branch_name]"
+    }
+  },
+  "git": {
+    "remote": "origin",
+    "main_branch": "main",
+    "current_branch": "main"
+  },
+  "rules": [
+    "Minimal code implementation",
+    "No verbose solutions",
+    "Direct problem solving"
+  ]
+}
