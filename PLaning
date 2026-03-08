@@ -1,0 +1,68 @@
+Saya ingin merefactor struktur folder aplikasi React saya menjadi industry-standard tanpa mengubah fungsionalitas atau UI sama sekali.
+
+**KONTEKS PROJEK:**
+- Aplikasi: SNBT AI (Platform Pembelajaran)
+- Tech Stack: React 18, Firebase, Tailwind CSS, Express API
+- Current Issue: Struktur folder berantakan, semua file di src/ root
+
+**STRUKTUR FOLDER SAAT INI:**
+[Lampirkan screenshot atau list folder Anda]
+
+**TUJUAN RESTRUKTURISASI:**
+1. Pisahkan components, pages, services, utils, hooks
+2. Group by feature (soal, tryout, vocab, community, ai)
+3. Ikuti best practice React folder structure
+4. Maintain semua import paths dan fungsionalitas
+5. Tidak ada perubahan UI/UX
+
+**STRUKTUR YANG DIINGINKAN:**
+
+src/
+├── components/
+│   ├── common/ (Reusable UI: Navbar, Button, Card)
+│   ├── layout/ (Layout wrappers)
+│   └── features/ (Feature-specific components)
+├── pages/ (Page-level components/views)
+├── features/ (Feature-based modules)
+│   ├── auth/ (components, hooks, services)
+│   ├── soal/ (components, hooks, services)
+│   ├── tryout/ (components, hooks, services)
+│   ├── ai/ (components, hooks, services)
+│   └── vocab/ (components, hooks, services)
+├── services/ (API, Firebase, external services)
+│   ├── firebase/
+│   ├── api/
+│   └── vercel/
+├── utils/ (Helper functions)
+├── hooks/ (Custom React hooks global)
+├── context/ (State management)
+├── constants/ (Config, routes, constants)
+└── styles/ (Global CSS)
+
+**TUGAS UNTUK AI:**
+1. Analisis file-file yang ada di struktur lama
+2. Buat mapping perpindahan setiap file ke struktur baru
+3. Berikan step-by-step migration plan
+4. Update semua import paths yang berubah
+5. Sediakan script bash untuk otomatisasi pemindahan file
+6. Pastikan tidak ada breaking changes
+7. Sediakan checklist testing
+
+**OUTPUT YANG DIHARAPKAN:**
+- ✅ Folder mapping table (old path → new path)
+- ✅ Step-by-step migration guide
+- ✅ Bash script untuk move files
+- ✅ Updated import statements examples
+- ✅ Testing checklist
+- ✅ Rollback plan jika ada masalah
+
+**CONSTRAINTS:**
+- ⚠️ JANGAN ubah logic code sama sekali
+- ⚠️ JANGAN ubah nama file atau variable
+- ⚠️ JANGAN ubah UI components structure
+- ⚠️ HANYA pindahkan file ke folder yang sesuai
+- ⚠️ Pastikan semua imports tetap berfungsi
+
+Mulai dengan menganalisis struktur folder saya dan berikan rekomendasi lengkap.
+
+Selain itu hapus file yang tidak diperlukan. dan buat struktur folder yang lebih rapi. 
