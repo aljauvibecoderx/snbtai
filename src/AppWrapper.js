@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { NotificationProvider } from './NotificationSystem';
+import { NotificationProvider } from './components/common/NotificationSystem';
 import App from './App';
 
 function AppWrapper() {

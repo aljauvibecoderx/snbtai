@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { ErrorBoundary } from './ErrorPage';
-import { NotificationProvider } from './NotificationSystem';
-import './notification-animations.css';
+import { ErrorBoundary } from './pages/ErrorPage';
+import { NotificationProvider } from './components/common/NotificationSystem';
+import './styles/notification-animations.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import LandingPage from './LandingPage';
+import LandingPage from './pages/LandingPage';
 import { 
   BookOpen, 
   Brain, 
@@ -33,31 +33,32 @@ import {
   Bookmark,
   BookText
 } from 'lucide-react';
-import { HelpView } from './HelpPage';
-import { selectTemplate, generatePromptWithTemplate, getAllPatterns } from './questionTemplates';
-import { TemplateInfo } from './TemplateInfo';
-import { auth, loginWithGoogle, logout, saveUserData, getUserData, saveQuestionSet, saveQuestion, getQuestionsBySetId, saveAttempt, updateAttemptStatus, finishAttempt, getTotalQuestionsCount, saveQuestionSetWithId, getQuestionSetById, saveResultWithId, getResultById, saveToBankSoal, saveToSoalSaya, addToWishlist, removeFromWishlist, checkWishlistStatus } from './firebase';
+import { HelpView } from './pages/HelpPage';
+import { selectTemplate, generatePromptWithTemplate, getAllPatterns } from './utils/questionTemplates';
+import { TemplateInfo } from './components/common/TemplateInfo';
+import { auth, loginWithGoogle, logout, saveUserData, getUserData, saveQuestionSet, saveQuestion, getQuestionsBySetId, saveAttempt, updateAttemptStatus, finishAttempt, getTotalQuestionsCount, saveQuestionSetWithId, getQuestionSetById, saveResultWithId, getResultById, saveToBankSoal, saveToSoalSaya, addToWishlist, removeFromWishlist, checkWishlistStatus } from './services/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { CommunityView } from './CommunityView';
-import { DashboardView } from './DashboardView';
-import HomeViewRevamp from './HomeViewRevamp';
-import { DetailSoalView } from './DetailSoalView';
-import { NotFoundPage } from './ErrorPage';
-import { sanitizeContext } from './security';
-import { SettingsView } from './SettingsView';
-import TermsConditions from './TermsConditions';
-import PrivacyPolicy from './PrivacyPolicy';
-import AboutUs from './AboutUs';
-import ContactUs from './ContactUs';
-import { GEMINI_KEYS, HF_API_KEY } from './config';
-import { AdminDashboard } from './AdminDashboard';
-import { checkAdminRole } from './firebase-admin';
-import { ImageUploader } from './ImageUploader';
-import { IRTScoring } from './irt-scoring';
-import { SUBTESTS, getSubtestLabel } from './subtestHelper';
-import { VocabPanel, HighlightPopup, SearchModal } from './VocabMode';
-import { saveVocab, checkVocabExists } from './vocab-firebase';
-import { NotificationProvider, useNotification } from './NotificationSystem';
+import { CommunityView } from './features/community/CommunityView';
+import { DashboardView } from './features/dashboard/DashboardView';
+import HomeViewRevamp from './pages/HomeViewRevamp';
+import { DetailSoalView } from './features/soal/DetailSoalView';
+import { NotFoundPage } from './pages/ErrorPage';
+import { sanitizeContext } from './utils/security';
+import { SettingsView } from './pages/SettingsView';
+import TermsConditions from './pages/TermsConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import { GEMINI_KEYS, HF_API_KEY } from './config/config';
+import { AdminDashboard } from './features/tryout/AdminDashboard';
+import { checkAdminRole } from './services/firebase/firebase-admin';
+import { ImageUploader } from './components/common/ImageUploader';
+import { IRTScoring } from './utils/irt-scoring';
+import { SUBTESTS, getSubtestLabel } from './constants/subtestHelper';
+import { VocabPanel, HighlightPopup, SearchModal } from './features/vocab/VocabMode';
+import { saveVocab, checkVocabExists } from './services/vocab/vocab-firebase';
+import { NotificationProvider, useNotification } from './components/common/NotificationSystem';
+import './styles/typography.css';
 
 // Toast system replaced by NotificationSystem
 
@@ -938,7 +939,7 @@ const generateQuestionsFromImage = async (filesOrImageBase64, subtestLabel, comp
 
   try {
     // Import multi-source processor
-    const { processMultipleFiles, generateMultiSourcePrompt } = await import('./multi-source-processor');
+    const { processMultipleFiles, generateMultiSourcePrompt } = await import('./utils/multi-source-processor');
     
     let combinedText = '';
     let sourceCount = 1;
@@ -2607,7 +2608,7 @@ const CBTView = ({
       const rect = range.getBoundingClientRect();
       
       // Check if word exists in vocab
-      const { getVocabByWord } = await import('./vocab-firebase');
+      const { getVocabByWord } = await import('./services/vocab/vocab-firebase');
       const existingVocab = await getVocabByWord(user.uid, selectedText.toLowerCase());
       
       setHighlightPopup({
@@ -3550,7 +3551,25 @@ const ResultView = ({ score, irtScore, percentile, userAnswers, questions, timeU
 
 function AppContent() {
   const { addNotification } = useNotification();
-  const [view, setView] = useState('HOME');
+  const [view, setView] = useState(() => {
+    const path = window.location.pathname;
+    if (path === '/') return 'LANDING';
+    if (path === '/app') return 'HOME';
+    if (path.startsWith('/dashboard')) return 'DASHBOARD';
+    if (path === '/community') return 'COMMUNITY';
+    if (path === '/question') return 'CBT';
+    if (path === '/result') return 'RESULT';
+    if (path === '/rules') return 'HELP';
+    if (path === '/superuser') return 'ADMIN';
+    if (path === '/settings') return 'SETTINGS';
+    if (path === '/terms') return 'TERMS';
+    if (path === '/privacy') return 'PRIVACY';
+    if (path === '/about') return 'ABOUT';
+    if (path === '/contact') return 'CONTACT';
+    if (path === '/404' || path === '/error') return '404';
+    if (path.startsWith('/tryout/') && path.endsWith('/result')) return 'RESULT';
+    return ''; // Prevent flash of HomeView on unknown/async routes
+  });
   const [mode, setMode] = useState('exam');
   const [modelType, setModelType] = useState('gemini');
   const [formData, setFormData] = useState({ context: '', subtest: SUBTESTS[0].id, complexity: 0, instruksi_spesifik: '' });
@@ -3629,7 +3648,7 @@ function AppContent() {
         }
         
         // Load my questions
-        const { getMyQuestions } = await import('./firebase');
+        const { getMyQuestions } = await import('./services/firebase/firebase');
         const questions = await getMyQuestions(currentUser.uid);
         setMyQuestions(questions);
         // Load total questions count from bank
@@ -3654,7 +3673,7 @@ function AppContent() {
   // Reload questions when returning to HOME view
   const reloadMyQuestions = useCallback(async () => {
     if (user) {
-      const { getMyQuestions } = await import('./firebase');
+      const { getMyQuestions } = await import('./services/firebase/firebase');
       const questions = await getMyQuestions(user.uid);
       setMyQuestions(questions);
       console.log('🔄 Questions reloaded:', questions.length);
@@ -3664,7 +3683,7 @@ function AppContent() {
   // Handle tryout slug route
   const handleTryoutSlugRoute = async (slug) => {
     try {
-      const { getTryoutBySlug, getTryoutQuestions } = await import('./firebase-admin');
+      const { getTryoutBySlug, getTryoutQuestions } = await import('./services/firebase/firebase-admin');
       const tryout = await getTryoutBySlug(slug);
       
       if (!tryout) {
@@ -3982,7 +4001,7 @@ function AppContent() {
             }, user.uid, setId);
           }
           
-          const { getMyQuestions } = await import('./firebase');
+          const { getMyQuestions } = await import('./services/firebase/firebase');
           const updatedQuestions = await getMyQuestions(user.uid);
           setMyQuestions(updatedQuestions);
         } catch (saveError) {
@@ -4237,7 +4256,7 @@ function AppContent() {
           }
           
           // Reload questions
-          const { getMyQuestions } = await import('./firebase');
+          const { getMyQuestions } = await import('./services/firebase/firebase');
           const updatedQuestions = await getMyQuestions(user.uid);
           setMyQuestions(updatedQuestions);
         } catch (saveError) {
@@ -4395,7 +4414,7 @@ function AppContent() {
         if (!tryoutId) {
           return;
         }
-        const { saveTryoutAttempt } = await import('./firebase-admin');
+        const { saveTryoutAttempt } = await import('./services/firebase/firebase-admin');
         await saveTryoutAttempt({
           tryoutId,
           userId: user.uid,
