@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SNBT AI - Buat Soal</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'snbt-purple': '#7C3AED',
+            'snbt-purple-light': '#F5F3FF',
+            'snbt-gray': '#6B7280',
+            'snbt-bg': '#F9FAFB',
+          },
+          borderRadius: {
+            'ios': '20px',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style data-purpose="layout-adjustments">
+    /* Custom scrollbar for a cleaner mobile look */
+    ::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+    .ios-shadow {
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+    /* Difficulty Slider styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #EDE9FE;
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #7C3AED;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -7px;
+      box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-snbt-bg text-slate-900 min-h-screen pb-12">
+<!-- BEGIN: Navigation -->
+<nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center" data-purpose="header-navigation">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-snbt-purple-light rounded-xl flex items-center justify-center">
+<!-- SVG Logo Icon -->
+<svg class="w-6 h-6 text-snbt-purple" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h1 class="text-lg font-bold leading-tight">SNBT AI</h1>
+<p class="text-[10px] text-snbt-gray uppercase tracking-wider font-medium">Adaptive Learning</p>
+</div>
+</div>
+<button aria-label="Menu" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+<svg class="h-6 w-6 text-slate-700" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6h16M4 12h16m-7 6h7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</nav>
+<!-- END: Navigation -->
+<main class="px-5 pt-6 space-y-8 max-w-md mx-auto">
+<!-- BEGIN: Header Section -->
+<header data-purpose="page-title">
+<h2 class="text-3xl font-extrabold tracking-tight">Buat Soal SNBT</h2>
+<p class="text-snbt-gray mt-2 text-sm leading-relaxed">
+        Buat soal latihan SNBT dengan cepat untuk membantu kamu belajar lebih efektif.
+      </p>
+</header>
+<!-- END: Header Section -->
+<!-- BEGIN: Main Input Form -->
+<section class="space-y-6" data-purpose="question-generator-form">
+<!-- Context Input -->
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<label class="font-semibold text-sm">Konteks Soal</label>
+<span class="text-[10px] font-medium text-snbt-gray">0/500</span>
+</div>
+<div class="relative">
+<textarea class="w-full h-32 p-4 bg-white border border-gray-200 rounded-ios focus:ring-2 focus:ring-snbt-purple focus:border-transparent transition-all ios-shadow resize-none text-sm placeholder:text-gray-300" placeholder="Masukkan konteks soal yang ingin dibuat. Contoh: Jika hari ini Sabtu dan besok Minggu, maka hari ke-5 dari sekarang adalah..."></textarea>
+<div class="absolute bottom-3 left-4 flex items-center gap-1.5">
+<svg class="h-3 w-3 text-amber-500" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" fill-rule="evenodd"></path>
+</svg>
+<span class="text-[10px] text-snbt-gray">Semakin jelas konteks, semakin berkualitas soal</span>
+</div>
+</div>
+</div>
+<!-- Specific Instructions -->
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<label class="font-semibold text-sm">Instruksi Spesifik <span class="text-snbt-gray font-normal text-xs">(Opsional)</span></label>
+<span class="text-[10px] font-medium text-snbt-gray">0/200</span>
+</div>
+<textarea class="w-full h-24 p-4 bg-white border border-gray-200 rounded-ios focus:ring-2 focus:ring-snbt-purple focus:border-transparent transition-all ios-shadow resize-none text-sm placeholder:text-gray-300" placeholder="Contoh: Fokus pada analisis data, gunakan grafik..."></textarea>
+</div>
+</section>
+<!-- END: Main Input Form -->
+<!-- BEGIN: Subtes Selection -->
+<section class="space-y-4" data-purpose="subtest-selection">
+<div class="flex justify-between items-baseline">
+<h3 class="font-bold text-lg">Subtes</h3>
+<span class="text-[10px] text-snbt-gray uppercase tracking-widest">Pilih Jenis</span>
+</div>
+<div class="grid grid-cols-1 gap-3">
+<!-- Item Active -->
+<div class="relative p-4 bg-white border border-gray-100 rounded-ios ios-shadow flex items-center gap-4 transition-all">
+<div class="w-10 h-10 bg-snbt-purple-light rounded-full flex items-center justify-center flex-shrink-0">
+<svg class="h-5 w-5 text-snbt-purple" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="flex-1">
+<span class="text-sm font-semibold block">TPS – Penalaran Umum</span>
+<div class="mt-1 flex justify-center w-full">
+<div class="h-1 w-8 bg-snbt-purple rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Item Inactive -->
+<div class="p-4 bg-white border border-gray-100 rounded-ios flex items-center gap-4 opacity-60 hover:opacity-100 transition-opacity">
+<div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center flex-shrink-0">
+<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-sm font-medium">TPS – Pengetahuan &amp; Pemahaman Umum</span>
+</div>
+<!-- Item Inactive -->
+<div class="p-4 bg-white border border-gray-100 rounded-ios flex items-center gap-4 opacity-60">
+<div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center flex-shrink-0">
+<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<span class="text-sm font-medium">TPS – Pemahaman Bacaan &amp; Menulis</span>
+</div>
+</div>
+</section>
+<!-- END: Subtes Selection -->
+<!-- BEGIN: Difficulty Slider -->
+<section class="space-y-4" data-purpose="difficulty-selection">
+<div class="flex justify-between items-center">
+<h3 class="font-bold text-lg">Kesulitan</h3>
+<span class="px-2 py-0.5 bg-snbt-purple-light text-snbt-purple text-[10px] font-bold rounded-full uppercase">Level 0</span>
+</div>
+<div class="bg-white p-5 rounded-ios border border-gray-100 ios-shadow space-y-4">
+<input class="cursor-pointer" max="100" min="0" type="range" value="10"/>
+<div class="flex justify-between text-[10px] font-bold text-snbt-gray uppercase tracking-widest">
+<span>Adaptive</span>
+<span>Pakar</span>
+</div>
+<div class="pt-2 border-t border-gray-50">
+<h4 class="text-xs font-bold text-snbt-purple">Adaptive - Otomatis disesuaikan</h4>
+<p class="text-[11px] text-snbt-gray mt-1 leading-relaxed">Tingkat kesulitan akan disesuaikan dengan konteks dan performa belajar kamu.</p>
+</div>
+</div>
+</section>
+<!-- END: Difficulty Slider -->
+<!-- BEGIN: Action Button -->
+<section class="pt-4 space-y-4" data-purpose="primary-action">
+<button class="w-full bg-snbt-purple hover:bg-violet-700 text-white font-bold py-4 rounded-ios shadow-lg shadow-violet-200 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]">
+<svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" fill-rule="evenodd"></path>
+</svg>
+        Buat Soal
+        <svg class="h-4 w-4 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+</svg>
+</button>
+<div class="flex justify-center items-center gap-3">
+<span class="text-[11px] font-medium text-snbt-gray uppercase tracking-wider">Sisa hari ini:</span>
+<div class="bg-snbt-purple-light px-3 py-1 rounded-full">
+<span class="text-[11px] font-extrabold text-snbt-purple">17/19</span>
+</div>
+</div>
+</section>
+<!-- END: Action Button -->
+</main>
+<!-- BEGIN: Floating Action Button (Optional Aesthetic) -->
+<div class="fixed bottom-6 right-6" data-purpose="floating-help">
+<button class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-transform">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- END: Floating Action Button -->
+<!-- BEGIN: Logic for UI Interactivity -->
+<script data-purpose="ui-logic">
+    // Minimal logic for visual feedback on range slider
+    const slider = document.querySelector('input[type="range"]');
+    const badge = document.querySelector('span.rounded-full.uppercase');
+    
+    if(slider && badge) {
+      slider.addEventListener('input', (e) => {
+        const val = e.target.value;
+        const level = Math.floor(val / 20);
+        badge.textContent = `Level ${level}`;
+      });
+    }
+  </script>
+<!-- END: Logic for UI Interactivity -->
+</body></html>

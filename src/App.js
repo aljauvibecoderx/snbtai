@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import LandingPage from './LandingPage';
 import { 
   BookOpen, 
   Brain, 
@@ -39,9 +40,15 @@ import { auth, loginWithGoogle, logout, saveUserData, getUserData, saveQuestionS
 import { onAuthStateChanged } from 'firebase/auth';
 import { CommunityView } from './CommunityView';
 import { DashboardView } from './DashboardView';
+import HomeViewRevamp from './HomeViewRevamp';
 import { DetailSoalView } from './DetailSoalView';
 import { NotFoundPage } from './ErrorPage';
 import { sanitizeContext } from './security';
+import { SettingsView } from './SettingsView';
+import TermsConditions from './TermsConditions';
+import PrivacyPolicy from './PrivacyPolicy';
+import AboutUs from './AboutUs';
+import ContactUs from './ContactUs';
 import { GEMINI_KEYS, HF_API_KEY } from './config';
 import { AdminDashboard } from './AdminDashboard';
 import { checkAdminRole } from './firebase-admin';
@@ -1958,7 +1965,7 @@ const WelcomeModal = ({ onClose }) => {
   };
   
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4 pt-24">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform animate-bounce-in overflow-hidden">
         <div className="bg-gradient-to-br from-indigo-600 to-indigo-500 p-6 text-white text-center">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -2198,9 +2205,6 @@ const Card = ({ children, className = '' }) => (
 
 
 const HomeView = ({ formData, setFormData, handleStart, errorMsg, mode, setMode, apiKey, modelType, setModelType, onHelp, user, onLogin, onLogout, usageData, setView, setShowLoginModal, myQuestions, onReloadQuestions, isDeveloperMode = false, totalQuestionsInBank = 0, isAdmin = false, navigate }) => {
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
   // Reload questions when component mounts
   useEffect(() => {
     if (user && onReloadQuestions) {
@@ -2259,320 +2263,33 @@ const HomeView = ({ formData, setFormData, handleStart, errorMsg, mode, setMode,
   
   const dailyUsage = getDailyUsage();
   const dailyLimit = user ? DAILY_LIMIT_LOGGED_IN : DAILY_LIMIT_NON_LOGGED_IN;
-  const isLimitReached = isDeveloperMode ? false : dailyUsage >= dailyLimit;
-  const canGenerate = !isLimitReached && formData.context.length >= 20;
   
+  // Use HomeViewRevamp component
   return (
-  <div className="min-h-screen bg-[#F3F4F8] flex flex-col relative overflow-x-hidden">
-    {showLogoutConfirm && <ConfirmModal message="Yakin ingin logout?" onConfirm={() => { setShowLogoutConfirm(false); onLogout(); }} onCancel={() => setShowLogoutConfirm(false)} />}
-    
-    {/* Mobile Menu Overlay */}
-    {showMobileMenu && (
-      <div className="fixed inset-0 z-50 sm:hidden">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)}></div>
-        <div className="absolute top-0 right-0 h-full w-64 bg-white shadow-2xl animate-slide-in-right">
-          <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-200">
-              <span className="font-bold text-slate-900">Menu</span>
-              <button onClick={() => setShowMobileMenu(false)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <X size={20} className="text-slate-600" />
-              </button>
-            </div>
-            <nav className="space-y-2">
-              <button onClick={() => { setView('HELP'); window.history.pushState({}, '', '/rules'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 p-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-all">
-                <BookOpen size={20} />
-                <span className="font-medium">Panduan</span>
-              </button>
-              {user && (
-                <button onClick={() => { setView('DASHBOARD'); navigate('/dashboard/overview'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 p-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-all">
-                  <Users size={20} />
-                  <span className="font-medium">Dashboard</span>
-                </button>
-              )}
-              <button onClick={() => { 
-                if (!user) {
-                  setShowLoginModal(true);
-                  setShowMobileMenu(false);
-                  return;
-                }
-                setView('COMMUNITY'); 
-                window.history.pushState({}, '', '/community');
-                setShowMobileMenu(false);
-              }} className="w-full flex items-center gap-3 p-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-all">
-                <Users size={20} />
-                <span className="font-medium">Community</span>
-              </button>
-              {user && (
-                <button onClick={() => { setShowLogoutConfirm(true); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 p-3 text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
-                  <LogOut size={20} />
-                  <span className="font-medium">Logout</span>
-                </button>
-              )}
-            </nav>
-          </div>
-        </div>
-      </div>
-    )}
-    
-    {/* Background Blur Effects */}
-    <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>
-    </div>
-    
-    {/* Sticky Header */}
-    <header className="sticky top-0 px-4 sm:px-6 py-3 sm:py-4 bg-transparent z-40">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <Logo size={32} showText={true} />
-        
-        {/* Desktop Navigation */}
-        <div className="hidden sm:flex items-center gap-3">
-          {user ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
-                <img src={user.photoURL} alt={user.displayName} className="w-6 h-6 rounded-full" />
-                <span className="text-sm font-medium text-slate-700">{user.displayName?.split(' ')[0]}</span>
-              </div>
-              <button onClick={() => setShowLogoutConfirm(true)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors" title="Logout">
-                <LogOut size={18} />
-              </button>
-            </div>
-          ) : (
-            <button onClick={onLogin} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-all">
-              <LogIn size={16} />
-              Login
-            </button>
-          )}
-          <button onClick={() => { setView('HELP'); window.history.pushState({}, '', '/rules'); }} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-            <BookOpen size={16} /> Panduan
-          </button>
-          {user && (
-            <button onClick={() => { setView('DASHBOARD'); navigate('/dashboard/overview'); }} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-              <Users size={16} /> Dashboard
-            </button>
-          )}
-          {isAdmin && (
-            <button onClick={() => { setView('ADMIN'); window.history.pushState({}, '', '/superuser'); }} className="flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all font-medium">
-              <Settings size={16} /> Admin Panel
-            </button>
-          )}
-          <button onClick={() => { 
-            if (!user) {
-              setShowLoginModal(true);
-              return;
-            }
-            setView('COMMUNITY'); 
-            window.history.pushState({}, '', '/community');
-          }} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-            <Users size={16} /> Community
-          </button>
-        </div>
-        
-        {/* Mobile Navigation */}
-        <div className="flex sm:hidden items-center gap-2">
-          {user ? (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
-              <img src={user.photoURL} alt={user.displayName} className="w-6 h-6 rounded-full" />
-            </div>
-          ) : (
-            <button onClick={onLogin} className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-medium">
-              <LogIn size={14} />
-              Login
-            </button>
-          )}
-          <button onClick={() => setShowMobileMenu(true)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" aria-label="Menu">
-            <Menu size={24} />
-          </button>
-        </div>
-      </div>
-    </header>
-    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 font-sans text-slate-800 relative z-10">
-    <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 items-start">
-      {/* Description section - visible on all screen sizes */}
-      <div className="space-y-4 sm:space-y-6 animate-fade-in-up">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium uppercase tracking-wider">
-          <Sparkles size={14} />
-          AI-Powered
-        </div>
-        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight tracking-tight">
-          Ubah Cerita<br/>Jadi Soal UTBK
-          {isDeveloperMode && <span className="block text-base text-rose-600 mt-2">Developer Mode</span>}
-        </h1>
-        <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
-          Ubah cerita jadi soal UTBK dengan AI. Pilih mode ujian atau mode game interaktif.
-        </p>
-        <div className="flex gap-2 sm:gap-3">
-          <button onClick={() => setMode('exam')} className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${mode === 'exam' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-indigo-200'}`}>
-            Mode Ujian
-          </button>
-          <button onClick={() => setMode('game')} className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${mode === 'game' ? 'bg-teal-500 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-200'}`}>
-            Mode Game
-          </button>
-        </div>
-        <div className={`grid ${user ? 'grid-cols-2' : 'grid-cols-1'} gap-2 sm:gap-3`}>
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-2 sm:p-3 border border-slate-200 ring-2 ring-indigo-200">
-            <div className="text-xl sm:text-2xl font-bold text-indigo-600">{dailyUsage}</div>
-            <div className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Soal Hari Ini</div>
-          </div>
-          {user && (
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-2 sm:p-3 border border-slate-200 ring-2 ring-amber-200">
-              <div className="text-xl sm:text-2xl font-bold text-amber-600">{totalQuestionsInBank}</div>
-              <div className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Total Soal Dibuat</div>
-            </div>
-          )}
-        </div>
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 border border-slate-200">
-          <div className="flex items-center gap-2 mb-2 sm:mb-3">
-            <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
-            <span className="text-[10px] sm:text-xs font-bold text-slate-700">Penalaran Umum</span>
-          </div>
-          <div className="space-y-1.5 sm:space-y-2">
-            <div className="bg-slate-50 rounded-lg p-2 sm:p-3 border border-slate-200">
-              <p className="text-[9px] sm:text-[10px] text-slate-600 leading-relaxed">
-                Fenomena urbanisasi menyebabkan kepadatan penduduk meningkat. Data menunjukkan Jakarta memiliki 15,342 jiwa/km².
-              </p>
-            </div>
-            <p className="text-[10px] sm:text-[11px] font-medium text-slate-800">Simpulan yang PALING TEPAT adalah...</p>
-            <div className="space-y-1 sm:space-y-1.5">
-              <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-white rounded-lg border border-slate-200">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-slate-200 flex items-center justify-center text-[7px] sm:text-[8px] font-bold text-slate-600">A</div>
-                <span className="text-[9px] sm:text-[10px] text-slate-600">Urbanisasi harus dihentikan</span>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-indigo-50 rounded-lg border-2 border-indigo-600">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-indigo-600 flex items-center justify-center text-[7px] sm:text-[8px] font-bold text-white">B</div>
-                <span className="text-[9px] sm:text-[10px] text-indigo-700 font-medium">Diperlukan solusi infrastruktur</span>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-white rounded-lg border border-slate-200">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-slate-200 flex items-center justify-center text-[7px] sm:text-[8px] font-bold text-slate-600">C</div>
-                <span className="text-[9px] sm:text-[10px] text-slate-600">Semua kota sama padatnya</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <Card className="p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-xl border border-slate-200 bg-white relative ring-1 ring-black/5 w-full max-w-md mx-auto lg:max-w-none">
-        {errorMsg && <div className="absolute top-0 left-0 w-full bg-rose-500 text-white text-sm py-2 px-4 text-center font-medium">{errorMsg}</div>}
-        <div className="space-y-3 sm:space-y-4">
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">Pilih Subtes</label>
-            <div className="grid grid-cols-2 gap-1.5">
-            {SUBTESTS_WITH_ICONS.map((st) => {
-              const isSelected = formData.subtest === st.id;
-              const iconColors = {
-                'tps_pu': 'text-purple-600',
-                'tps_ppu': 'text-blue-600',
-                'tps_pbm': 'text-pink-600',
-                'tps_pk': 'text-orange-600',
-                'lit_ind': 'text-red-600',
-                'lit_ing': 'text-green-600',
-                'pm': 'text-cyan-600'
-              };
-              return (
-                <button key={st.id} onClick={() => setFormData({ ...formData, subtest: st.id })} className={`p-2 rounded-lg border text-left text-xs transition-all flex items-center gap-2 ${isSelected ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-slate-50'}`}>
-                  <div className={`${isSelected ? 'text-indigo-600' : iconColors[st.id]}`}>
-                    <st.icon size={16} className="flex-shrink-0" />
-                  </div>
-                  <span className="leading-tight">{st.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">Model AI</label>
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => setModelType('gemini')} className={`p-2.5 rounded-lg border text-xs transition-all ${modelType === 'gemini' ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-medium' : 'border-slate-200 text-slate-600 hover:border-indigo-200'}`}>
-              <div>Gemini (Terbaik)</div>
-              {getRemainingUsage().minute === 0 && <div className="text-[9px] text-rose-600 font-bold mt-0.5">⚠️ Limit habis</div>}
-            </button>
-            <button onClick={() => setModelType('qwen')} className={`p-2.5 rounded-lg border text-xs transition-all ${modelType === 'qwen' ? 'border-teal-600 bg-teal-50 text-teal-700 font-medium' : 'border-slate-200 text-slate-600 hover:border-teal-200'}`}>
-              <div>Gemma (Alternatif)</div>
-              {modelType === 'qwen' && getRemainingUsage().minute === 0 && <div className="text-[9px] text-rose-600 font-bold mt-0.5">⚠️ Limit habis</div>}
-            </button>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Limit Harian</span>
-            <div className="flex items-center gap-2 text-xs">
-              <span className={`font-bold ${isLimitReached ? 'text-rose-600' : 'text-indigo-600'}`}>{dailyUsage}/{dailyLimit} soal</span>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">Tulis Cerita</label>
-            <span className={`text-xs ${formData.context.length > 500 ? 'text-rose-500' : 'text-slate-400'}`}>{formData.context.length}/500</span>
-          </div>
-          <textarea className="w-full h-28 sm:h-32 p-2.5 rounded-lg border border-slate-200 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm bg-slate-50 focus:bg-white transition-all" placeholder="Tulis cerita singkat..." value={formData.context} onChange={(e) => setFormData({ ...formData, context: e.target.value.slice(0, 500) })} />
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">Konteks (Opsional)</label>
-            <span className={`text-xs ${formData.instruksi_spesifik.length > 200 ? 'text-rose-500' : 'text-slate-400'}`}>{formData.instruksi_spesifik.length}/200</span>
-          </div>
-          <textarea className="w-full h-20 p-2.5 rounded-lg border border-slate-200 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm bg-slate-50 focus:bg-white transition-all" placeholder="Contoh: Buat soal dengan grafik, atau fokus pada materi perbandingan..." value={formData.instruksi_spesifik} onChange={(e) => setFormData({ ...formData, instruksi_spesifik: e.target.value.slice(0, 200) })} />
-          <div className="flex flex-wrap gap-1.5">
-            <button onClick={() => setFormData({ ...formData, instruksi_spesifik: 'Fokus pada materi perbandingan' })} className="px-2 py-1 text-[10px] bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors border border-indigo-200 font-medium">+ Perbandingan</button>
-            <button onClick={() => setFormData({ ...formData, instruksi_spesifik: 'Gunakan logika sederhana dan mudah dipahami' })} className="px-2 py-1 text-[10px] bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors border border-indigo-200 font-medium">+ Logika Sederhana</button>
-            <button onClick={() => setFormData({ ...formData, instruksi_spesifik: 'Buat soal dengan flowchart atau diagram' })} className="px-2 py-1 text-[10px] bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors border border-indigo-200 font-medium">+ Flowchart</button>
-            <button onClick={() => setFormData({ ...formData, instruksi_spesifik: 'Fokus pada analisis data dan statistik' })} className="px-2 py-1 text-[10px] bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors border border-indigo-200 font-medium">+ Statistik</button>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider">Kesulitan</label>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-              formData.complexity === 0 ? 'bg-purple-100 text-purple-700' :
-              formData.complexity === 1 ? 'bg-green-100 text-green-700' :
-              formData.complexity === 2 ? 'bg-lime-100 text-lime-700' :
-              formData.complexity === 3 ? 'bg-amber-100 text-amber-700' :
-              formData.complexity === 4 ? 'bg-orange-100 text-orange-700' :
-              'bg-rose-100 text-rose-700'
-            }`}>Level {formData.complexity}</span>
-          </div>
-          <input type="range" min="0" max="5" step="1" value={formData.complexity} onChange={(e) => setFormData({ ...formData, complexity: parseInt(e.target.value) })} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
-          <div className="flex justify-between text-[9px] text-slate-400 px-1">
-            <span>Adaptive</span>
-            <span>Sulit</span>
-          </div>
-        </div>
-        
-        <TemplateInfo subtestId={formData.subtest} complexity={formData.complexity} />
-        
-        {isLimitReached && !user ? (
-          <button onClick={onLogin} className="w-full px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-            <LogIn size={18} /> Login untuk 20 Soal/Hari
-          </button>
-        ) : isLimitReached && user ? (
-          <button onClick={() => { setView('DASHBOARD'); navigate('/dashboard/overview'); }} className="w-full px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 bg-amber-600 text-white hover:bg-amber-700 shadow-lg shadow-amber-200">
-            <Users size={18} /> Kredit Habis, Cek Bank Soal
-          </button>
-        ) : (
-          <Button onClick={handleStart} className="w-full" disabled={!canGenerate}>
-            {isLimitReached ? `Limit Habis (${dailyUsage}/${dailyLimit})` : 'Generate Soal'} <ChevronRight size={18} />
-          </Button>
-        )}
-        
-        {!isDeveloperMode && (
-          <div className="text-center text-xs text-slate-500">
-            Sisa hari ini: <span className={`font-bold ${isLimitReached ? 'text-rose-600' : 'text-indigo-600'}`}>{Math.max(0, dailyLimit - dailyUsage)}/{dailyLimit}</span> soal
-          </div>
-        )}
-        {isDeveloperMode && (
-          <div className="text-center text-xs text-rose-600 font-bold">
-            ♾️ Unlimited Generation
-          </div>
-        )}
-      </Card>
-    </div>
-    </div>
-    <footer className="py-3 text-center text-xs text-slate-500 border-t border-slate-200 relative z-10">
-      By <span className="font-medium text-slate-700">SNBT AI Team</span>
-    </footer>
-  </div>
-);
+    <HomeViewRevamp
+      formData={formData}
+      setFormData={setFormData}
+      handleStart={handleStart}
+      errorMsg={errorMsg}
+      mode={mode}
+      setMode={setMode}
+      apiKey={apiKey}
+      modelType={modelType}
+      setModelType={setModelType}
+      user={user}
+      onLogin={onLogin}
+      onLogout={onLogout}
+      usageData={usageData}
+      setView={setView}
+      setShowLoginModal={setShowLoginModal}
+      isDeveloperMode={isDeveloperMode}
+      totalQuestionsInBank={totalQuestionsInBank}
+      isAdmin={isAdmin}
+      navigate={navigate}
+      dailyLimit={dailyLimit}
+      dailyUsage={dailyUsage}
+    />
+  );
 };
 
 const LoadingView = ({ loadingQuizIdx, stopwatch, onQuizAnswer, onCancel }) => {
@@ -3528,6 +3245,15 @@ const ResultView = ({ score, irtScore, percentile, userAnswers, questions, timeU
     setDetailSubtest(questions[0]?.subtest || 'tps_pu');
     setShowDetailModal(true);
   };
+  
+  const handleBackToMenu = () => {
+    if (fromBankSoal) {
+      onBackToDashboard();
+    } else {
+      setView('HOME');
+      navigate('/app');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] p-3 sm:p-6 flex items-center justify-center font-sans relative overflow-x-hidden animate-fade-in">
@@ -3612,14 +3338,7 @@ const ResultView = ({ score, irtScore, percentile, userAnswers, questions, timeU
           )}
           
           <div className="flex gap-3">
-            <Button onClick={() => {
-              if (fromBankSoal) {
-                onBackToDashboard();
-              } else {
-                setView('HOME');
-                navigate('/');
-              }
-            }} className="flex-1">{fromBankSoal ? 'Kembali ke Dashboard' : 'Latihan Baru'}</Button>
+            <Button onClick={handleBackToMenu} className="flex-1">{fromBankSoal ? 'Kembali ke Dashboard' : 'Menu Soal Saya'}</Button>
             {user && questionSetId && (
               <Button onClick={handleViewDetail} variant="secondary" className="flex-1">
                 <Bookmark size={18} /> Lihat & Simpan Soal
@@ -4117,10 +3836,22 @@ function AppContent() {
         setView('DASHBOARD');
       } else if (path === '/superuser') {
         setView('ADMIN');
+      } else if (path === '/settings') {
+        setView('SETTINGS');
+      } else if (path === '/terms') {
+        setView('TERMS');
+      } else if (path === '/privacy') {
+        setView('PRIVACY');
+      } else if (path === '/about') {
+        setView('ABOUT');
+      } else if (path === '/contact') {
+        setView('CONTACT');
       } else if (path === '/404' || path === '/error') {
         setView('404');
-      } else if (path === '/') {
+      } else if (path === '/app') {
         setView('HOME');
+      } else if (path === '/') {
+        setView('LANDING');
       } else {
         // 404 - URL tidak ditemukan
         setView('404');
@@ -4816,8 +4547,14 @@ function AppContent() {
         />
       )}
       {view === '404' && <NotFoundPage />}
+      {view === 'LANDING' && <LandingPage />}
       {view === 'HOME' && <HomeView formData={formData} setFormData={setFormData} handleStart={handleStart} errorMsg={errorMsg} mode={mode} setMode={setMode} apiKey={apiKey} modelType={modelType} setModelType={setModelType} onHelp={() => setView('HELP')} user={user} onLogin={handleLogin} onLogout={handleLogout} usageData={usageData} setView={setView} setShowLoginModal={setShowLoginModal} myQuestions={myQuestions} onReloadQuestions={reloadMyQuestions} isDeveloperMode={isDeveloperMode} totalQuestionsInBank={totalQuestionsInBank} isAdmin={isAdmin} navigate={navigate} />}
       {view === 'ADMIN' && <AdminDashboard user={user} onBack={() => { setView('HOME'); navigate('/'); }} />}
+      {view === 'SETTINGS' && <SettingsView user={user} onBack={() => { setView('HOME'); navigate('/app'); }} onLogout={handleLogout} />}
+      {view === 'TERMS' && <TermsConditions />}
+      {view === 'PRIVACY' && <PrivacyPolicy />}
+      {view === 'ABOUT' && <AboutUs />}
+      {view === 'CONTACT' && <ContactUs />}
       {view === 'DASHBOARD' && <DashboardView user={user} onBack={() => { setView('HOME'); navigate('/'); }} onViewDetail={async (setId, questionIndex) => { const questions = await getQuestionsBySetId(setId); setDetailQuestions(questions); setQuestionSetId(setId); setDetailSubtest('Paket Soal'); setView('DETAIL'); if (questionIndex !== undefined) { setTimeout(() => { const element = document.getElementById(`question-${questionIndex}`); if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add('highlight-flash'); setTimeout(() => element.classList.remove('highlight-flash'), 2000); } }, 100); } }} onStartQuiz={async (setId, questionsData, tryoutData) => { if (tryoutData) { if (!user) { setShowLoginModal(true); return; } setPendingTryout({ setId, questionsData, tryoutData }); setShowConfirmStart(true); } else { let questions; if (questionsData) { questions = questionsData; } else { questions = await getQuestionsBySetId(setId); } setQuestions(questions); setUserAnswers({}); setRaguRagu({}); setCurrentQuestionIdx(0); setStreak(0); setPoints(0); setFeedback(null); setMode('exam'); setTimer(tryoutData?.totalDuration || questions.length * 60); setFromBankSoal(true); setIsOfficialTryout(!!tryoutData); if (tryoutData?.slug) { window.history.pushState({}, '', `/tryout/${tryoutData.slug}`); } else { window.history.pushState({}, '', '/question'); } setView('CBT'); } }} onVisionGenerate={handleVisionGenerate} />}
       {view === 'DETAIL' && <DetailSoalView questions={detailQuestions} subtestLabel={detailSubtest} subtestId={detailQuestions[0]?.subtest} onBack={() => { setView('DASHBOARD'); navigate('/dashboard/overview'); }} user={user} questionSetId={questionSetId} showToast={showToast} />}
       {view === 'HELP' && <HelpView onBack={() => setView('HOME')} />}

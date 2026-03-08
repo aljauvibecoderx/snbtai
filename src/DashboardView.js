@@ -7,11 +7,14 @@ import { ImageUploader } from './ImageUploader';
 import { SUBTESTS, getSubtestLabel } from './subtestHelper';
 import { PTNPediaView } from './ptnpedia';
 import { getVocabList, deleteVocab, getVocabStats, updateVocab, saveVocab, subscribeToVocabList } from './vocab-firebase';
+import { UnifiedNavbar } from './UnifiedNavbar';
+import { auth } from './firebase';
 
 
 export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisionGenerate }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   // Get active tab from URL
   const getActiveTab = () => {
@@ -163,170 +166,180 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
 
   const renderOverview = () => {
     const stats = getStats();
+    const greeting = new Date().getHours() < 12 ? 'Selamat pagi' : new Date().getHours() < 18 ? 'Selamat siang' : 'Selamat malam';
     
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Stats Cards */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-indigo-50 rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 opacity-50"></div>
+      <div className="space-y-6">
+        {/* Mobile Header - Only visible on mobile */}
+        <div className="lg:hidden">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="flex items-center gap-2 mb-2 sm:mb-4">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                    <FileText size={16} className="sm:w-6 sm:h-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-3xl font-bold text-slate-900">{stats.totalQuestions}</p>
-                    <p className="text-[9px] sm:text-xs text-slate-500 font-medium">Total Soal</p>
-                  </div>
+                <div className="w-12 h-12 rounded-full border-2 border-indigo-200 p-0.5">
+                  <img 
+                    alt="User Profile" 
+                    className="w-full h-full rounded-full object-cover" 
+                    src={user?.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.displayName || 'User')}
+                  />
                 </div>
-                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full" style={{width: `${Math.min((stats.totalQuestions / 50) * 100, 100)}%`}}></div>
-                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
-            </div>
-            
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-teal-50 rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 opacity-50"></div>
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-2 sm:mb-4">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-teal-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                    <Target size={16} className="sm:w-6 sm:h-6 text-teal-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-3xl font-bold text-slate-900">{stats.totalAttempts}</p>
-                    <p className="text-[9px] sm:text-xs text-slate-500 font-medium">Percobaan</p>
-                  </div>
-                </div>
-                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-teal-500 rounded-full" style={{width: `${Math.min((stats.totalAttempts / 20) * 100, 100)}%`}}></div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-amber-50 rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 opacity-50"></div>
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-2 sm:mb-4">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                    <TrendingUp size={16} className="sm:w-6 sm:h-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-3xl font-bold text-slate-900">{stats.avgScore}%</p>
-                    <p className="text-[9px] sm:text-xs text-slate-500 font-medium">Rata-rata</p>
-                  </div>
-                </div>
-                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{width: `${stats.avgScore}%`}}></div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 sm:w-32 sm:h-32 bg-rose-50 rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 opacity-50"></div>
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-2 sm:mb-4">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-rose-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                    <Trophy size={16} className="sm:w-6 sm:h-6 text-rose-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-3xl font-bold text-slate-900">{stats.bestScore}%</p>
-                    <p className="text-[9px] sm:text-xs text-slate-500 font-medium">Terbaik</p>
-                  </div>
-                </div>
-                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-rose-500 rounded-full" style={{width: `${stats.bestScore}%`}}></div>
-                </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500">{greeting},</p>
+                <h1 className="text-lg font-bold tracking-tight text-slate-900">{user?.displayName || 'User'}</h1>
               </div>
             </div>
           </div>
-          
-          {/* Recent Activity */}
-          {myQuestions.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-800">Paket Terbaru</h3>
-                <button onClick={() => navigate('/dashboard/my-questions')} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">Lihat Semua →</button>
-              </div>
-              <div className="space-y-3">
-                {myQuestions.slice(0, 3).map((set, idx) => {
-                  const mainSubtest = Object.keys(set.subtestSummary || {})[0] || 'tps_pu';
-                  const subtestLabel = getSubtestLabel(mainSubtest);
-                  return (
-                    <div key={set.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all cursor-pointer" onClick={() => onViewDetail(set.id)}>
-                      <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText size={18} className="text-indigo-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{set.title || 'Latihan SNBT'}</p>
-                        <p className="text-xs text-slate-500">{set.totalQuestions || 0} soal • Level {set.complexity || 3}</p>
-                      </div>
-                      <div className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600 whitespace-nowrap">
-                        {subtestLabel}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
-        
-        {/* Right Column - Info Panel */}
-        <div className="space-y-6">
-          {/* Quick Stats */}
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <BarChart3 size={18} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Stats Cards */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-50 flex flex-col gap-2">
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <FileText size={20} className="text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Total Soal</p>
+                  <p className="text-2xl font-extrabold text-slate-900">{stats.totalQuestions}</p>
+                </div>
               </div>
-              <h3 className="font-bold">Ringkasan</h3>
+              
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-50 flex flex-col gap-2">
+                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Target size={20} className="text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Percobaan</p>
+                  <p className="text-2xl font-extrabold text-slate-900">{stats.totalAttempts}</p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm opacity-90">Paket Soal</span>
-                <span className="text-xl font-bold">{stats.subtestCount}</span>
+
+            {/* Paket Terbaru - Moved here */}
+            {myQuestions.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-800">Paket Terbaru</h2>
+                  <button 
+                    onClick={() => navigate('/dashboard/my-questions')} 
+                    className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                  >
+                    Semua
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {myQuestions.slice(0, 3).map((set) => {
+                    const mainSubtest = Object.keys(set.subtestSummary || {})[0] || 'tps_pu';
+                    const subtestLabel = getSubtestLabel(mainSubtest);
+                    const shortId = set.id?.slice(-6).toUpperCase() || 'XXXXXX';
+                    
+                    return (
+                      <div 
+                        key={set.id} 
+                        className="bg-white p-4 rounded-xl flex items-center justify-between border border-slate-50 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                        onClick={() => onViewDetail(set.id)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                            <FileText size={24} />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-800">#{shortId}</h4>
+                            <p className="text-xs text-slate-500">{set.totalQuestions || 0} Soal • Level {set.complexity || 3}</p>
+                          </div>
+                        </div>
+                        <button className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
+                          <span className="text-slate-400 text-sm">→</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="h-px bg-white/20"></div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm opacity-90">Total Soal</span>
-                <span className="text-xl font-bold">{stats.totalQuestions}</span>
-              </div>
-              <div className="h-px bg-white/20"></div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm opacity-90">Dikerjakan</span>
-                <span className="text-xl font-bold">{stats.totalAttempts}x</span>
-              </div>
-            </div>
+            )}
           </div>
           
-          {/* Progress Info */}
-          {stats.totalQuestions > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <h4 className="font-bold text-slate-800 mb-4 text-sm">Progress Belajar</h4>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-slate-600">Soal Dibuat</span>
-                    <span className="text-xs font-bold text-slate-800">{stats.totalQuestions}/50</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full transition-all" style={{width: `${Math.min((stats.totalQuestions / 50) * 100, 100)}%`}}></div>
-                  </div>
+          {/* Right Column - Info Panel (Desktop Only) */}
+          <div className="hidden lg:block space-y-6">
+            {/* Quick Stats */}
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <BarChart3 size={18} />
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-slate-600">Target Skor</span>
-                    <span className="text-xs font-bold text-slate-800">{stats.avgScore}/100</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-teal-500 rounded-full transition-all" style={{width: `${stats.avgScore}%`}}></div>
-                  </div>
+                <h3 className="font-bold">Ringkasan</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm opacity-90">Paket Soal</span>
+                  <span className="text-xl font-bold">{stats.subtestCount}</span>
+                </div>
+                <div className="h-px bg-white/20"></div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm opacity-90">Total Soal</span>
+                  <span className="text-xl font-bold">{stats.totalQuestions}</span>
+                </div>
+                <div className="h-px bg-white/20"></div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm opacity-90">Dikerjakan</span>
+                  <span className="text-xl font-bold">{stats.totalAttempts}x</span>
                 </div>
               </div>
             </div>
-          )}
+            
+            {/* Additional Stats */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <h4 className="font-bold text-slate-800 mb-4 text-sm">Statistik Lainnya</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600">Rata-rata Skor</span>
+                  <span className="text-lg font-bold text-amber-600">{stats.avgScore}%</span>
+                </div>
+                <div className="h-px bg-slate-100"></div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600">Skor Terbaik</span>
+                  <span className="text-lg font-bold text-rose-600">{stats.bestScore}%</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Progress Belajar - Moved here */}
+            {stats.totalQuestions > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h4 className="font-bold text-slate-800 mb-4 text-sm">Progress Belajar</h4>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-medium text-slate-600">Soal Dikerjakan</span>
+                      <span className="text-xs font-bold text-indigo-600">{Math.min((stats.totalAttempts / 20) * 100, 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-600 rounded-full" style={{width: `${Math.min((stats.totalAttempts / 20) * 100, 100)}%`}}></div>
+                    </div>
+                    <p className="mt-1.5 text-[10px] text-slate-500 flex items-center gap-1">
+                      <CheckCircle size={12} /> {stats.totalAttempts}/20 Percobaan
+                    </p>
+                  </div>
+                  
+                  <div className="pt-3 border-t border-slate-100">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-medium text-slate-600">Target Skor</span>
+                      <span className="text-xs font-bold text-orange-500">{stats.avgScore}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 rounded-full" style={{width: `${stats.avgScore}%`}}></div>
+                    </div>
+                    <p className="mt-1.5 text-[10px] text-slate-500 flex items-center gap-1">
+                      <CheckCircle size={12} /> Rata-rata skor
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -1106,7 +1119,44 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F8] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F3F4F8] relative">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      {/* Background Blur Effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-400 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-indigo-400 rounded-full blur-[120px]"></div>
+      </div>
+
+      {/* Unified Navbar */}
+      <UnifiedNavbar
+        user={user}
+        onLogin={() => navigate('/login')}
+        onLogout={() => {
+          auth.signOut();
+          navigate('/');
+        }}
+        navigate={navigate}
+        setView={() => {}}
+        dailyUsage={attempts.length}
+        totalQuestionsInBank={publicQuestions.length}
+        remainingQuota={19 - attempts.filter(a => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const attemptDate = a.finishedAt?.seconds ? new Date(a.finishedAt.seconds * 1000) : new Date();
+          attemptDate.setHours(0, 0, 0, 0);
+          return attemptDate.getTime() === today.getTime();
+        }).length}
+        isAdmin={false}
+        showMobileMenu={showMobileMenu}
+        setShowMobileMenu={setShowMobileMenu}
+        variant="dashboard"
+        showBackButton={true}
+        onBack={() => { onBack(); navigate('/app'); }}
+      />
+
       {showVisionModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -1178,53 +1228,97 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
           </div>
         </div>
       )}
-      {/* Background Blur Effects */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>
-      </div>
       
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 relative z-10">
-        <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button onClick={() => { onBack(); window.history.pushState({}, '', '/'); }} className="p-2 hover:bg-white rounded-xl transition-all shadow-sm hover:shadow-md">
-              <ArrowLeft size={18} className="sm:w-5 sm:h-5 text-slate-600" />
-            </button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">Kelola soal dan pantau progresmu</p>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 pt-28 sm:pt-32 relative z-10">
+        {/* Premium Glassmorphism Navigation Bar */}
+        <div className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-xl rounded-full p-2 shadow-lg border border-white/20 min-w-min">
+              <button 
+                onClick={() => navigate('/dashboard/overview')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'overview' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <BarChart3 size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Overview</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/ptnpedia')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'ptnpedia' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <Globe size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">PTNPedia</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/ai-lens')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'ai-lens' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <Camera size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">AI Lens</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/official-tryouts')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'official' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <Trophy size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Tryout</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/my-questions')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'my' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <FileText size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Soal Saya</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/wishlist')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'wishlist' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <Bookmark size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Wishlist</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/vocab')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'vocab' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <BookText size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Vocab</span>
+              </button>
             </div>
           </div>
-        </div>
-
-        <div className="flex gap-2 mb-6 overflow-x-auto bg-white rounded-2xl p-2 shadow-lg border border-slate-200 scrollbar-hide">
-          <button onClick={() => navigate('/dashboard/overview')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'overview' ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <BarChart3 size={14} className="sm:w-4 sm:h-4" /><span>Overview</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/ptnpedia')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'ptnpedia' ? 'bg-gradient-to-r from-cyan-600 to-cyan-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Globe size={14} className="sm:w-4 sm:h-4" /><span>PTNPedia</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/ai-lens')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'ai-lens' ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Camera size={14} className="sm:w-4 sm:h-4" /><span>AI Lens</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/official-tryouts')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'official' ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Trophy size={14} className="sm:w-4 sm:h-4" /><span>Tryout Resmi</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/my-questions')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'my' ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <FileText size={14} className="sm:w-4 sm:h-4" /><span>Soal Saya</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/question-bank')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'bank' ? 'bg-gradient-to-r from-teal-600 to-teal-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <BookOpen size={14} className="sm:w-4 sm:h-4" /><span>Bank Soal</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/wishlist')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'wishlist' ? 'bg-gradient-to-r from-pink-600 to-pink-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Bookmark size={14} className="sm:w-4 sm:h-4" /><span>Wishlist</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/history')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'riwayat' ? 'bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <History size={14} className="sm:w-4 sm:h-4" /><span>Riwayat</span>
-          </button>
-          <button onClick={() => navigate('/dashboard/vocab')} className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'vocab' ? 'bg-gradient-to-r from-indigo-600 to-purple-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <BookText size={14} className="sm:w-4 sm:h-4" /><span>Vocab</span>
-          </button>
         </div>
 
         {loading ? (
@@ -1256,6 +1350,71 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
             {activeTab === 'vocab' && renderVocab()}
           </>
         )}
+      </div>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <div className={`lg:hidden fixed bottom-6 left-6 right-6 z-50 transition-all duration-500 ease-in-out ${
+        showMobileMenu 
+          ? 'translate-y-32 opacity-0 pointer-events-none' 
+          : 'translate-y-0 opacity-100'
+      }`}>
+        <div className="bg-white/90 backdrop-blur-xl rounded-full h-16 px-6 flex items-center justify-between shadow-lg border border-slate-100">
+          {/* Left Side */}
+          <div className="flex flex-1 justify-around items-center pr-4">
+            <button 
+              onClick={() => navigate('/dashboard/overview')}
+              className={`flex flex-col items-center gap-0.5 transition-colors ${
+                activeTab === 'overview' ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              <BarChart3 size={20} strokeWidth={1.5} />
+              <span className="text-[9px] font-medium">Beranda</span>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/dashboard/history')}
+              className={`flex flex-col items-center gap-0.5 transition-colors ${
+                activeTab === 'riwayat' ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              <History size={20} strokeWidth={1.5} />
+              <span className="text-[9px] font-medium">Riwayat</span>
+            </button>
+          </div>
+          
+          {/* Center - Bank Soal (Subtle Floating) */}
+          <div className="relative -top-4">
+            <button 
+              onClick={() => navigate('/dashboard/question-bank')}
+              className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-4 ring-white hover:scale-105 transition-transform"
+            >
+              <BookOpen size={22} strokeWidth={2} className="text-white" />
+            </button>
+          </div>
+          
+          {/* Right Side */}
+          <div className="flex flex-1 justify-around items-center pl-4">
+            <button 
+              onClick={() => navigate('/dashboard/wishlist')}
+              className={`flex flex-col items-center gap-0.5 transition-colors ${
+                activeTab === 'wishlist' ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              <Bookmark size={20} strokeWidth={1.5} />
+              <span className="text-[9px] font-medium">Saved</span>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/dashboard/ptnpedia')}
+              className={`flex flex-col items-center gap-0.5 transition-colors ${
+                activeTab === 'ptnpedia' ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              <Globe size={20} strokeWidth={1.5} />
+              <span className="text-[9px] font-medium">PTN</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

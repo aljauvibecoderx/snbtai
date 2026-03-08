@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Image, Heart, MessageCircle, Trash2, X } from 'lucide-react';
-import { db, auth } from './firebase';
+import { db } from './firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UnifiedNavbar } from './UnifiedNavbar';
-import { useNavigate } from 'react-router-dom';
 
 const storage = getStorage();
 
 export const CommunityView = ({ onBack, user, onLogin }) => {
-  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState('');
   const [mediaFile, setMediaFile] = useState(null);
@@ -155,34 +153,29 @@ export const CommunityView = ({ onBack, user, onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F8] relative">
+    <div className="min-h-screen bg-[#F3F4F8] relative overflow-x-hidden">
       {/* Background Blur Effects */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-400 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-indigo-400 rounded-full blur-[120px]"></div>
       </div>
-
+      
       {/* Unified Navbar */}
       <UnifiedNavbar
         user={user}
         onLogin={onLogin}
-        onLogout={() => {
-          auth.signOut();
-          navigate('/');
-        }}
-        navigate={navigate}
+        onLogout={() => {}}
+        navigate={() => {}}
         setView={() => {}}
         dailyUsage={0}
         totalQuestionsInBank={0}
-        remainingQuota={19}
+        remainingQuota={0}
         isAdmin={false}
         showMobileMenu={showMobileMenu}
         setShowMobileMenu={setShowMobileMenu}
         variant="community"
-        showBackButton={true}
-        onBack={() => { onBack(); navigate('/app'); }}
       />
-
+      
       {loading && (
         <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
           <div className="text-center">
@@ -192,9 +185,7 @@ export const CommunityView = ({ onBack, user, onLogin }) => {
         </div>
       )}
       
-      
-      <div className="max-w-2xl mx-auto px-4 py-6 pt-28 sm:pt-32 space-y-4 relative z-10">
-        {/* Login Prompt */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 relative z-10 pt-32">
         {!user && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center">
             <p className="text-slate-600 mb-4">Login untuk mulai posting dan berinteraksi</p>
