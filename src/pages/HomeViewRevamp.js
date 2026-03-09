@@ -200,6 +200,7 @@ const HomeViewRevamp = ({
         showMobileMenu={showMobileMenu}
         setShowMobileMenu={setShowMobileMenu}
         variant="default"
+        onBuyCoin={() => setView('AMBIS_TOKEN')}
       />
 
       <main className="relative z-10 pt-20 md:pt-20 pb-20 md:pb-16 px-0 md:px-8">

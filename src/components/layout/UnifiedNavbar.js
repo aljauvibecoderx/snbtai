@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown } from 'lucide-react';
+import { CoinBalance } from '../payment/CoinBalance';
 
 export const UnifiedNavbar = ({ 
   user, 
@@ -18,7 +19,8 @@ export const UnifiedNavbar = ({
   setShowMobileMenu,
   variant = 'default', // 'default' | 'dashboard' | 'community'
   showBackButton = false,
-  onBack = null
+  onBack = null,
+  onBuyCoin = null,
 }) => {
   const [isHidden, setIsHidden] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -108,6 +110,8 @@ export const UnifiedNavbar = ({
                     <span className="text-sm font-semibold text-gray-900">{remainingQuota}</span>
                     <span className="text-xs text-gray-500">kredit</span>
                   </div>
+                  {/* ─── Ambis Coin Balance ─── */}
+                  <CoinBalance onClick={onBuyCoin} size="md" />
                   {variant !== 'dashboard' && (
                     <button onClick={() => { setView?.('DASHBOARD'); navigate?.('/dashboard/overview'); }} className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-500">
                       <Users size={16} strokeWidth={2} />
@@ -243,6 +247,11 @@ export const UnifiedNavbar = ({
                       <div className="text-lg font-bold text-rose-600">{remainingQuota}</div>
                       <div className="text-xs text-gray-500">Kredit</div>
                     </div>
+                  </div>
+
+                  {/* ─── Ambis Coin Balance (Mobile) ─── */}
+                  <div className="flex items-center justify-between p-3 bg-violet-50 border border-violet-100 rounded-lg">
+                    <CoinBalance onClick={() => { onBuyCoin?.(); setShowMobileMenu?.(false); }} size="sm" />
                   </div>
                   
                   {variant !== 'dashboard' && (

@@ -58,6 +58,7 @@ import { SUBTESTS, getSubtestLabel } from './constants/subtestHelper';
 import { VocabPanel, HighlightPopup, SearchModal } from './features/vocab/VocabMode';
 import { saveVocab, checkVocabExists } from './services/vocab/vocab-firebase';
 import { NotificationProvider, useNotification } from './components/common/NotificationSystem';
+import AmbisToken from './pages/AmbisToken';
 import './styles/typography.css';
 
 // Toast system replaced by NotificationSystem
@@ -4578,6 +4579,7 @@ function AppContent() {
       {view === 'DETAIL' && <DetailSoalView questions={detailQuestions} subtestLabel={detailSubtest} subtestId={detailQuestions[0]?.subtest} onBack={() => { setView('DASHBOARD'); navigate('/dashboard/overview'); }} user={user} questionSetId={questionSetId} showToast={showToast} />}
       {view === 'HELP' && <HelpView onBack={() => setView('HOME')} />}
       {view === 'COMMUNITY' && <CommunityView onBack={() => setView('HOME')} user={user} onLogin={handleLogin} />}
+      {view === 'AMBIS_TOKEN' && <AmbisToken user={user} onBack={() => { setView('HOME'); navigate('/'); }} />}
       {view === 'LOADING' && <LoadingView loadingQuizIdx={loadingQuizIdx} stopwatch={stopwatch} onQuizAnswer={(correct) => { if (correct) setLoadingQuizScore(s => s + 1); }} onCancel={() => { setCancelGeneration(true); setView('HOME'); }} />}
       {view === 'CBT' && <CBTView questions={questions} currentQuestionIdx={currentQuestionIdx} setCurrentQuestionIdx={setCurrentQuestionIdx} userAnswers={userAnswers} handleAnswer={handleAnswer} raguRagu={raguRagu} toggleRagu={(i)=>setRaguRagu(p=>({...p,[i]:!p[i]}))} timer={timer} finishExam={finishExam} formatTime={formatTime} subtestId={questions[0]?.subtest || formData.subtest} mode={mode} streak={streak} points={points} sfx={sfx} feedback={feedback} health={health} isPaused={isPaused} setIsPaused={setIsPaused} setStreak={setStreak} setPoints={setPoints} setFeedback={setFeedback} setHealth={setHealth} setShowGameOver={setShowGameOver} user={user} questionSetId={questionSetId} showToast={showToast} />}
       {view === 'RESULT' && <ResultView score={score} irtScore={irtScore} percentile={percentile} userAnswers={userAnswers} questions={questions} timeUsed={(questions.length*60)-timer} formatTime={formatTime} points={points} sfx={sfx} user={user} usageData={usageData} fromBankSoal={fromBankSoal} onBackToDashboard={() => { setView('DASHBOARD'); setFromBankSoal(false); navigate('/dashboard/overview'); }} setView={setView} navigate={navigate} />}
