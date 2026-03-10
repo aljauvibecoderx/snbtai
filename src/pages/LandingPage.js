@@ -275,6 +275,7 @@ const LandingPage = () => {
         }}
         navigate={navigate}
         setView={() => {}}
+        onBuyCoin={() => navigate('/ambis-coin')}
         dailyUsage={attempts.filter(a => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);

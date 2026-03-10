@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown } from 'lucide-react';
 import { CoinBalance } from '../payment/CoinBalance';
+import { useStats } from '../../context/StatsContext';
 
 export const UnifiedNavbar = ({ 
   user, 
@@ -11,22 +12,25 @@ export const UnifiedNavbar = ({
   onLogout, 
   navigate, 
   setView,
-  dailyUsage = 0,
-  totalQuestionsInBank = 0,
-  remainingQuota = 0,
   isAdmin = false,
   showMobileMenu,
   setShowMobileMenu,
-  variant = 'default', // 'default' | 'dashboard' | 'community'
+  variant = 'default',
   showBackButton = false,
   onBack = null,
   onBuyCoin = null,
 }) => {
+  const statsContext = useStats();
+  const { hariIni = 0, bankSoal = 0, kredit = 0, isLoading = true } = statsContext?.stats || {};
   const [isHidden, setIsHidden] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  const displayHariIni = isLoading ? '-' : hariIni;
+  const displayBankSoal = isLoading ? '-' : bankSoal;
+  const displayKredit = isLoading ? '-' : kredit;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,17 +101,17 @@ export const UnifiedNavbar = ({
                 <>
                   <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-500">
                     <Activity className="w-4 h-4 text-indigo-600" strokeWidth={2} />
-                    <span className="text-sm font-semibold text-gray-900">{dailyUsage}</span>
+                    <span className="text-sm font-semibold text-gray-900">{displayHariIni}</span>
                     <span className="text-xs text-gray-500">hari ini</span>
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-500">
                     <TrendingUp className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-                    <span className="text-sm font-semibold text-gray-900">{totalQuestionsInBank}</span>
+                    <span className="text-sm font-semibold text-gray-900">{displayBankSoal}</span>
                     <span className="text-xs text-gray-500">bank</span>
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-500">
                     <Wallet className="w-4 h-4 text-rose-600" strokeWidth={2} />
-                    <span className="text-sm font-semibold text-gray-900">{remainingQuota}</span>
+                    <span className="text-sm font-semibold text-gray-900">{displayKredit}</span>
                     <span className="text-xs text-gray-500">kredit</span>
                   </div>
                   {/* ─── Ambis Coin Balance ─── */}
@@ -236,15 +240,15 @@ export const UnifiedNavbar = ({
                   
                   <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-indigo-600">{dailyUsage}</div>
+                      <div className="text-lg font-bold text-indigo-600">{displayHariIni}</div>
                       <div className="text-xs text-gray-500">Hari ini</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-emerald-600">{totalQuestionsInBank}</div>
+                      <div className="text-lg font-bold text-emerald-600">{displayBankSoal}</div>
                       <div className="text-xs text-gray-500">Bank</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-rose-600">{remainingQuota}</div>
+                      <div className="text-lg font-bold text-rose-600">{displayKredit}</div>
                       <div className="text-xs text-gray-500">Kredit</div>
                     </div>
                   </div>

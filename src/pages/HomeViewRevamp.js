@@ -45,15 +45,18 @@ const HomeViewRevamp = ({
   navigate,
   dailyLimit,
   dailyUsage,
+  totalLimit,
+  coinBalance,
   publicQuestions = [],
   attempts = []
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const isLimitReached = isDeveloperMode ? false : dailyUsage >= dailyLimit;
+  const isLimitReached = isDeveloperMode ? false : dailyUsage >= totalLimit;
   const canGenerate = !isLimitReached && formData.context.length >= 20;
-  const remainingQuota = Math.max(0, dailyLimit - dailyUsage);
+  const remainingQuota = Math.max(0, totalLimit - dailyUsage);
+  const showBankSoalButton = user && dailyUsage >= dailyLimit && coinBalance === 0; // Show when base limit reached and no coins
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] relative overflow-x-hidden">
@@ -258,7 +261,7 @@ const HomeViewRevamp = ({
                       Login untuk 20 Soal/Hari
                       <ChevronRight size={16} strokeWidth={2} className="transition-transform duration-200 group-hover:translate-x-1" />
                     </button>
-                  ) : isLimitReached && user ? (
+                  ) : showBankSoalButton ? (
                     <button onClick={() => { setView('DASHBOARD'); navigate('/dashboard/question-bank'); }} className="w-full py-4 bg-gray-50 border border-gray-100 text-gray-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-all duration-200 hover:shadow-sm">
                       <Users size={16} strokeWidth={2} />
                       Kredit Habis, Cek Bank Soal
@@ -283,8 +286,14 @@ const HomeViewRevamp = ({
                     <div className="flex justify-center">
                       <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-full">
                         <span className="text-[10px] font-semibold text-gray-500">Sisa hari ini:</span>
-                        <span className="text-[10px] font-bold text-indigo-600">{remainingQuota}/{dailyLimit}</span>
+                        <span className="text-[10px] font-bold text-indigo-600">{remainingQuota}/{totalLimit}</span>
                       </div>
+                      {coinBalance > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 rounded-full">
+                          <Wallet size={12} className="text-amber-600" />
+                          <span className="text-[10px] font-bold text-amber-600">+{coinBalance}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

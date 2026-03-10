@@ -10,36 +10,36 @@
 export const COIN_PACKAGES = [
   {
     id: 'starter',
-    name: 'Starter',
+    name: 'Starter Pack',
     coins: 10,
-    price: 15000,
-    originalPrice: 20000,
-    discount: 25,
+    price: 10000,
+    originalPrice: 15000,
+    discount: 33,
     generateQuota: 10,
     badge: null,
     highlight: false,
     description: 'Cocok untuk percobaan awal.',
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    coins: 20,
-    price: 25000,
-    originalPrice: 40000,
-    discount: 37,
-    generateQuota: 20,
+    id: 'popular',
+    name: 'Popular Pack',
+    coins: 55,
+    price: 45000,
+    originalPrice: 60000,
+    discount: 25,
+    generateQuota: 55,
     badge: 'Paling Laris',
     highlight: true,
     description: 'Pilihan terbaik untuk belajar rutin.',
   },
   {
-    id: 'ultimate',
-    name: 'Ultimate',
-    coins: 30,
-    price: 35000,
-    originalPrice: 60000,
-    discount: 42,
-    generateQuota: 30,
+    id: 'premium',
+    name: 'Premium Pack',
+    coins: 115,
+    price: 80000,
+    originalPrice: 120000,
+    discount: 33,
+    generateQuota: 115,
     badge: 'Best Value',
     highlight: false,
     description: 'Nilai terbaik untuk pejuang SNBT serius.',
@@ -86,8 +86,8 @@ export const processMockPayment = async (packageId, user = null) => {
   const delay = 1500 + Math.random() * 1000;
   await new Promise(resolve => setTimeout(resolve, delay));
 
-  // Simulasi success rate 90% untuk testing
-  const isSuccess = Math.random() > 0.1;
+  // Simulasi success rate 100% untuk testing
+  const isSuccess = true;
 
   if (!isSuccess) {
     return {

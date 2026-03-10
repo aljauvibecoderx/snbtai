@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatedBackground } from '../components/common/AnimatedBackground';
 import { BookOpen, ChevronLeft, Zap, Trophy, Users, Sparkles, Heart, TrendingUp, CheckCircle, AlertCircle, Cpu, Shield, Rocket, Key, Gamepad2, FileText, Lightbulb, HelpCircle, Target, Edit3, BarChart3, GitBranch, PieChart, XCircle } from 'lucide-react';
 
 const Logo = ({ size = 40 }) => (
@@ -44,6 +45,7 @@ export const HelpView = ({ onBack }) => {
   
   return (
   <div className={`min-h-screen bg-[#F3F4F8] p-4 font-sans relative overflow-x-hidden transition-opacity duration-700 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <AnimatedBackground />
     <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>

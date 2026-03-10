@@ -1,12 +1,11 @@
 // ============================================================
-// AmbisToken.js — Halaman Utama Ambis Coin
+// AmbisToken.js — Halaman Ambis Token (Matching Ambis Coin Design)
 // Route: /ambis-token
 // ============================================================
 
 import React, { useState } from 'react';
-import { Coins, Sparkles, ChevronRight, Clock, List, ArrowLeft } from 'lucide-react';
+import { Coins, Sparkles, ArrowLeft, Zap, TrendingUp, Shield, Check, Clock, Crown, List, ChevronRight } from 'lucide-react';
 import { COIN_PACKAGES, formatPrice } from '../services/payment/mockPaymentService';
-import { PackageCard } from '../components/payment/PackageCard';
 import { PaymentModal } from '../components/payment/PaymentModal';
 import { useCoin } from '../context/CoinContext';
 
@@ -15,10 +14,42 @@ const TABS = {
   HISTORY: 'history',
 };
 
-/**
- * @param {object} user — Firebase user object
- * @param {function} onBack — Callback untuk kembali ke halaman sebelumnya
- */
+const TOKEN_PACKAGES = [
+  {
+    id: 'starter',
+    name: 'Starter Pack',
+    coins: 10,
+    price: 10000,
+    bonus: 0,
+    popular: false,
+    icon: Coins,
+    color: 'from-gray-500 to-gray-600',
+    features: ['10 Soal Tambahan', 'Berlaku 30 Hari', 'Support 24/7']
+  },
+  {
+    id: 'popular',
+    name: 'Popular Pack',
+    coins: 50,
+    price: 45000,
+    bonus: 5,
+    popular: true,
+    icon: Zap,
+    color: 'from-violet-500 to-purple-600',
+    features: ['50 Soal Tambahan', '+5 Bonus Coin', 'Berlaku 60 Hari', 'Priority Support']
+  },
+  {
+    id: 'premium',
+    name: 'Premium Pack',
+    coins: 100,
+    price: 80000,
+    bonus: 15,
+    popular: false,
+    icon: Crown,
+    color: 'from-amber-500 to-orange-600',
+    features: ['100 Soal Tambahan', '+15 Bonus Coin', 'Berlaku 90 Hari', 'VIP Support', 'Early Access']
+  }
+];
+
 const AmbisToken = ({ user, onBack }) => {
   const [activeTab, setActiveTab] = useState(TABS.PACKAGES);
   const [selectedPkg, setSelectedPkg] = useState(null);
@@ -44,151 +75,227 @@ const AmbisToken = ({ user, onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-indigo-50/20">
-
-      {/* ─── HERO SECTION ─── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-700 pt-20 pb-28">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24" />
-
-        <div className="relative max-w-5xl mx-auto px-6">
-          {/* Back button */}
-          {onBack && (
-            <button
-              id="ambis-token-back-btn"
-              onClick={onBack}
-              className="flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-6 text-sm font-medium"
-            >
-              <ArrowLeft size={16} />
-              Kembali
-            </button>
-          )}
-
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
-              <Coins className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white">Ambis Token</h1>
-              <p className="text-white/70 text-sm font-medium">Tingkatkan limit generate soalmu!</p>
-            </div>
-          </div>
-
-          {/* Balance Card */}
-          <div className="mt-6 flex items-center gap-6 bg-white/10 border border-white/20 rounded-2xl px-6 py-5 backdrop-blur-sm max-w-sm">
-            <div className="text-center">
-              <div className="text-3xl font-black text-white tabular-nums">{balance}</div>
-              <div className="text-white/70 text-xs font-medium mt-0.5">Koin Tersisa</div>
-            </div>
-            <div className="w-px h-10 bg-white/20" />
-            <div className="text-center">
-              <div className="text-3xl font-black text-white tabular-nums">{totalEarned}</div>
-              <div className="text-white/70 text-xs font-medium mt-0.5">Total Dibeli</div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#F3F4F8] relative overflow-x-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-15">
+        <div className="absolute top-[-10%] left-[-10%] w-[30%] h-[30%] bg-violet-500 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[25%] h-[25%] bg-amber-500 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* ─── MAIN CONTENT ─── */}
-      <div className="max-w-5xl mx-auto px-6 -mt-16 pb-28 sm:pb-12">
-        {/* Success toast (inline banner) */}
-        {lastSuccess && (
-          <div
-            className="mb-5 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 shadow-sm cursor-pointer"
-            onClick={() => setLastSuccess(null)}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+        {/* Back Button */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors mb-6 text-sm font-medium"
           >
-            <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-green-600" />
+            <ArrowLeft size={18} />
+            Kembali
+          </button>
+        )}
+
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-violet-100 rounded-full mb-4">
+            <Sparkles className="w-4 h-4 text-violet-600" />
+            <span className="text-sm font-semibold text-violet-600">Ambis Token Store</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Beli Ambis Token
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Tingkatkan limit soal harianmu dengan Ambis Token. 1 Token = 1 Soal Tambahan
+          </p>
+        </div>
+
+        {/* Balance Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
+          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                <Coins className="w-5 h-5 text-violet-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-600">Token Tersisa</span>
             </div>
-            <div className="flex-1">
-              <div className="text-sm font-bold text-green-800">+{lastSuccess.coins} Koin Berhasil Ditambahkan!</div>
-              <div className="text-xs text-green-600">Paket {lastSuccess.packageName} · {formatPrice(lastSuccess.price)}</div>
+            <div className="text-3xl font-bold text-gray-900">{balance}</div>
+          </div>
+          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-indigo-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-600">Total Dibeli</span>
             </div>
-            <ChevronRight size={16} className="text-green-400" />
+            <div className="text-3xl font-bold text-gray-900">{totalEarned}</div>
+          </div>
+        </div>
+
+        {/* Success Banner */}
+        {lastSuccess && (
+          <div className="mb-6 max-w-2xl mx-auto bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                <Check className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-green-800">+{lastSuccess.coins} Token Berhasil Ditambahkan!</div>
+                <div className="text-xs text-green-600">Paket {lastSuccess.packageName} · {formatPrice(lastSuccess.price)}</div>
+              </div>
+              <button onClick={() => setLastSuccess(null)} className="text-green-400 hover:text-green-600">
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex bg-white border border-gray-200 rounded-2xl p-1 mb-6 shadow-sm">
+        <div className="flex justify-center gap-2 mb-12">
           <button
-            id="tab-packages-btn"
             onClick={() => setActiveTab(TABS.PACKAGES)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
+            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
               activeTab === TABS.PACKAGES
-                ? 'bg-violet-600 text-white shadow-md'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-violet-600 shadow-md border border-violet-100'
+                : 'bg-white/50 text-gray-600 hover:bg-white border border-transparent'
             }`}
           >
-            <Coins size={15} />
-            Paket Koin
+            <Coins size={16} className="inline mr-2" />
+            Paket Token
           </button>
           <button
-            id="tab-history-btn"
             onClick={() => setActiveTab(TABS.HISTORY)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
+            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
               activeTab === TABS.HISTORY
-                ? 'bg-violet-600 text-white shadow-md'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-violet-600 shadow-md border border-violet-100'
+                : 'bg-white/50 text-gray-600 hover:bg-white border border-transparent'
             }`}
           >
-            <List size={15} />
+            <List size={16} className="inline mr-2" />
             Riwayat
           </button>
         </div>
 
-        {/* ─── TAB: PACKAGES ─── */}
+        {/* Packages Tab */}
         {activeTab === TABS.PACKAGES && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-lg font-bold text-gray-900">Pilih Paket</h2>
-              <p className="text-sm text-gray-500">Setiap koin = 1x generate soal AI</p>
+          <>
+            {/* Trust Badges */}
+            <div className="flex flex-wrap justify-center gap-6 mb-12">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Shield className="w-5 h-5 text-green-600" />
+                <span>Pembayaran Aman</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <span>Instant Delivery</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Check className="w-5 h-5 text-violet-600" />
+                <span>Garansi 100%</span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {COIN_PACKAGES.map(pkg => (
-                <PackageCard
-                  key={pkg.id}
-                  pkg={pkg}
-                  onSelect={handleSelectPackage}
-                />
-              ))}
+            {/* Packages */}
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              {TOKEN_PACKAGES.map((pkg) => {
+                const Icon = pkg.icon;
+                return (
+                  <div
+                    key={pkg.id}
+                    className={`relative bg-white rounded-3xl p-8 border-2 transition-all duration-300 hover:scale-105 ${
+                      pkg.popular
+                        ? 'border-violet-500 shadow-2xl shadow-violet-200'
+                        : 'border-gray-200 hover:border-violet-300'
+                    }`}
+                  >
+                    {pkg.popular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-bold rounded-full">
+                        PALING LARIS
+                      </div>
+                    )}
+
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mb-6`}>
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{pkg.name}</h3>
+                    
+                    <div className="flex items-baseline gap-2 mb-6">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {pkg.coins + pkg.bonus}
+                      </span>
+                      <span className="text-lg text-gray-500">Token</span>
+                      {pkg.bonus > 0 && (
+                        <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                          +{pkg.bonus} Bonus
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-3xl font-bold text-gray-900 mb-6">
+                      Rp {pkg.price.toLocaleString('id-ID')}
+                    </div>
+
+                    <ul className="space-y-3 mb-8">
+                      {pkg.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                          <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <button
+                      onClick={() => handleSelectPackage(pkg)}
+                      className={`w-full py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                        pkg.popular
+                          ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:shadow-lg'
+                          : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      }`}
+                    >
+                      Beli Sekarang
+                      <ArrowLeft className="w-5 h-5 rotate-180" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Info note */}
-            <div className="mt-6 flex items-start gap-2.5 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-              <Sparkles className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-indigo-700 leading-relaxed">
-                Koin yang dibeli tidak memiliki masa kadaluarsa dan akan tersimpan di akun Anda selamanya.
-                Integrasi pembayaran nyata (Mayar) akan segera hadir!
-              </p>
+            {/* FAQ */}
+            <div className="max-w-3xl mx-auto bg-white rounded-3xl p-8 border border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Pertanyaan Umum</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Bagaimana cara menggunakan Ambis Token?</h4>
+                  <p className="text-gray-600 text-sm">Ambis Token otomatis menambah limit soal harianmu. 1 Token = 1 Soal tambahan yang bisa di-generate.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Apakah Ambis Token bisa expired?</h4>
+                  <p className="text-gray-600 text-sm">Tidak! Token yang kamu beli berlaku selamanya dan tidak akan hangus.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Metode pembayaran apa saja yang tersedia?</h4>
+                  <p className="text-gray-600 text-sm">Kami menerima transfer bank, e-wallet (GoPay, OVO, DANA), dan QRIS. Integrasi pembayaran nyata segera hadir!</p>
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
-        {/* ─── TAB: HISTORY ─── */}
+        {/* History Tab */}
         {activeTab === TABS.HISTORY && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-lg font-bold text-gray-900">Riwayat Transaksi</h2>
-              <p className="text-sm text-gray-500">{transactions.length} transaksi tercatat</p>
-            </div>
-
+          <div className="max-w-3xl mx-auto">
             {transactions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center">
-                  <Clock className="w-8 h-8 text-gray-300" />
+              <div className="bg-white rounded-3xl p-12 text-center border border-gray-200">
+                <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-10 h-10 text-gray-400" />
                 </div>
-                <div className="text-center">
-                  <p className="text-base font-semibold text-gray-700">Belum ada transaksi</p>
-                  <p className="text-sm text-gray-400 mt-1">Beli koin pertama Anda untuk mulai!</p>
-                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Belum Ada Transaksi</h3>
+                <p className="text-gray-600 mb-6">Beli token pertama untuk mulai generate soal tanpa batas!</p>
                 <button
-                  id="goto-packages-btn"
                   onClick={() => setActiveTab(TABS.PACKAGES)}
-                  className="px-6 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-all"
+                  className="px-8 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all inline-flex items-center gap-2"
                 >
-                  Beli Koin
+                  Beli Token
+                  <ArrowLeft className="w-5 h-5 rotate-180" />
                 </button>
               </div>
             ) : (
@@ -196,25 +303,29 @@ const AmbisToken = ({ user, onBack }) => {
                 {transactions.map((tx) => (
                   <div
                     key={tx.id}
-                    className="flex items-center gap-4 bg-white border border-gray-100 rounded-xl px-5 py-4 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-white rounded-2xl p-5 border border-gray-200 hover:shadow-md transition-all"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center flex-shrink-0">
-                      <Coins className="w-5 h-5 text-violet-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-gray-900">Paket {tx.packageName}</div>
-                      <div className="text-xs text-gray-400 truncate">
-                        {new Date(tx.timestamp).toLocaleDateString('id-ID', {
-                          day: 'numeric', month: 'short', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit',
-                        })}
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center">
+                        <Coins className="w-6 h-6 text-violet-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-gray-900">Paket {tx.packageName}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(tx.timestamp).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-green-600">+{tx.coins} Token</div>
+                        <div className="text-sm text-gray-500">{formatPrice(tx.price)}</div>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-sm font-bold text-green-600">+{tx.coins} Koin</div>
-                      <div className="text-xs text-gray-400">{formatPrice(tx.price)}</div>
-                    </div>
-                    <div className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" title="Berhasil" />
                   </div>
                 ))}
               </div>
@@ -223,20 +334,7 @@ const AmbisToken = ({ user, onBack }) => {
         )}
       </div>
 
-      {/* ─── STICKY BOTTOM CTA (Mobile only) ─── */}
-      {activeTab === TABS.PACKAGES && (
-        <div className="fixed sm:hidden bottom-0 left-0 right-0 z-40 p-4 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-          <button
-            id="sticky-buy-coin-btn"
-            onClick={() => document.getElementById('package-card-pro')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-base shadow-lg shadow-violet-200 hover:opacity-90 transition-all active:scale-[0.98]"
-          >
-            Beli Koin Sekarang
-          </button>
-        </div>
-      )}
-
-      {/* ─── PAYMENT MODAL ─── */}
+      {/* Payment Modal */}
       {showModal && selectedPkg && (
         <PaymentModal
           pkg={selectedPkg}
