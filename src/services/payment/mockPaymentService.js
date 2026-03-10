@@ -4,6 +4,46 @@
 // ============================================================
 
 /**
+ * Paket token yang tersedia
+ * TODO: Mayar Integration — fetch ini dari Mayar product catalog API
+ */
+export const TOKEN_PACKAGES = [
+  {
+    id: 'token_starter',
+    name: 'Token Starter',
+    tokens: 5,
+    price: 25000,
+    originalPrice: 35000,
+    discount: 29,
+    badge: null,
+    highlight: false,
+    description: 'Paket token dasar untuk memulai.',
+  },
+  {
+    id: 'token_popular',
+    name: 'Token Popular',
+    tokens: 30,
+    price: 120000,
+    originalPrice: 150000,
+    discount: 20,
+    badge: 'Paling Laris',
+    highlight: true,
+    description: 'Paket token terpopuler dengan nilai terbaik.',
+  },
+  {
+    id: 'token_premium',
+    name: 'Token Premium',
+    tokens: 75,
+    price: 250000,
+    originalPrice: 350000,
+    discount: 29,
+    badge: 'Best Value',
+    highlight: false,
+    description: 'Paket token premium untuk pengguna setia.',
+  },
+];
+
+/**
  * Paket koin yang tersedia
  * TODO: Mayar Integration — fetch ini dari Mayar product catalog API
  */
