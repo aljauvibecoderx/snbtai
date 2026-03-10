@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import { AmbisCoinStore, AmbisCoinCheckout, AmbisCoinPayment, AmbisCoinSuccess } from './pages/payment-flow';
+import { AmbisTokenStore, AmbisTokenCheckout, AmbisTokenPayment, AmbisTokenSuccess } from './pages/token-flow';
 import { 
   BookOpen, 
   Brain, 
@@ -3887,6 +3888,14 @@ function AppContent() {
         setView('AMBIS_COIN_PAYMENT');
       } else if (path === '/ambis-coin/success') {
         setView('AMBIS_COIN_SUCCESS');
+      } else if (path === '/ambis-token') {
+        setView('AMBIS_TOKEN_STORE');
+      } else if (path === '/ambis-token/checkout') {
+        setView('AMBIS_TOKEN_CHECKOUT');
+      } else if (path === '/ambis-token/payment') {
+        setView('AMBIS_TOKEN_PAYMENT');
+      } else if (path === '/ambis-token/success') {
+        setView('AMBIS_TOKEN_SUCCESS');
       } else if (path === '/404' || path === '/error') {
         setView('404');
       } else if (path === '/app') {
@@ -4612,6 +4621,10 @@ function AppContent() {
       {view === 'AMBIS_COIN_CHECKOUT' && <AmbisCoinCheckout user={user} />}
       {view === 'AMBIS_COIN_PAYMENT' && <AmbisCoinPayment />}
       {view === 'AMBIS_COIN_SUCCESS' && <AmbisCoinSuccess user={user} />}
+      {view === 'AMBIS_TOKEN_STORE' && <AmbisTokenStore user={user} onBack={() => setView('HOME')} navigate={navigate} />}
+      {view === 'AMBIS_TOKEN_CHECKOUT' && <AmbisTokenCheckout user={user} navigate={navigate} location={location} />}
+      {view === 'AMBIS_TOKEN_PAYMENT' && <AmbisTokenPayment navigate={navigate} location={location} />}
+      {view === 'AMBIS_TOKEN_SUCCESS' && <AmbisTokenSuccess user={user} navigate={navigate} location={location} />}
       {view === 'LOADING' && <LoadingView loadingQuizIdx={loadingQuizIdx} stopwatch={stopwatch} onQuizAnswer={(correct) => { if (correct) setLoadingQuizScore(s => s + 1); }} onCancel={() => { setCancelGeneration(true); setView('HOME'); }} />}
       {view === 'CBT' && <CBTView questions={questions} currentQuestionIdx={currentQuestionIdx} setCurrentQuestionIdx={setCurrentQuestionIdx} userAnswers={userAnswers} handleAnswer={handleAnswer} raguRagu={raguRagu} toggleRagu={(i)=>setRaguRagu(p=>({...p,[i]:!p[i]}))} timer={timer} finishExam={finishExam} formatTime={formatTime} subtestId={questions[0]?.subtest || formData.subtest} mode={mode} streak={streak} points={points} sfx={sfx} feedback={feedback} health={health} isPaused={isPaused} setIsPaused={setIsPaused} setStreak={setStreak} setPoints={setPoints} setFeedback={setFeedback} setHealth={setHealth} setShowGameOver={setShowGameOver} user={user} questionSetId={questionSetId} showToast={showToast} />}
       {view === 'RESULT' && <ResultView score={score} irtScore={irtScore} percentile={percentile} userAnswers={userAnswers} questions={questions} timeUsed={(questions.length*60)-timer} formatTime={formatTime} points={points} sfx={sfx} user={user} usageData={usageData} fromBankSoal={fromBankSoal} onBackToDashboard={() => { setView('DASHBOARD'); setFromBankSoal(false); navigate('/dashboard/overview'); }} setView={setView} navigate={navigate} />}
