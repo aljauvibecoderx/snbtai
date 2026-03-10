@@ -3,11 +3,11 @@
 // Route: /ambis-token
 // ============================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Coins, Sparkles, ArrowLeft, Zap, TrendingUp, Shield, Check, Clock, Crown, List, ChevronRight } from 'lucide-react';
 import { COIN_PACKAGES, formatPrice } from '../services/payment/mockPaymentService';
 import { PaymentModal } from '../components/payment/PaymentModal';
-import { useCoin } from '../context/CoinContext';
+
 
 const TABS = {
   PACKAGES: 'packages',
@@ -50,23 +50,60 @@ const TOKEN_PACKAGES = [
   }
 ];
 
-const AmbisToken = ({ user, onBack }) => {
+const AmbisToken = ({ user, onBack, onTokenUpdate }) => {
   const [activeTab, setActiveTab] = useState(TABS.PACKAGES);
   const [selectedPkg, setSelectedPkg] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [lastSuccess, setLastSuccess] = useState(null);
+  const [balance, setBalance] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [transactions, setTransactions] = useState([]);
 
-  const { balance, totalEarned, transactions } = useCoin();
+  // Load user data on mount
+  useEffect(() => {
+    if (user) {
+      loadUserData();
+    }
+  }, [user]);
+
+  const loadUserData = async () => {
+    if (!user) return;
+    
+    try {
+      const { getUserTokenBalance, getTokenTransactions } = await import('../services/firebase/firebase');
+      const tokenBalance = await getUserTokenBalance(user.uid);
+      const tokenTransactions = await getTokenTransactions(user.uid);
+      
+      setBalance(tokenBalance);
+      setTransactions(tokenTransactions);
+      
+      // Calculate total earned from purchase transactions
+      const totalPurchased = tokenTransactions
+        .filter(tx => tx.type === 'purchase')
+        .reduce((sum, tx) => sum + tx.amount, 0);
+      setTotalEarned(totalPurchased);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
 
   const handleSelectPackage = (pkg) => {
     setSelectedPkg(pkg);
     setShowModal(true);
   };
 
-  const handlePaymentSuccess = (result) => {
+  const handlePaymentSuccess = async (result) => {
     setLastSuccess(result);
     setShowModal(false);
     setSelectedPkg(null);
+    
+    // Reload user data to reflect new balance
+    await loadUserData();
+    
+    // Notify parent component to update token balance
+    if (onTokenUpdate) {
+      await onTokenUpdate();
+    }
   };
 
   const handleCloseModal = () => {
@@ -310,20 +347,37 @@ const AmbisToken = ({ user, onBack }) => {
                         <Coins className="w-6 h-6 text-violet-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-bold text-gray-900">Paket {tx.packageName}</div>
+                        <div className="font-bold text-gray-900">
+                          {tx.type === 'purchase' ? 'Pembelian Token' : 'Penggunaan Token'}
+                        </div>
                         <div className="text-sm text-gray-500">
-                          {new Date(tx.timestamp).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {tx.timestamp?.toDate ? 
+                            tx.timestamp.toDate().toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }) :
+                            new Date(tx.timestamp).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          }
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-green-600">+{tx.coins} Token</div>
-                        <div className="text-sm text-gray-500">{formatPrice(tx.price)}</div>
+                        <div className={`font-bold ${
+                          tx.type === 'purchase' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {tx.type === 'purchase' ? '+' : ''}{tx.amount} Token
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {tx.reason || (tx.type === 'purchase' ? 'Pembelian' : 'Generate Soal')}
+                        </div>
                       </div>
                     </div>
                   </div>

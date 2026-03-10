@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown } from 'lucide-react';
-import { CoinBalance } from '../payment/CoinBalance';
+import { CoinBalance } from '../common/CoinBalance';
 import { useStats } from '../../context/StatsContext';
 
 export const UnifiedNavbar = ({ 
@@ -19,6 +19,7 @@ export const UnifiedNavbar = ({
   showBackButton = false,
   onBack = null,
   onBuyCoin = null,
+  coinBalance = 0,
 }) => {
   const statsContext = useStats();
   const { hariIni = 0, bankSoal = 0, kredit = 0, isLoading = true } = statsContext?.stats || {};
@@ -110,12 +111,18 @@ export const UnifiedNavbar = ({
                     <span className="text-xs text-gray-500">bank</span>
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-500">
-                    <Wallet className="w-4 h-4 text-rose-600" strokeWidth={2} />
-                    <span className="text-sm font-semibold text-gray-900">{displayKredit}</span>
-                    <span className="text-xs text-gray-500">kredit</span>
+                    <Wallet className="w-4 h-4 text-amber-600" strokeWidth={2} />
+                    <span className="text-sm font-semibold text-gray-900">{coinBalance}</span>
+                    <span className="text-xs text-gray-500">coin</span>
                   </div>
-                  {/* ─── Ambis Coin Balance ─── */}
-                  <CoinBalance onClick={onBuyCoin} size="md" />
+                  
+                  {onBuyCoin && (
+                    <CoinBalance 
+                      balance={coinBalance}
+                      onClick={onBuyCoin}
+                    />
+                  )}
+
                   {variant !== 'dashboard' && (
                     <button onClick={() => { setView?.('DASHBOARD'); navigate?.('/dashboard/overview'); }} className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-500">
                       <Users size={16} strokeWidth={2} />
@@ -248,15 +255,20 @@ export const UnifiedNavbar = ({
                       <div className="text-xs text-gray-500">Bank</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-rose-600">{displayKredit}</div>
-                      <div className="text-xs text-gray-500">Kredit</div>
+                      <div className="text-lg font-bold text-amber-600">{coinBalance}</div>
+                      <div className="text-xs text-gray-500">Coin</div>
                     </div>
                   </div>
+                  
+                  {onBuyCoin && (
+                    <CoinBalance 
+                      balance={coinBalance}
+                      onClick={() => { onBuyCoin(); setShowMobileMenu?.(false); }}
+                      className="w-full justify-center"
+                    />
+                  )}
 
-                  {/* ─── Ambis Coin Balance (Mobile) ─── */}
-                  <div className="flex items-center justify-between p-3 bg-violet-50 border border-violet-100 rounded-lg">
-                    <CoinBalance onClick={() => { onBuyCoin?.(); setShowMobileMenu?.(false); }} size="sm" />
-                  </div>
+
                   
                   {variant !== 'dashboard' && (
                     <button onClick={() => { setView?.('DASHBOARD'); navigate?.('/dashboard/overview'); setShowMobileMenu?.(false); }} className="w-full flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-all">

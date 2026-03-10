@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { CheckCircle, ArrowLeft, Coins, Download } from 'lucide-react';
 import { formatPrice } from '../../services/payment/mockPaymentService';
-import { useCoin } from '../../context/CoinContext';
+
 
 export const AmbisTokenSuccess = ({ navigate, location, user }) => {
   const { package: pkg } = location?.state || {};
-  const { addCoins } = useCoin();
+  const addCoins = () => {}; // Removed CoinContext
 
   useEffect(() => {
     // Add coins to user balance

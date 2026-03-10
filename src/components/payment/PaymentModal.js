@@ -5,7 +5,8 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, XCircle, Loader2, Coins, Tag, ShoppingCart, AlertCircle } from 'lucide-react';
 import { processMockPayment, formatPrice } from '../../services/payment/mockPaymentService';
-import { useCoin } from '../../context/CoinContext';
+import { addTokens } from '../../services/firebase/firebase';
+
 
 const STEPS = {
   CONFIRM: 'confirm',
@@ -17,7 +18,6 @@ const STEPS = {
 export const PaymentModal = ({ pkg, user, onClose, onSuccess }) => {
   const [step, setStep] = useState(STEPS.CONFIRM);
   const [errorMsg, setErrorMsg] = useState('');
-  const { addCoins } = useCoin();
 
   const handlePay = async () => {
     setStep(STEPS.PROCESSING);
@@ -27,12 +27,15 @@ export const PaymentModal = ({ pkg, user, onClose, onSuccess }) => {
       const result = await processMockPayment(pkg.id, user);
 
       if (result.success) {
-        addCoins(result.coins, result.transaction);
+        // Add tokens to user's balance
+        if (user) {
+          await addTokens(user.uid, result.coins, `purchase_${result.transactionId}`);
+        }
+        
         setStep(STEPS.SUCCESS);
         setTimeout(() => {
           onSuccess?.(result);
-          onClose();
-        }, 2200);
+        }, 1500);
       } else {
         setErrorMsg(result.error || 'Terjadi kesalahan yang tidak diketahui.');
         setStep(STEPS.FAILED);
@@ -94,7 +97,7 @@ export const PaymentModal = ({ pkg, user, onClose, onSuccess }) => {
                     </div>
                     <div>
                       <div className="text-xl font-bold text-gray-900">{pkg.coins} Koin</div>
-                      <div className="text-xs text-violet-600 font-medium">+{pkg.generateQuota} Generate Soal</div>
+                      <div className="text-xs text-violet-600 font-medium">+{pkg.coins} Generate Soal</div>
                     </div>
                   </div>
                   {pkg.badge && (
@@ -200,6 +203,12 @@ export const PaymentModal = ({ pkg, user, onClose, onSuccess }) => {
                 <div className="text-2xl font-black text-green-600">{pkg.coins}</div>
                 <div className="text-xs text-gray-500">Koin Ditambahkan</div>
               </div>
+              <button
+                onClick={onClose}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold hover:opacity-90 transition-all"
+              >
+                Selesai
+              </button>
             </div>
           )}
 

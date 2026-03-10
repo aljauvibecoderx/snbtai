@@ -556,3 +556,110 @@ export const checkWishlistStatus = async (userId, questionSetId, questionIndex) 
     return null;
   }
 };
+
+// Token Management Functions
+export const getUserTokenBalance = async (userId) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      return data.tokenBalance || 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error('Error getting token balance:', error);
+    return 0;
+  }
+};
+
+export const addTokens = async (userId, amount, transactionId = null) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    let currentBalance = 0;
+    if (userDoc.exists()) {
+      currentBalance = userDoc.data().tokenBalance || 0;
+    }
+    
+    const newBalance = currentBalance + amount;
+    
+    await setDoc(userRef, {
+      tokenBalance: newBalance,
+      lastTokenUpdate: serverTimestamp()
+    }, { merge: true });
+    
+    // Log transaction
+    if (transactionId) {
+      await addDoc(collection(db, 'token_transactions'), {
+        userId,
+        type: 'purchase',
+        amount,
+        transactionId,
+        balanceBefore: currentBalance,
+        balanceAfter: newBalance,
+        timestamp: serverTimestamp()
+      });
+    }
+    
+    return newBalance;
+  } catch (error) {
+    console.error('Error adding tokens:', error);
+    throw error;
+  }
+};
+
+export const spendTokens = async (userId, amount, reason = 'question_generation') => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = userDoc.data().tokenBalance || 0;
+    
+    if (currentBalance < amount) {
+      throw new Error('Insufficient token balance');
+    }
+    
+    const newBalance = currentBalance - amount;
+    
+    await setDoc(userRef, {
+      tokenBalance: newBalance,
+      lastTokenUpdate: serverTimestamp()
+    }, { merge: true });
+    
+    // Log transaction
+    await addDoc(collection(db, 'token_transactions'), {
+      userId,
+      type: 'spend',
+      amount: -amount,
+      reason,
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+      timestamp: serverTimestamp()
+    });
+    
+    return newBalance;
+  } catch (error) {
+    console.error('Error spending tokens:', error);
+    throw error;
+  }
+};
+
+export const getTokenTransactions = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'token_transactions'),
+      where('userId', '==', userId),
+      orderBy('timestamp', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error getting token transactions:', error);
+    return [];
+  }
+};

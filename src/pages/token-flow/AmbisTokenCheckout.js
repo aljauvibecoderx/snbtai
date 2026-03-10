@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Coins, Tag, ShoppingCart, AlertCircle, ChevronRight } from 'lucide-react';
 import { formatPrice } from '../../services/payment/mockPaymentService';
-import { useCoin } from '../../context/CoinContext';
+
 
 export const AmbisTokenCheckout = ({ user, navigate, location }) => {
   const pkg = location?.state?.package;
-  const { balance } = useCoin();
+  const balance = 0;
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState('bank');
   const [agreedToTerms, setAgreedToTerms] = useState(false);

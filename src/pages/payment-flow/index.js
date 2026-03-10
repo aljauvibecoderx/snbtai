@@ -1,4 +1,1 @@
-export { AmbisCoinStore } from './AmbisCoinStore';
-export { AmbisCoinCheckout } from './AmbisCoinCheckout';
-export { AmbisCoinPayment } from './AmbisCoinPayment';
-export { AmbisCoinSuccess } from './AmbisCoinSuccess';
+// Ambis Coin exports removed - only Ambis Token remains

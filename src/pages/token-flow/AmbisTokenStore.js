@@ -1,13 +1,33 @@
 import React, { useState } from 'react';
 import { Coins, Sparkles, ArrowLeft, Zap, TrendingUp, Shield, Check, Clock, Crown, ChevronRight } from 'lucide-react';
-import { TOKEN_PACKAGES, formatPrice } from '../../services/payment/mockPaymentService';
-import { useCoin } from '../../context/CoinContext';
+import { COIN_PACKAGES, formatPrice } from '../../services/payment/mockPaymentService';
+import { PaymentModal } from '../../components/payment/PaymentModal';
 
-export const AmbisTokenStore = ({ user, onBack, navigate }) => {
-  const { balance, totalEarned } = useCoin();
+
+export const AmbisTokenStore = ({ user, onBack, navigate, onTokenUpdate }) => {
+  const [selectedPkg, setSelectedPkg] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const balance = 0;
+  const totalEarned = 0;
 
   const handleSelectPackage = (pkg) => {
-    navigate('/ambis-token/checkout', { state: { package: pkg } });
+    setSelectedPkg(pkg);
+    setShowModal(true);
+  };
+
+  const handlePaymentSuccess = async (result) => {
+    setShowModal(false);
+    setSelectedPkg(null);
+    
+    // Update token balance
+    if (onTokenUpdate) {
+      await onTokenUpdate();
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedPkg(null);
   };
 
   return (
@@ -84,8 +104,8 @@ export const AmbisTokenStore = ({ user, onBack, navigate }) => {
 
         {/* Packages */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {TOKEN_PACKAGES.map((pkg) => {
-            const Icon = pkg.icon;
+          {COIN_PACKAGES.map((pkg) => {
+            const Icon = pkg.highlight ? Crown : Coins;
             return (
               <div
                 key={pkg.id}
@@ -101,7 +121,7 @@ export const AmbisTokenStore = ({ user, onBack, navigate }) => {
                   </div>
                 )}
 
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${pkg.color} flex items-center justify-center mb-6`}>
+                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-6`}>
                   <Icon className="w-8 h-8 text-white" />
                 </div>
 
@@ -109,28 +129,16 @@ export const AmbisTokenStore = ({ user, onBack, navigate }) => {
                 
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-4xl font-bold text-gray-900">
-                    {pkg.coins + pkg.bonus}
+                    {pkg.coins}
                   </span>
                   <span className="text-lg text-gray-500">Token</span>
-                  {pkg.bonus > 0 && (
-                    <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                      +{pkg.bonus} Bonus
-                    </span>
-                  )}
                 </div>
 
                 <div className="text-3xl font-bold text-gray-900 mb-6">
                   Rp {pkg.price.toLocaleString('id-ID')}
                 </div>
 
-                <ul className="space-y-3 mb-8">
-                  {pkg.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-sm text-gray-600 mb-8">{pkg.description}</p>
 
                 <button
                   onClick={() => handleSelectPackage(pkg)}
@@ -167,6 +175,16 @@ export const AmbisTokenStore = ({ user, onBack, navigate }) => {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showModal && selectedPkg && (
+        <PaymentModal
+          pkg={selectedPkg}
+          user={user}
+          onClose={handleCloseModal}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };

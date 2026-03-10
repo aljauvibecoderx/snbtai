@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './pages/ErrorPage';
 import { NotificationProvider } from './components/common/NotificationSystem';
-import { CoinProvider } from './context/CoinContext';
+
 import { StatsProvider } from './context/StatsContext';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, getUserData } from './services/firebase/firebase';
@@ -68,9 +68,7 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <NotificationProvider>
-        <CoinProvider>
-          <AppWithProviders />
-        </CoinProvider>
+        <AppWithProviders />
       </NotificationProvider>
     </ErrorBoundary>
   </React.StrictMode>

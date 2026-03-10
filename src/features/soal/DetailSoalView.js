@@ -69,11 +69,12 @@ const GridBooleanReadOnly = ({ grid_data, userAnswer }) => {
             const userAns = userAnswer?.[i];
             const isCorrect = userAns === item.correct_answer;
             const bgColor = userAnswer ? (isCorrect ? 'bg-teal-50' : 'bg-rose-50') : (item.correct_answer ? 'bg-teal-50' : 'bg-rose-50');
+            const statementText = item.statement || item.text || item.pernyataan || '';
             
             return (
               <tr key={i} className={`border-b border-slate-200 last:border-b-0 ${bgColor}`}>
                 <td className="p-3 text-slate-700 align-middle">
-                  <LatexWrapper text={`${i + 1}. ${item.statement}`} />
+                  <LatexWrapper text={`${i + 1}. ${statementText}`} />
                 </td>
                 <td className="p-3 text-center align-middle border-l border-slate-200">
                   {item.correct_answer && (

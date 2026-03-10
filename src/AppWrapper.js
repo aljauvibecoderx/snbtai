@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { NotificationProvider } from './components/common/NotificationSystem';
-import { CoinProvider } from './context/CoinContext';
+
 import { StatsProvider } from './context/StatsContext';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, getUserData } from './services/firebase/firebase';
@@ -63,11 +63,9 @@ function AppWrapper() {
   return (
     <Router>
       <NotificationProvider>
-        <CoinProvider>
-          <StatsProvider user={user} myQuestions={myQuestions} coinBalance={coinBalance}>
-            <App />
-          </StatsProvider>
-        </CoinProvider>
+        <StatsProvider user={user} myQuestions={myQuestions} coinBalance={coinBalance}>
+          <App />
+        </StatsProvider>
       </NotificationProvider>
     </Router>
   );
