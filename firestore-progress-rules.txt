@@ -1,0 +1,28 @@
+// Add these rules to your firestore.rules file
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Existing rules...
+    
+    // User Progress Collection
+    match /user_progress/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && validateProgressData(resource.data);
+      allow update: if request.auth != null && request.auth.uid == userId
+        && validateProgressData(resource.data);
+    }
+    
+    // Validation function for progress data
+    function validateProgressData(data) {
+      return data.keys().hasAll(['userId', 'totalProgress', 'lastUpdated', 'subjects'])
+        && data.userId is string
+        && data.totalProgress is number
+        && data.totalProgress >= 0 && data.totalProgress <= 1
+        && data.lastUpdated is timestamp
+        && data.subjects is map;
+    }
+  }
+}

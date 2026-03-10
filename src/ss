@@ -1,8 +1,0 @@
-- Pernyataan (statement/questions)
-- Ya (Yes)
-- Tidak (No)
-
-**MASALAH:**
-Saat ini yang tampil di kolom "Pernyataan" hanya "1. undefined", "2. undefined", dst. 
-Padahal seharusnya tampil teks pertanyaan/pernyataan yang sebenarnya
-perbaikilah
