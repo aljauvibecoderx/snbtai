@@ -183,27 +183,27 @@ export const PTNPediaView = ({ user, onBack }) => {
             {/* SNBP Card */}
             <button
               onClick={() => setDataType('snbp')}
-              className={`group relative p-4 sm:p-6 rounded-2xl transition-all duration-300 overflow-hidden ${
+              className={`group relative p-2 sm:p-3 rounded-xl transition-all duration-300 overflow-hidden ${
                 dataType === 'snbp'
-                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-500/25 scale-[1.02]'
-                  : 'bg-white/70 backdrop-blur-sm text-slate-700 hover:bg-white hover:shadow-lg border border-white/50'
+                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 scale-[1.01]'
+                  : 'bg-white/70 backdrop-blur-sm text-slate-700 hover:bg-white hover:shadow-md border border-white/50'
               }`}
             >
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`p-2 rounded-xl ${
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`p-1.5 rounded-lg ${
                     dataType === 'snbp' ? 'bg-white/20' : 'bg-indigo-100'
                   }`}>
-                    <Sparkles size={20} className={dataType === 'snbp' ? 'text-white' : 'text-indigo-600'} />
+                    <Sparkles size={16} className={dataType === 'snbp' ? 'text-white' : 'text-indigo-600'} />
                   </div>
-                  <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
                     dataType === 'snbp' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'
                   }`}>
                     Afirmasi
                   </div>
                 </div>
-                <h3 className="font-bold text-base sm:text-lg mb-1">SNBP</h3>
-                <p className={`text-xs sm:text-sm opacity-80 leading-tight ${
+                <h3 className="font-bold text-sm mb-0.5">SNBP</h3>
+                <p className={`text-[10px] opacity-80 leading-tight ${
                   dataType === 'snbp' ? 'text-white' : 'text-slate-600'
                 }`}>
                   Jalur prestasi akademik
@@ -217,27 +217,27 @@ export const PTNPediaView = ({ user, onBack }) => {
             {/* SNBT Card */}
             <button
               onClick={() => setDataType('snbt')}
-              className={`group relative p-4 sm:p-6 rounded-2xl transition-all duration-300 overflow-hidden ${
+              className={`group relative p-2 sm:p-3 rounded-xl transition-all duration-300 overflow-hidden ${
                 dataType === 'snbt'
-                  ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/25 scale-[1.02]'
-                  : 'bg-white/70 backdrop-blur-sm text-slate-700 hover:bg-white hover:shadow-lg border border-white/50'
+                  ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 scale-[1.01]'
+                  : 'bg-white/70 backdrop-blur-sm text-slate-700 hover:bg-white hover:shadow-md border border-white/50'
               }`}
             >
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`p-2 rounded-xl ${
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`p-1.5 rounded-lg ${
                     dataType === 'snbt' ? 'bg-white/20' : 'bg-emerald-100'
                   }`}>
-                    <Zap size={20} className={dataType === 'snbt' ? 'text-white' : 'text-emerald-600'} />
+                    <Zap size={16} className={dataType === 'snbt' ? 'text-white' : 'text-emerald-600'} />
                   </div>
-                  <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
                     dataType === 'snbt' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     Tes Tulis
                   </div>
                 </div>
-                <h3 className="font-bold text-base sm:text-lg mb-1">SNBT</h3>
-                <p className={`text-xs sm:text-sm opacity-80 leading-tight ${
+                <h3 className="font-bold text-sm mb-0.5">SNBT</h3>
+                <p className={`text-[10px] opacity-80 leading-tight ${
                   dataType === 'snbt' ? 'text-white' : 'text-slate-600'
                 }`}>
                   Ujian tertulis berbasis komputer
@@ -352,70 +352,86 @@ export const PTNPediaView = ({ user, onBack }) => {
             </div>
 
             {compareResults.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-bold text-slate-900">Hasil Perbandingan</h3>
-                    <p className="text-xs text-slate-500 mt-1">{sortedCompareResults.length} program ditemukan</p>
-                  </div>
-                  <div className="relative">
-                    <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <select
-                      value={compareSortBy}
-                      onChange={(e) => setCompareSortBy(e.target.value)}
-                      className="w-full sm:w-auto pr-10 pl-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white appearance-none cursor-pointer"
-                    >
-                      <option value="ratio-asc">Rasio Terendah</option>
-                      <option value="ratio-desc">Rasio Tertinggi</option>
-                      <option value="chance-desc">Peluang Tertinggi</option>
-                      <option value="chance-asc">Peluang Terendah</option>
-                      <option value="capacity-desc">Daya Tampung Terbanyak</option>
-                      <option value="capacity-asc">Daya Tampung Tersedikit</option>
-                      <option value="applicants-desc">Peminat Terbanyak</option>
-                      <option value="applicants-asc">Peminat Tersedikit</option>
-                    </select>
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 overflow-hidden">
+                <div className="p-6 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-white/50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-lg">Hasil Perbandingan</h3>
+                      <p className="text-sm text-slate-600 mt-1">
+                        <span className="inline-flex items-center gap-1">
+                          <div className="w-2 h-2 bg-indigo-500 rounded-full" />
+                          {sortedCompareResults.length} program ditemukan
+                        </span>
+                      </p>
+                    </div>
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                      <div className="relative">
+                        <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                        <select
+                          value={compareSortBy}
+                          onChange={(e) => setCompareSortBy(e.target.value)}
+                          className="w-full sm:w-auto pr-10 pl-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm appearance-none cursor-pointer transition-all"
+                        >
+                          <option value="ratio-asc">Rasio Terendah</option>
+                          <option value="ratio-desc">Rasio Tertinggi</option>
+                          <option value="chance-desc">Peluang Tertinggi</option>
+                          <option value="chance-asc">Peluang Terendah</option>
+                          <option value="capacity-desc">Daya Tampung Terbanyak</option>
+                          <option value="capacity-asc">Daya Tampung Tersedikit</option>
+                          <option value="applicants-desc">Peminat Terbanyak</option>
+                          <option value="applicants-asc">Peminat Tersedikit</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="max-h-[600px] overflow-y-auto">
-                  <div className="divide-y divide-slate-200">
+                  <div className="divide-y divide-slate-200/50">
                     {sortedCompareResults.map((prog, idx) => (
-                      <div key={idx} className="p-3 sm:p-4 hover:bg-slate-50 transition-colors">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3">
-                          <div className="flex-1 mb-2 sm:mb-0">
-                            <h4 className="font-semibold text-slate-900 text-sm leading-tight">{prog.name}</h4>
-                            <p className="text-xs text-indigo-600 font-medium mt-1">{prog.universityName}</p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {prog.jenjang} • Kode: {prog.code}
+                      <div key={idx} className="p-4 sm:p-6 hover:bg-white/50 transition-all duration-300 group">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4">
+                          <div className="flex-1 mb-3 sm:mb-0">
+                            <h4 className="font-semibold text-slate-900 text-base leading-tight group-hover:text-indigo-700 transition-colors">{prog.name}</h4>
+                            <p className="text-sm text-indigo-600 font-medium mt-1 flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+                              {prog.universityName}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                              <span className="px-2 py-1 bg-slate-100 rounded-full text-xs font-medium">{prog.jenjang}</span>
+                              <span>Kode: {prog.code}</span>
                             </p>
                           </div>
-                          <div className="text-center sm:text-right sm:ml-4">
-                            <div className="text-lg font-bold text-indigo-600">{prog.ratio}</div>
-                            <p className="text-xs text-slate-500">Rasio</p>
+                          <div className="text-center sm:text-right sm:ml-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
+                              <div className="text-2xl font-bold text-indigo-600">{prog.ratio}</div>
+                              <div className="text-xs text-slate-600 font-medium">Rasio</div>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
-                          <div className="bg-slate-50 rounded-lg p-2">
-                            <div className="flex items-center justify-center gap-1 mb-1">
-                              <Target size={12} className="text-teal-600 sm:w-3.5 sm:h-3.5" />
-                              <span className="font-bold text-slate-900 text-xs sm:text-sm">{prog.capacity}</span>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 rounded-xl p-3 text-center">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <Target size={14} className="text-teal-600" />
+                              <span className="font-bold text-slate-900 text-sm">{prog.capacity}</span>
                             </div>
-                            <p className="text-[9px] sm:text-[10px] text-slate-500">Daya Tampung</p>
+                            <p className="text-xs text-slate-600 font-medium">Daya Tampung</p>
                           </div>
-                          <div className="bg-slate-50 rounded-lg p-2">
-                            <div className="flex items-center justify-center gap-1 mb-1">
-                              <Users size={12} className="text-amber-600 sm:w-3.5 sm:h-3.5" />
-                              <span className="font-bold text-slate-900 text-xs sm:text-sm">{prog.applicants}</span>
+                          <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-3 text-center">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <Users size={14} className="text-amber-600" />
+                              <span className="font-bold text-slate-900 text-sm">{prog.applicants}</span>
                             </div>
-                            <p className="text-[9px] sm:text-[10px] text-slate-500">Peminat</p>
+                            <p className="text-xs text-slate-600 font-medium">Peminat</p>
                           </div>
-                          <div className="bg-slate-50 rounded-lg p-2">
-                            <div className="flex items-center justify-center gap-1 mb-1">
-                              <TrendingUp size={12} className="text-rose-600 sm:w-3.5 sm:h-3.5" />
-                              <span className="font-bold text-slate-900 text-xs sm:text-sm">{prog.admissionChance}</span>
+                          <div className="bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-100 rounded-xl p-3 text-center">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <TrendingUp size={14} className="text-rose-600" />
+                              <span className="font-bold text-slate-900 text-sm">{prog.admissionChance}</span>
                             </div>
-                            <p className="text-[9px] sm:text-[10px] text-slate-500">Peluang</p>
+                            <p className="text-xs text-slate-600 font-medium">Peluang</p>
                           </div>
                         </div>
                       </div>
@@ -426,44 +442,64 @@ export const PTNPediaView = ({ user, onBack }) => {
             )}
 
             {!loading && compareResults.length === 0 && compareProdiName && (
-              <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-slate-200">
-                <BookOpen className="mx-auto text-slate-300 mb-4" size={48} />
-                <p className="text-slate-500 font-medium">Tidak ada hasil ditemukan</p>
-                <p className="text-sm text-slate-400 mt-2">Coba kata kunci lain atau periksa ejaan</p>
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-12 text-center shadow-lg border border-white/50">
+                <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="text-slate-400" size={32} />
+                </div>
+                <p className="text-slate-600 font-medium text-lg mb-2">Tidak ada hasil ditemukan</p>
+                <p className="text-sm text-slate-500">Coba kata kunci lain atau periksa ejaan</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 dash-fade-up d-delay-200">
+            {/* Premium University List */}
             <div className="xl:col-span-1">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-3 sm:p-4 border-b border-slate-200">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input
-                      type="text"
-                      placeholder="Cari universitas..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                    />
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 overflow-hidden">
+                <div className="p-4 sm:p-6 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-white/50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl">
+                      <Globe size={20} className="text-indigo-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-lg">Pilih Universitas</h3>
+                      <p className="text-sm text-slate-600">Jelajahi PTN favorit Anda</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Cari universitas..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all text-sm placeholder:text-slate-400"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="max-h-[400px] xl:max-h-[600px] overflow-y-auto">
+                <div className="max-h-[400px] xl:max-h-[500px] overflow-y-auto">
                   {loading && !universities.length ? (
                     <div className="p-8 text-center">
-                      <Loader className="animate-spin mx-auto text-indigo-600 mb-2" size={24} />
-                      <p className="text-sm text-slate-500">Memuat data...</p>
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Loader className="animate-spin text-indigo-600" size={24} />
+                      </div>
+                      <p className="text-sm text-slate-600 font-medium">Memuat data...</p>
                     </div>
                   ) : filteredUniversities.length === 0 ? (
                     <div className="p-8 text-center">
-                      <BookOpen className="mx-auto text-slate-300 mb-2" size={32} />
-                      <p className="text-sm text-slate-500">Tidak ada universitas ditemukan</p>
+                      <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <BookOpen className="text-slate-400" size={24} />
+                      </div>
+                      <p className="text-sm text-slate-600 font-medium">Tidak ada universitas ditemukan</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-slate-200">
-                      {filteredUniversities.map((uni) => (
+                    <div className="divide-y divide-slate-200/50">
+                      {filteredUniversities.map((uni, index) => (
                         <button
                           key={uni.code}
                           onClick={() => {
@@ -474,12 +510,35 @@ export const PTNPediaView = ({ user, onBack }) => {
                               loadPrograms(uni.code);
                             }
                           }}
-                          className={`w-full p-3 sm:p-4 text-left transition-all hover:bg-slate-50 ${
-                            expandedUniversity === uni.code ? 'bg-indigo-50 border-l-4 border-indigo-600' : ''
+                          className={`w-full p-4 sm:p-5 text-left transition-all duration-300 hover:bg-white/50 group ${
+                            expandedUniversity === uni.code 
+                              ? 'bg-gradient-to-r from-indigo-50/80 to-purple-50/80 border-l-4 border-indigo-500' 
+                              : ''
                           }`}
+                          style={{ animationDelay: `${index * 50}ms` }}
                         >
-                          <p className="font-medium text-slate-800 text-sm leading-tight">{uni.name}</p>
-                          <p className="text-xs text-slate-500 mt-1">Kode: {uni.code}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-slate-800 text-sm leading-tight group-hover:text-indigo-700 transition-colors truncate">
+                                {uni.name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 group-hover:bg-indigo-100 rounded-full text-xs font-medium text-slate-600 group-hover:text-indigo-700 transition-colors">
+                                  <div className="w-1.5 h-1.5 bg-current rounded-full" />
+                                  Kode: {uni.code}
+                                </span>
+                              </div>
+                            </div>
+                            <div className={`ml-3 p-2 rounded-lg transition-all ${
+                              expandedUniversity === uni.code 
+                                ? 'bg-indigo-100 text-indigo-600' 
+                                : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600'
+                            }`}>
+                              <ChevronDown size={16} className={`transition-transform ${
+                                expandedUniversity === uni.code ? 'rotate-180' : ''
+                              }`} />
+                            </div>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -597,32 +656,68 @@ export const PTNPediaView = ({ user, onBack }) => {
           </div>
         )}
 
-        <div className="mt-6 sm:mt-8 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-2xl p-4 sm:p-6">
-          <h3 className="font-bold text-slate-900 mb-3 text-sm sm:text-base">Cara Membaca Data</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div>
-              <p className="font-semibold text-slate-800 mb-1">Rasio Peminat</p>
-              <p className="text-slate-600 leading-relaxed">Perbandingan jumlah peminat dengan daya tampung. Semakin kecil, semakin mudah masuk.</p>
+        {/* Premium Footer */}
+        <div className="mt-12 dash-fade-up d-delay-400">
+          <div className="bg-gradient-to-r from-indigo-50/80 via-white/50 to-purple-50/80 backdrop-blur-sm border border-white/50 rounded-2xl p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl">
+                <BookOpen size={20} className="text-indigo-600" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-lg">Cara Membaca Data</h3>
             </div>
-            <div>
-              <p className="font-semibold text-slate-800 mb-1">Daya Tampung</p>
-              <p className="text-slate-600 leading-relaxed">Jumlah kursi yang tersedia untuk program studi tersebut.</p>
-            </div>
-            <div>
-              <p className="font-semibold text-slate-800 mb-1">Peluang Masuk</p>
-              <p className="text-slate-600 leading-relaxed">Estimasi persentase peluang diterima berdasarkan rasio peminat.</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="group">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg group-hover:scale-110 transition-transform">
+                    <BarChart3 size={16} className="text-indigo-600" />
+                  </div>
+                  <p className="font-semibold text-slate-800">Rasio Peminat</p>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Perbandingan jumlah peminat dengan daya tampung. Semakin kecil, semakin mudah masuk.
+                </p>
+              </div>
+              
+              <div className="group">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg group-hover:scale-110 transition-transform">
+                    <Target size={16} className="text-emerald-600" />
+                  </div>
+                  <p className="font-semibold text-slate-800">Daya Tampung</p>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Jumlah kursi yang tersedia untuk program studi tersebut.
+                </p>
+              </div>
+              
+              <div className="group">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-rose-100 to-rose-200 rounded-lg group-hover:scale-110 transition-transform">
+                    <TrendingUp size={16} className="text-rose-600" />
+                  </div>
+                  <p className="font-semibold text-slate-800">Peluang Masuk</p>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Estimasi persentase peluang diterima berdasarkan rasio peminat.
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 text-center">
-          <p className="text-xs text-slate-500">
-            Data bersumber dari{' '}
-            <a href="https://snpmb.bppp.kemdikbud.go.id" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 font-medium">
-              SNPMB.id
-            </a>
-            {' '}• © {new Date().getFullYear()} SNBT AI
-          </p>
+        {/* Premium Attribution */}
+        <div className="mt-6 text-center dash-fade-up d-delay-450">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full border border-white/50">
+            <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" />
+            <p className="text-xs text-slate-600">
+              Data bersumber dari{' '}
+              <a href="https://snpmb.bppp.kemdikbud.go.id" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+                SNPMB.id
+              </a>
+              {' '}• © {new Date().getFullYear()} SNBT AI
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -630,3 +725,64 @@ export const PTNPediaView = ({ user, onBack }) => {
 };
 
 export default PTNPediaView;
+
+// Add premium animation styles
+const premiumStyles = `
+  /* Premium Animation System */
+  @keyframes dashFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes dashFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes premiumGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
+    50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.2); }
+  }
+  
+  .dash-fade-up { animation: dashFadeUp 0.6s cubic-bezier(0.22, 0.68, 0, 1.2) both; }
+  .dash-fade-in { animation: dashFadeIn 0.4s ease both; }
+  .premium-glow { animation: premiumGlow 3s ease-in-out infinite; }
+  
+  .d-delay-0 { animation-delay: 0ms; }
+  .d-delay-80 { animation-delay: 80ms; }
+  .d-delay-160 { animation-delay: 160ms; }
+  .d-delay-200 { animation-delay: 200ms; }
+  .d-delay-400 { animation-delay: 400ms; }
+  .d-delay-450 { animation-delay: 450ms; }
+  
+  /* Premium Glassmorphism */
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Premium Hover Effects */
+  .premium-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .premium-hover:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+  }
+  
+  /* Premium Focus Effects */
+  .premium-focus:focus-within {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+`;
+
+// Inject premium styles
+if (typeof document !== 'undefined' && !document.getElementById('ptnpedia-premium-styles')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'ptnpedia-premium-styles';
+  styleElement.textContent = premiumStyles;
+  document.head.appendChild(styleElement);
+}
