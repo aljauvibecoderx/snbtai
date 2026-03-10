@@ -5,7 +5,7 @@ export const CoinBalance = ({ balance = 0, onClick, className = "" }) => {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-sm hover:shadow-md ${className}`}
+      className={`flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 shadow-sm hover:shadow-md ${className}`}
     >
       <Coins className="w-4 h-4" strokeWidth={2} />
       <span className="text-sm font-semibold">{balance}</span>

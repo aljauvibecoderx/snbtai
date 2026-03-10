@@ -5,6 +5,7 @@ import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateD
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UnifiedNavbar } from '../../components/layout/UnifiedNavbar';
 import { useNavigate } from 'react-router-dom';
+import { useTokenBalance } from '../../hooks/useTokenBalance';
 
 const storage = getStorage();
 
@@ -20,6 +21,7 @@ export const CommunityView = ({ onBack, user, onLogin }) => {
   const [replyText, setReplyText] = useState('');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const fileInputRef = useRef(null);
+  const tokenBalance = useTokenBalance();
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
@@ -172,6 +174,7 @@ export const CommunityView = ({ onBack, user, onLogin }) => {
         }}
         navigate={navigate}
         setView={() => {}}
+        coinBalance={tokenBalance}
         dailyUsage={0}
         totalQuestionsInBank={0}
         remainingQuota={19}

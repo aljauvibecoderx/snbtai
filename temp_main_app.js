@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
-
-
 import { 
   BookOpen, 
   Brain, 
@@ -38,7 +36,7 @@ import {
 import { HelpView } from './pages/HelpPage';
 import { selectTemplate, generatePromptWithTemplate, getAllPatterns } from './utils/questionTemplates';
 import { TemplateInfo } from './components/common/TemplateInfo';
-import { auth, loginWithGoogle, logout, saveUserData, getUserData, saveQuestionSet, saveQuestion, getQuestionsBySetId, saveAttempt, updateAttemptStatus, finishAttempt, getTotalQuestionsCount, saveQuestionSetWithId, getQuestionSetById, saveResultWithId, getResultById, saveToBankSoal, saveToSoalSaya, addToWishlist, removeFromWishlist, checkWishlistStatus, getUserTokenBalance, addTokens, spendTokens, getTokenTransactions } from './services/firebase/firebase';
+import { auth, loginWithGoogle, logout, saveUserData, getUserData, saveQuestionSet, saveQuestion, getQuestionsBySetId, saveAttempt, updateAttemptStatus, finishAttempt, getTotalQuestionsCount, saveQuestionSetWithId, getQuestionSetById, saveResultWithId, getResultById, saveToBankSoal, saveToSoalSaya, addToWishlist, removeFromWishlist, checkWishlistStatus } from './services/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { CommunityView } from './features/community/CommunityView';
 import { DashboardView } from './features/dashboard/DashboardView';
@@ -60,10 +58,8 @@ import { SUBTESTS, getSubtestLabel } from './constants/subtestHelper';
 import { VocabPanel, HighlightPopup, SearchModal } from './features/vocab/VocabMode';
 import { saveVocab, checkVocabExists } from './services/vocab/vocab-firebase';
 import { NotificationProvider, useNotification } from './components/common/NotificationSystem';
-
-import { StatsProvider } from './context/StatsContext';
-import { AnimatedBackground } from './components/common/AnimatedBackground';
 import AmbisToken from './pages/AmbisToken';
+import { CoinProvider, useCoin } from './context/CoinContext';
 import './styles/typography.css';
 
 // Toast system replaced by NotificationSystem
@@ -833,7 +829,6 @@ const MINUTE_REQUEST_LIMIT = 10;
 const MINUTE_TOKEN_LIMIT = 250000;
 const DAILY_LIMIT_LOGGED_IN = 19;
 const DAILY_LIMIT_NON_LOGGED_IN = 1;
-const COIN_PER_QUESTION = 1; // 1 koin = 1 soal tambahan
 
 const getUsageData = (userId = null) => {
   if (userId) {
@@ -2213,7 +2208,6 @@ const Card = ({ children, className = '' }) => (
 
 
 const HomeView = ({ formData, setFormData, handleStart, errorMsg, mode, setMode, apiKey, modelType, setModelType, onHelp, user, onLogin, onLogout, usageData, setView, setShowLoginModal, myQuestions, onReloadQuestions, isDeveloperMode = false, totalQuestionsInBank = 0, isAdmin = false, navigate }) => {
-  const coinBalance = 0;
   // Reload questions when component mounts
   useEffect(() => {
     if (user && onReloadQuestions) {
@@ -2272,7 +2266,6 @@ const HomeView = ({ formData, setFormData, handleStart, errorMsg, mode, setMode,
   
   const dailyUsage = getDailyUsage();
   const dailyLimit = user ? DAILY_LIMIT_LOGGED_IN : DAILY_LIMIT_NON_LOGGED_IN;
-  const totalLimit = dailyLimit + coinBalance; // Base limit + coins
   
   // Use HomeViewRevamp component
   return (
@@ -2298,9 +2291,6 @@ const HomeView = ({ formData, setFormData, handleStart, errorMsg, mode, setMode,
       navigate={navigate}
       dailyLimit={dailyLimit}
       dailyUsage={dailyUsage}
-      totalLimit={totalLimit}
-      coinBalance={coinBalance}
-      onBuyCoin={() => setView('AMBIS_TOKEN')}
     />
   );
 };
@@ -2338,9 +2328,8 @@ const LoadingView = ({ loadingQuizIdx, stopwatch, onQuizAnswer, onCancel }) => {
   
   return (
   <div className="min-h-screen bg-[#F3F4F8] flex flex-col items-center justify-center p-6 text-center space-y-8 relative overflow-x-hidden">
-    <AnimatedBackground />
     {/* Background Blur Effects */}
-    <div className="fixed inset-0 z-0 pointer-events-none opacity-15">
+    <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>
     </div>
@@ -2796,9 +2785,8 @@ const CBTView = ({
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] flex flex-col font-sans relative overflow-x-hidden">
-      <AnimatedBackground />
       {/* Background Blur Effects */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-15">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>
       </div>
@@ -3272,9 +3260,8 @@ const ResultView = ({ score, irtScore, percentile, userAnswers, questions, timeU
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] p-3 sm:p-6 flex items-center justify-center font-sans relative overflow-x-hidden animate-fade-in">
-      <AnimatedBackground />
       {/* Background Blur Effects */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-15">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>
       </div>
@@ -3566,10 +3553,7 @@ const ResultView = ({ score, irtScore, percentile, userAnswers, questions, timeU
 
 function AppContent() {
   const { addNotification } = useNotification();
-  const [tokenBalance, setTokenBalance] = useState(() => {
-    return parseInt(localStorage.getItem('ambisTokenBalance') || '0');
-  });
-  const coinBalance = tokenBalance;
+  const { spendCoins, hasEnoughCoins } = useCoin();
   const [view, setView] = useState(() => {
     const path = window.location.pathname;
     if (path === '/') return 'LANDING';
@@ -3643,17 +3627,6 @@ function AppContent() {
   const sfx = useSound();
   const apiKey = modelType === 'gemini' ? getGeminiKey().key : HF_API_KEY;
   
-  // Listen to localStorage changes for token balance
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const newBalance = parseInt(localStorage.getItem('ambisTokenBalance') || '0');
-      setTokenBalance(newBalance);
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-  
   // Auth listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -3665,10 +3638,6 @@ function AppContent() {
         if (data?.usage) {
           setUsageData(data.usage);
         }
-        
-        // Load token balance
-        const balance = await getUserTokenBalance(currentUser.uid);
-        setTokenBalance(balance);
         
         // Check admin role
         const adminStatus = await checkAdminRole(currentUser.uid);
@@ -3699,7 +3668,6 @@ function AppContent() {
         setMyQuestions([]);
         setTotalQuestionsInBank(0);
         setIsAdmin(false);
-        setTokenBalance(0);
       }
     });
     return () => unsubscribe();
@@ -3900,15 +3868,6 @@ function AppContent() {
         setView('ABOUT');
       } else if (path === '/contact') {
         setView('CONTACT');
-
-      } else if (path === '/ambis-token') {
-        setView('AMBIS_TOKEN_STORE');
-      } else if (path === '/ambis-token/checkout') {
-        setView('AMBIS_TOKEN_CHECKOUT');
-      } else if (path === '/ambis-token/payment') {
-        setView('AMBIS_TOKEN_PAYMENT');
-      } else if (path === '/ambis-token/success') {
-        setView('AMBIS_TOKEN_SUCCESS');
       } else if (path === '/404' || path === '/error') {
         setView('404');
       } else if (path === '/app') {
@@ -3929,12 +3888,6 @@ function AppContent() {
       saveUserData(user.uid, { usage: usageData }).catch(console.error);
     }
   }, [usageData, user]);
-  
-  // Token update function
-  const updateTokenBalance = async () => {
-    const newBalance = parseInt(localStorage.getItem('ambisTokenBalance') || '0');
-    setTokenBalance(newBalance);
-  };
   
   const handleLogin = async () => {
     try {
@@ -4200,17 +4153,22 @@ function AppContent() {
       return usage.dailyCount;
     })();
     const dailyLimit = user ? DAILY_LIMIT_LOGGED_IN : DAILY_LIMIT_NON_LOGGED_IN;
-    const totalLimit = dailyLimit + tokenBalance; // Limit dasar + token
     
-    if (dailyUsage >= totalLimit) {
+    // Check if daily limit exceeded
+    if (dailyUsage >= dailyLimit) {
       if (!user) {
         showToast(`Limit harian tercapai (${dailyLimit} soal/hari). Login untuk 20 soal/hari!`, 'warning');
-      } else if (dailyUsage >= dailyLimit && tokenBalance === 0) {
-        showToast(`Limit harian tercapai (${dailyLimit} soal/hari). Beli token untuk soal tambahan!`, 'warning');
+        return;
       } else {
-        showToast(`Limit harian tercapai (${totalLimit} soal/hari).`, 'warning');
+        // For logged-in users, check if they have coins to continue
+        if (!hasEnoughCoins(1)) {
+          showToast(`Limit harian tercapai (${dailyLimit} soal/hari). Beli Ambis Token untuk lanjut generate!`, 'warning');
+          return;
+        }
+        // If they have coins, deduct 1 coin and continue
+        spendCoins(1);
+        showToast('1 Ambis Token digunakan untuk generate soal', 'info');
       }
-      return;
     }
     
     sfx.playClick();
@@ -4257,19 +4215,6 @@ function AppContent() {
           if (modelType === 'gemini') newUsage.geminiCount = (newUsage.geminiCount || 0) + 1;
           else newUsage.hfCount = (newUsage.hfCount || 0) + 1;
           setUsageData(newUsage);
-          
-          // Spend token if over daily limit
-          if (dailyUsage >= dailyLimit && coinBalance > 0) {
-            try {
-              const newBalance = coinBalance - 1;
-              localStorage.setItem('ambisTokenBalance', newBalance.toString());
-              setTokenBalance(newBalance);
-              showToast('1 Token digunakan untuk soal tambahan', 'info');
-            } catch (error) {
-              console.error('Error spending token:', error);
-              showToast('Gagal menggunakan token', 'error');
-            }
-          }
         } else {
           updateUsageCount(modelType);
         }
@@ -4631,14 +4576,6 @@ function AppContent() {
           onCancel={() => setShowConfirm(false)} 
         />
       )}
-      {view === 'AMBIS_TOKEN' && (
-        <AmbisToken 
-          user={user}
-          onBack={() => { setView('HOME'); navigate('/app'); }}
-          onTokenUpdate={updateTokenBalance}
-        />
-      )}
-
       {view === '404' && <NotFoundPage />}
       {view === 'LANDING' && <LandingPage />}
       {view === 'HOME' && <HomeView formData={formData} setFormData={setFormData} handleStart={handleStart} errorMsg={errorMsg} mode={mode} setMode={setMode} apiKey={apiKey} modelType={modelType} setModelType={setModelType} onHelp={() => setView('HELP')} user={user} onLogin={handleLogin} onLogout={handleLogout} usageData={usageData} setView={setView} setShowLoginModal={setShowLoginModal} myQuestions={myQuestions} onReloadQuestions={reloadMyQuestions} isDeveloperMode={isDeveloperMode} totalQuestionsInBank={totalQuestionsInBank} isAdmin={isAdmin} navigate={navigate} />}
@@ -4652,7 +4589,7 @@ function AppContent() {
       {view === 'DETAIL' && <DetailSoalView questions={detailQuestions} subtestLabel={detailSubtest} subtestId={detailQuestions[0]?.subtest} onBack={() => { setView('DASHBOARD'); navigate('/dashboard/overview'); }} user={user} questionSetId={questionSetId} showToast={showToast} />}
       {view === 'HELP' && <HelpView onBack={() => setView('HOME')} />}
       {view === 'COMMUNITY' && <CommunityView onBack={() => setView('HOME')} user={user} onLogin={handleLogin} />}
-
+      {view === 'AMBIS_TOKEN' && <AmbisToken user={user} onBack={() => { setView('HOME'); navigate('/'); }} />}
       {view === 'LOADING' && <LoadingView loadingQuizIdx={loadingQuizIdx} stopwatch={stopwatch} onQuizAnswer={(correct) => { if (correct) setLoadingQuizScore(s => s + 1); }} onCancel={() => { setCancelGeneration(true); setView('HOME'); }} />}
       {view === 'CBT' && <CBTView questions={questions} currentQuestionIdx={currentQuestionIdx} setCurrentQuestionIdx={setCurrentQuestionIdx} userAnswers={userAnswers} handleAnswer={handleAnswer} raguRagu={raguRagu} toggleRagu={(i)=>setRaguRagu(p=>({...p,[i]:!p[i]}))} timer={timer} finishExam={finishExam} formatTime={formatTime} subtestId={questions[0]?.subtest || formData.subtest} mode={mode} streak={streak} points={points} sfx={sfx} feedback={feedback} health={health} isPaused={isPaused} setIsPaused={setIsPaused} setStreak={setStreak} setPoints={setPoints} setFeedback={setFeedback} setHealth={setHealth} setShowGameOver={setShowGameOver} user={user} questionSetId={questionSetId} showToast={showToast} />}
       {view === 'RESULT' && <ResultView score={score} irtScore={irtScore} percentile={percentile} userAnswers={userAnswers} questions={questions} timeUsed={(questions.length*60)-timer} formatTime={formatTime} points={points} sfx={sfx} user={user} usageData={usageData} fromBankSoal={fromBankSoal} onBackToDashboard={() => { setView('DASHBOARD'); setFromBankSoal(false); navigate('/dashboard/overview'); }} setView={setView} navigate={navigate} />}

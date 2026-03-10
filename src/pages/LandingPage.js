@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, Target, TrendingUp, Sparkles, CheckCircle2, Users
 import { auth } from '../services/firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { UnifiedNavbar } from '../components/layout/UnifiedNavbar';
+import { useTokenBalance } from '../hooks/useTokenBalance';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const LandingPage = () => {
   const [myQuestions, setMyQuestions] = useState([]);
   const [publicQuestions, setPublicQuestions] = useState([]);
   const [attempts, setAttempts] = useState([]);
+  const tokenBalance = useTokenBalance();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -276,6 +278,7 @@ const LandingPage = () => {
         navigate={navigate}
         setView={() => {}}
         onBuyCoin={() => navigate('/ambis-coin')}
+        coinBalance={tokenBalance}
         dailyUsage={attempts.filter(a => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);

@@ -9,12 +9,14 @@ import { PTNPediaView } from '../ptnpedia/ptnpedia';
 import { getVocabList, deleteVocab, getVocabStats, updateVocab, saveVocab, subscribeToVocabList } from '../../services/vocab/vocab-firebase';
 import { UnifiedNavbar } from '../../components/layout/UnifiedNavbar';
 import { auth } from '../../services/firebase/firebase';
+import { useTokenBalance } from '../../hooks/useTokenBalance';
 
 
 export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisionGenerate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const tokenBalance = useTokenBalance();
   
   // Get active tab from URL
   const getActiveTab = () => {
@@ -1250,6 +1252,7 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
         variant="dashboard"
         showBackButton={true}
         onBack={() => { onBack(); navigate('/app'); }}
+        coinBalance={tokenBalance}
       />
 
       {showVisionModal && (

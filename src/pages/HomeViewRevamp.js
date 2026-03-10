@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LogIn, Sparkles, ChevronRight, Wallet, TrendingUp, Activity, Users, BookOpen } from 'lucide-react';
 import { SUBTESTS } from '../constants/subtestHelper';
 import { TemplateInfo } from '../components/common/TemplateInfo';
 import { UnifiedNavbar } from '../components/layout/UnifiedNavbar';
+import { useTokenBalance } from '../hooks/useTokenBalance';
 
 const SUBTEST_CONFIG = {
   'tps_pu': { icon: Activity, color: '#8B5CF6' },
@@ -53,11 +54,12 @@ const HomeViewRevamp = ({
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-
-  const isLimitReached = isDeveloperMode ? false : dailyUsage >= totalLimit;
+  const tokenBalance = useTokenBalance();
+  const totalLimitWithToken = totalLimit + tokenBalance;
+  const isLimitReached = isDeveloperMode ? false : dailyUsage >= totalLimitWithToken;
   const canGenerate = !isLimitReached && formData.context.length >= 20;
-  const remainingQuota = Math.max(0, totalLimit - dailyUsage);
-  const showBankSoalButton = user && dailyUsage >= dailyLimit && coinBalance === 0; // Show when base limit reached and no coins
+  const remainingQuota = Math.max(0, totalLimitWithToken - dailyUsage);
+  const showBankSoalButton = user && dailyUsage >= totalLimitWithToken && tokenBalance === 0;
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] relative overflow-x-hidden">
@@ -205,7 +207,7 @@ const HomeViewRevamp = ({
         setShowMobileMenu={setShowMobileMenu}
         variant="default"
         onBuyCoin={onBuyCoin}
-        coinBalance={coinBalance}
+        coinBalance={tokenBalance}
       />
 
       <main className="relative z-10 pt-20 md:pt-20 pb-20 md:pb-16 px-0 md:px-8">
@@ -285,15 +287,15 @@ const HomeViewRevamp = ({
                   )}
 
                   {!isDeveloperMode && (
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-2">
                       <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-full">
                         <span className="text-[10px] font-semibold text-gray-500">Sisa hari ini:</span>
-                        <span className="text-[10px] font-bold text-indigo-600">{remainingQuota}/{totalLimit}</span>
+                        <span className="text-[10px] font-bold text-indigo-600">{remainingQuota}/{totalLimitWithToken}</span>
                       </div>
-                      {coinBalance > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 rounded-full">
+                      {tokenBalance > 0 && (
+                        <div className="flex items-center gap-1 px-3 py-1 bg-amber-50 rounded-full border border-amber-200">
                           <Wallet size={12} className="text-amber-600" />
-                          <span className="text-[10px] font-bold text-amber-600">+{coinBalance}</span>
+                          <span className="text-[10px] font-bold text-amber-600">Token: {tokenBalance}</span>
                         </div>
                       )}
                     </div>

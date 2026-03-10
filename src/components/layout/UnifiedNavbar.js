@@ -110,10 +110,10 @@ export const UnifiedNavbar = ({
                     <span className="text-sm font-semibold text-gray-900">{displayBankSoal}</span>
                     <span className="text-xs text-gray-500">bank</span>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-500">
-                    <Wallet className="w-4 h-4 text-amber-600" strokeWidth={2} />
-                    <span className="text-sm font-semibold text-gray-900">{coinBalance}</span>
-                    <span className="text-xs text-gray-500">coin</span>
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-violet-50 rounded-lg border border-violet-200 hover:border-violet-300 transition-all duration-500">
+                    <Wallet className="w-4 h-4 text-violet-600" strokeWidth={2} />
+                    <span className="text-sm font-semibold text-violet-900">{coinBalance}</span>
+                    <span className="text-xs text-violet-500">coin</span>
                   </div>
                   
                   {onBuyCoin && (
@@ -255,7 +255,7 @@ export const UnifiedNavbar = ({
                       <div className="text-xs text-gray-500">Bank</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-amber-600">{coinBalance}</div>
+                      <div className="text-lg font-bold text-violet-600">{coinBalance}</div>
                       <div className="text-xs text-gray-500">Coin</div>
                     </div>
                   </div>
