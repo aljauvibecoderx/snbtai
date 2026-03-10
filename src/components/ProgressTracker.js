@@ -7,7 +7,7 @@ import { CheckCircle2, Circle, RotateCcw, Filter, BookOpen, Target, Award, BarCh
 
 const ProgressTracker = ({ userId }) => {
   const { progress, loading, toggleCompletion, resetProgress, importProgress } = useStudyProgress(userId);
-  const [filter, setFilter] = useState('all'); // 'all', 'completed', 'incomplete'
+  const [filter, setFilter] = useState('all');
   const [expandedSubjects, setExpandedSubjects] = useState(new Set());
   const [showInsights, setShowInsights] = useState(false);
 
@@ -82,85 +82,85 @@ const ProgressTracker = ({ userId }) => {
           </div>
         </div>
 
-      {/* Controls */}
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-2">
-          <FilterButton 
-            active={filter === 'all'} 
-            onClick={() => setFilter('all')}
-          >
-            All
-          </FilterButton>
-          <FilterButton 
-            active={filter === 'completed'} 
-            onClick={() => setFilter('completed')}
-          >
-            Completed
-          </FilterButton>
-          <FilterButton 
-            active={filter === 'incomplete'} 
-            onClick={() => setFilter('incomplete')}
-          >
-            Incomplete
-          </FilterButton>
-        </div>
-        
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setShowInsights(!showInsights)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              showInsights 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <BarChart3 size={16} />
-            <span>Analytics</span>
-          </button>
+        {/* Controls */}
+        <div className="flex justify-between items-center">
+          <div className="flex space-x-2">
+            <FilterButton 
+              active={filter === 'all'} 
+              onClick={() => setFilter('all')}
+            >
+              All
+            </FilterButton>
+            <FilterButton 
+              active={filter === 'completed'} 
+              onClick={() => setFilter('completed')}
+            >
+              Completed
+            </FilterButton>
+            <FilterButton 
+              active={filter === 'incomplete'} 
+              onClick={() => setFilter('incomplete')}
+            >
+              Incomplete
+            </FilterButton>
+          </div>
           
-          <button
-            onClick={resetProgress}
-            className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <RotateCcw size={16} />
-            <span>Reset</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Analytics View */}
-      {showInsights && (
-        <StudyInsights 
-          progress={progress} 
-          onImportProgress={importProgress}
-        />
-      )}
-
-      {/* Subject Cards */}
-      {!showInsights && (
-        <div className="space-y-4">
-          {subjects.map(subject => {
-            const subjectData = progress.subjects[subject];
-            const filteredMaterials = getFilteredMaterials(subject);
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowInsights(!showInsights)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                showInsights 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <BarChart3 size={16} />
+              <span>Analytics</span>
+            </button>
             
-            if (filteredMaterials.length === 0) return null;
-
-            return (
-              <SubjectCard
-                key={subject}
-                subject={subject}
-                subjectData={subjectData}
-                materials={filteredMaterials}
-                expanded={expandedSubjects.has(subject)}
-                onToggle={() => toggleSubject(subject)}
-                onMaterialToggle={toggleCompletion}
-                progress={progress}
-              />
-            );
-          })}
+            <button
+              onClick={resetProgress}
+              className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <RotateCcw size={16} />
+              <span>Reset</span>
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* Analytics View */}
+        {showInsights && (
+          <StudyInsights 
+            progress={progress} 
+            onImportProgress={importProgress}
+          />
+        )}
+
+        {/* Subject Cards */}
+        {!showInsights && (
+          <div className="space-y-4">
+            {subjects.map(subject => {
+              const subjectData = progress.subjects[subject];
+              const filteredMaterials = getFilteredMaterials(subject);
+              
+              if (filteredMaterials.length === 0) return null;
+
+              return (
+                <SubjectCard
+                  key={subject}
+                  subject={subject}
+                  subjectData={subjectData}
+                  materials={filteredMaterials}
+                  expanded={expandedSubjects.has(subject)}
+                  onToggle={() => toggleSubject(subject)}
+                  onMaterialToggle={toggleCompletion}
+                  progress={progress}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
     </ErrorBoundary>
   );
 };
