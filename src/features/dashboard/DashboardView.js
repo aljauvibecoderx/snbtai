@@ -10,6 +10,7 @@ import { getVocabList, deleteVocab, getVocabStats, updateVocab, saveVocab, subsc
 import { UnifiedNavbar } from '../../components/layout/UnifiedNavbar';
 import { auth } from '../../services/firebase/firebase';
 import { useTokenBalance } from '../../hooks/useTokenBalance';
+import ProgressTracker from '../../components/ProgressTracker';
 
 
 export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisionGenerate }) => {
@@ -29,6 +30,7 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
     if (path.includes('/history')) return 'riwayat';
     if (path.includes('/ptnpedia')) return 'ptnpedia';
     if (path.includes('/vocab')) return 'vocab';
+    if (path.includes('/progress')) return 'progress';
 
     return 'overview';
   };
@@ -1427,6 +1429,18 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
                 <BookText size={18} strokeWidth={2} />
                 <span className="text-sm font-semibold">Vocab</span>
               </button>
+              
+              <button 
+                onClick={() => navigate('/dashboard/progress')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'progress' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <Target size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Progress</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1458,6 +1472,7 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
             {activeTab === 'wishlist' && <div className="tab-content">{renderWishlist()}</div>}
             {activeTab === 'riwayat' && <div className="tab-content">{renderRiwayat()}</div>}
             {activeTab === 'vocab' && <div className="tab-content">{renderVocab()}</div>}
+            {activeTab === 'progress' && <div className="tab-content"><ProgressTracker userId={user?.uid} /></div>}
           </>
         )}
       </div>

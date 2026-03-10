@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../services/firebase/firebase';
 import { silabusData } from '../data/silabus';
 
 export const useStudyProgress = (userId) => {
@@ -109,15 +109,28 @@ export const useStudyProgress = (userId) => {
     const docRef = doc(db, 'user_progress', userId);
     
     const unsubscribe = onSnapshot(docRef, async (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setProgress(calculateProgress(data));
-      } else {
-        // Initialize new user progress
+      try {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setProgress(calculateProgress(data));
+        } else {
+          // Initialize new user progress
+          const initialProgress = initializeProgress();
+          await setDoc(docRef, initialProgress);
+          setProgress(initialProgress);
+        }
+      } catch (error) {
+        console.error('Error in progress listener:', error);
+        // Fallback to initial progress
         const initialProgress = initializeProgress();
-        await setDoc(docRef, initialProgress);
         setProgress(initialProgress);
       }
+      setLoading(false);
+    }, (error) => {
+      console.error('Firestore listener error:', error);
+      // Fallback to initial progress
+      const initialProgress = initializeProgress();
+      setProgress(initialProgress);
       setLoading(false);
     });
 
