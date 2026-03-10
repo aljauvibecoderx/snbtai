@@ -65,7 +65,7 @@ export const showToast = (message, type = 'success') => {
   }, 3000);
 };
 
-// Progress Analytics
+// Progress Analytics with Enhanced Features
 export const calculateStudyStats = (progress) => {
   if (!progress || !progress.subjects) return null;
 
@@ -75,25 +75,46 @@ export const calculateStudyStats = (progress) => {
     completedMaterials: 0,
     subjectStats: {},
     streakDays: 0,
-    averageProgress: 0
+    averageProgress: 0,
+    weakestSubject: null,
+    strongestSubject: null,
+    completionRate: 0
   };
+
+  let lowestProgress = 1;
+  let highestProgress = 0;
 
   subjects.forEach(subject => {
     const subjectData = progress.subjects[subject];
     stats.totalMaterials += subjectData.total;
     stats.completedMaterials += subjectData.completed;
     
+    const subjectProgress = subjectData.progress || 0;
+    
+    if (subjectProgress < lowestProgress) {
+      lowestProgress = subjectProgress;
+      stats.weakestSubject = subject;
+    }
+    
+    if (subjectProgress > highestProgress) {
+      highestProgress = subjectProgress;
+      stats.strongestSubject = subject;
+    }
+    
     stats.subjectStats[subject] = {
       name: subject.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      progress: subjectData.progress,
+      progress: subjectProgress,
       completed: subjectData.completed,
-      total: subjectData.total
+      total: subjectData.total,
+      completionRate: subjectData.total > 0 ? (subjectData.completed / subjectData.total) * 100 : 0
     };
   });
 
   stats.averageProgress = stats.totalMaterials > 0 
     ? stats.completedMaterials / stats.totalMaterials 
     : 0;
+    
+  stats.completionRate = Math.round(stats.averageProgress * 100);
 
   return stats;
 };

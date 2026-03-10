@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase/firebase';
 import { silabusData } from '../data/silabus';
@@ -6,6 +6,7 @@ import { silabusData } from '../data/silabus';
 export const useStudyProgress = (userId) => {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const unsubscribeRef = useRef(null);
 
   // Initialize progress structure from silabus data
   const initializeProgress = () => {
@@ -60,24 +61,24 @@ export const useStudyProgress = (userId) => {
   const toggleCompletion = async (materialId) => {
     if (!userId || !progress) return;
 
-    const material = silabusData.find(item => item.id === materialId);
-    if (!material) return;
-
-    const subjectKey = material.subject;
-    const currentStatus = progress.subjects[subjectKey]?.materials[materialId]?.completed || false;
-    
-    const updatedProgress = { ...progress };
-    updatedProgress.subjects[subjectKey].materials[materialId] = {
-      completed: !currentStatus,
-      completedAt: !currentStatus ? new Date() : null
-    };
-    updatedProgress.lastUpdated = new Date();
-
-    const calculatedProgress = calculateProgress(updatedProgress);
-    setProgress(calculatedProgress);
-
-    // Update Firebase
     try {
+      const material = silabusData.find(item => item.id === materialId);
+      if (!material) return;
+
+      const subjectKey = material.subject;
+      const currentStatus = progress.subjects[subjectKey]?.materials[materialId]?.completed || false;
+      
+      const updatedProgress = { ...progress };
+      updatedProgress.subjects[subjectKey].materials[materialId] = {
+        completed: !currentStatus,
+        completedAt: !currentStatus ? new Date() : null
+      };
+      updatedProgress.lastUpdated = new Date();
+
+      const calculatedProgress = calculateProgress(updatedProgress);
+      setProgress(calculatedProgress);
+
+      // Update Firebase
       const docRef = doc(db, 'user_progress', userId);
       await updateDoc(docRef, calculatedProgress);
     } catch (error) {
@@ -89,14 +90,35 @@ export const useStudyProgress = (userId) => {
   const resetProgress = async () => {
     if (!userId) return;
     
-    const initialProgress = initializeProgress();
-    setProgress(initialProgress);
-    
     try {
+      const initialProgress = initializeProgress();
+      setProgress(initialProgress);
+      
       const docRef = doc(db, 'user_progress', userId);
       await setDoc(docRef, initialProgress);
     } catch (error) {
       console.error('Error resetting progress:', error);
+    }
+  };
+
+  // Import progress data
+  const importProgress = async (importedData) => {
+    if (!userId) return;
+    
+    try {
+      const docRef = doc(db, 'user_progress', userId);
+      const processedData = {
+        ...importedData,
+        userId,
+        lastUpdated: new Date()
+      };
+      
+      const calculatedProgress = calculateProgress(processedData);
+      await setDoc(docRef, calculatedProgress);
+      setProgress(calculatedProgress);
+    } catch (error) {
+      console.error('Error importing progress:', error);
+      throw error;
     }
   };
 
@@ -106,9 +128,14 @@ export const useStudyProgress = (userId) => {
       return;
     }
 
+    // Clean up previous listener
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+    }
+
     const docRef = doc(db, 'user_progress', userId);
     
-    const unsubscribe = onSnapshot(docRef, async (docSnap) => {
+    unsubscribeRef.current = onSnapshot(docRef, async (docSnap) => {
       try {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -134,13 +161,19 @@ export const useStudyProgress = (userId) => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
   }, [userId]);
 
   return {
     progress,
     loading,
     toggleCompletion,
-    resetProgress
+    resetProgress,
+    importProgress
   };
 };

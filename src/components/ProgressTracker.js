@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useStudyProgress } from '../hooks/useStudyProgress';
-import { silabusData } from '../data/silabus';
-import { CheckCircle2, Circle, RotateCcw, Filter } from 'lucide-react';
+import { silabusData, subjectMetadata } from '../data/silabus';
+import StudyInsights from './StudyInsights';
+import ErrorBoundary from './ErrorBoundary';
+import { CheckCircle2, Circle, RotateCcw, Filter, BookOpen, Target, Award, BarChart3 } from 'lucide-react';
 
 const ProgressTracker = ({ userId }) => {
-  const { progress, loading, toggleCompletion, resetProgress } = useStudyProgress(userId);
+  const { progress, loading, toggleCompletion, resetProgress, importProgress } = useStudyProgress(userId);
   const [filter, setFilter] = useState('all'); // 'all', 'completed', 'incomplete'
   const [expandedSubjects, setExpandedSubjects] = useState(new Set());
+  const [showInsights, setShowInsights] = useState(false);
 
   if (loading) {
     return <ProgressSkeleton />;
@@ -45,24 +48,39 @@ const ProgressTracker = ({ userId }) => {
   const subjects = [...new Set(silabusData.map(item => item.subject))];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">SNBT Progress Tracker</h1>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-center space-x-4">
-            <div className="relative w-24 h-24">
-              <CircularProgress percentage={progress.totalProgress * 100} />
-            </div>
-            <div className="text-left">
-              <div className="text-2xl font-bold text-gray-900">
-                {Math.round(progress.totalProgress * 100)}%
+    <ErrorBoundary>
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold text-gray-900">SNBT Progress Tracker</h1>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-center space-x-8">
+              <div className="relative w-24 h-24">
+                <CircularProgress percentage={progress.totalProgress * 100} />
               </div>
-              <div className="text-gray-600">Total Progress</div>
+              <div className="grid grid-cols-3 gap-6 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {Object.keys(progress.subjects).length}
+                  </div>
+                  <div className="text-sm text-gray-600">Subjects</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {Object.values(progress.subjects).reduce((sum, s) => sum + s.completed, 0)}
+                  </div>
+                  <div className="text-sm text-gray-600">Completed</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {Object.values(progress.subjects).reduce((sum, s) => sum + s.total, 0)}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Materials</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Controls */}
       <div className="flex justify-between items-center">
@@ -87,43 +105,69 @@ const ProgressTracker = ({ userId }) => {
           </FilterButton>
         </div>
         
-        <button
-          onClick={resetProgress}
-          className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <RotateCcw size={16} />
-          <span>Reset</span>
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowInsights(!showInsights)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              showInsights 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <BarChart3 size={16} />
+            <span>Analytics</span>
+          </button>
+          
+          <button
+            onClick={resetProgress}
+            className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <RotateCcw size={16} />
+            <span>Reset</span>
+          </button>
+        </div>
       </div>
+
+      {/* Analytics View */}
+      {showInsights && (
+        <StudyInsights 
+          progress={progress} 
+          onImportProgress={importProgress}
+        />
+      )}
 
       {/* Subject Cards */}
-      <div className="space-y-4">
-        {subjects.map(subject => {
-          const subjectData = progress.subjects[subject];
-          const filteredMaterials = getFilteredMaterials(subject);
-          
-          if (filteredMaterials.length === 0) return null;
+      {!showInsights && (
+        <div className="space-y-4">
+          {subjects.map(subject => {
+            const subjectData = progress.subjects[subject];
+            const filteredMaterials = getFilteredMaterials(subject);
+            
+            if (filteredMaterials.length === 0) return null;
 
-          return (
-            <SubjectCard
-              key={subject}
-              subject={subject}
-              subjectData={subjectData}
-              materials={filteredMaterials}
-              expanded={expandedSubjects.has(subject)}
-              onToggle={() => toggleSubject(subject)}
-              onMaterialToggle={toggleCompletion}
-              progress={progress}
-            />
-          );
-        })}
-      </div>
+            return (
+              <SubjectCard
+                key={subject}
+                subject={subject}
+                subjectData={subjectData}
+                materials={filteredMaterials}
+                expanded={expandedSubjects.has(subject)}
+                onToggle={() => toggleSubject(subject)}
+                onMaterialToggle={toggleCompletion}
+                progress={progress}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
+    </ErrorBoundary>
   );
 };
 
 const SubjectCard = ({ subject, subjectData, materials, expanded, onToggle, onMaterialToggle, progress }) => {
   const progressPercentage = (subjectData?.progress || 0) * 100;
+  const metadata = subjectMetadata[subject] || {};
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -132,25 +176,40 @@ const SubjectCard = ({ subject, subjectData, materials, expanded, onToggle, onMa
         className="w-full p-6 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900 capitalize">
-              {subject.replace('_', ' ')}
-            </h3>
-            <div className="flex items-center space-x-4">
-              <div className="w-32 bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercentage}%` }}
-                />
+          <div className="flex items-center space-x-4">
+            <div 
+              className="w-12 h-12 rounded-lg flex items-center justify-center text-white"
+              style={{ backgroundColor: metadata.color || '#6B7280' }}
+            >
+              <i className={metadata.icon || 'fas fa-book'} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {metadata.name || subject.replace('_', ' ')}
+              </h3>
+              <p className="text-sm text-gray-600">{metadata.description}</p>
+              <div className="flex items-center space-x-4">
+                <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${progressPercentage}%`,
+                      backgroundColor: metadata.color || '#3B82F6'
+                    }}
+                  />
+                </div>
+                <span className="text-sm text-gray-600">
+                  {subjectData?.completed || 0}/{subjectData?.total || 0}
+                </span>
               </div>
-              <span className="text-sm text-gray-600">
-                {subjectData?.completed || 0}/{subjectData?.total || 0}
-              </span>
             </div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-gray-900">
               {Math.round(progressPercentage)}%
+            </div>
+            <div className="text-xs text-gray-500 font-medium">
+              {metadata.code}
             </div>
           </div>
         </div>
