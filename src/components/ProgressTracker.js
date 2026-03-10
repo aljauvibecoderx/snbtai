@@ -51,32 +51,32 @@ const ProgressTracker = ({ userId }) => {
     <ErrorBoundary>
       <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header - Mobile Optimized */}
-        <div className="text-center space-y-3 sm:space-y-4">
+        <div className="text-center space-y-3 sm:space-y-4 dash-fade-up d-delay-0">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 px-2">SNBT Progress Tracker</h1>
           
           {/* Stats Container - Responsive Layout */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dash-shadow stat-card-hover">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
               {/* Circular Progress */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 dash-fade-up d-delay-80">
                 <CircularProgress percentage={progress.totalProgress * 100} />
               </div>
               
               {/* Stats Grid - Mobile Responsive */}
               <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full sm:w-auto">
-                <div className="text-center min-w-0">
+                <div className="text-center min-w-0 dash-fade-up d-delay-120">
                   <div className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 truncate">
                     {Object.keys(progress.subjects).length}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">Subjects</div>
                 </div>
-                <div className="text-center min-w-0">
+                <div className="text-center min-w-0 dash-fade-up d-delay-160">
                   <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 truncate">
                     {Object.values(progress.subjects).reduce((sum, s) => sum + s.completed, 0)}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">Completed</div>
                 </div>
-                <div className="text-center min-w-0">
+                <div className="text-center min-w-0 dash-fade-up d-delay-200">
                   <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
                     {Object.values(progress.subjects).reduce((sum, s) => sum + s.total, 0)}
                   </div>
@@ -88,7 +88,7 @@ const ProgressTracker = ({ userId }) => {
         </div>
 
         {/* Controls - Mobile Optimized */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center dash-fade-up d-delay-250">
           {/* Filter Buttons */}
           <div className="flex space-x-2 overflow-x-auto pb-2 sm:pb-0">
             <FilterButton 
@@ -137,32 +137,35 @@ const ProgressTracker = ({ userId }) => {
 
         {/* Analytics View */}
         {showInsights && (
-          <StudyInsights 
-            progress={progress} 
-            onImportProgress={importProgress}
-          />
+          <div className="tab-content">
+            <StudyInsights 
+              progress={progress} 
+              onImportProgress={importProgress}
+            />
+          </div>
         )}
 
         {/* Subject Cards */}
         {!showInsights && (
           <div className="space-y-3 sm:space-y-4">
-            {subjects.map(subject => {
+            {subjects.map((subject, index) => {
               const subjectData = progress.subjects[subject];
               const filteredMaterials = getFilteredMaterials(subject);
               
               if (filteredMaterials.length === 0) return null;
 
               return (
-                <SubjectCard
-                  key={subject}
-                  subject={subject}
-                  subjectData={subjectData}
-                  materials={filteredMaterials}
-                  expanded={expandedSubjects.has(subject)}
-                  onToggle={() => toggleSubject(subject)}
-                  onMaterialToggle={toggleCompletion}
-                  progress={progress}
-                />
+                <div key={subject} className="dash-fade-up" style={{ animationDelay: `${300 + (index * 80)}ms` }}>
+                  <SubjectCard
+                    subject={subject}
+                    subjectData={subjectData}
+                    materials={filteredMaterials}
+                    expanded={expandedSubjects.has(subject)}
+                    onToggle={() => toggleSubject(subject)}
+                    onMaterialToggle={toggleCompletion}
+                    progress={progress}
+                  />
+                </div>
               );
             })}
           </div>
@@ -177,7 +180,7 @@ const SubjectCard = ({ subject, subjectData, materials, expanded, onToggle, onMa
   const metadata = subjectMetadata[subject] || {};
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden dash-shadow-hover">
       <button
         onClick={onToggle}
         className="w-full p-4 sm:p-6 text-left hover:bg-gray-50 transition-colors"
@@ -203,10 +206,11 @@ const SubjectCard = ({ subject, subjectData, materials, expanded, onToggle, onMa
               <div className="flex items-center space-x-2 sm:space-x-4">
                 <div className="w-20 sm:w-32 bg-gray-200 rounded-full h-2 flex-shrink-0">
                   <div 
-                    className="h-2 rounded-full transition-all duration-300"
+                    className="h-2 rounded-full transition-all duration-300 progress-anim"
                     style={{ 
                       width: `${progressPercentage}%`,
-                      backgroundColor: metadata.color || '#3B82F6'
+                      backgroundColor: metadata.color || '#3B82F6',
+                      '--progress-width': `${progressPercentage}%`
                     }}
                   />
                 </div>
@@ -231,13 +235,14 @@ const SubjectCard = ({ subject, subjectData, materials, expanded, onToggle, onMa
 
       {expanded && (
         <div className="border-t border-gray-100 p-4 sm:p-6 space-y-2 sm:space-y-3">
-          {materials.map(material => (
-            <MaterialItem
-              key={material.id}
-              material={material}
-              completed={progress.subjects[subject]?.materials[material.id]?.completed || false}
-              onToggle={() => onMaterialToggle(material.id)}
-            />
+          {materials.map((material, index) => (
+            <div key={material.id} className="dash-row-slide" style={{ animationDelay: `${index * 55}ms` }}>
+              <MaterialItem
+                material={material}
+                completed={progress.subjects[subject]?.materials[material.id]?.completed || false}
+                onToggle={() => onMaterialToggle(material.id)}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -368,3 +373,73 @@ const ProgressSkeleton = () => (
 );
 
 export default ProgressTracker;
+
+// Add the same CSS animations used in DashboardView
+const animationStyles = `
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Premium Shadow System ── */
+  .dash-shadow {
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.04),
+      0 4px 12px rgba(0,0,0,0.05),
+      0 8px 24px rgba(0,0,0,0.03);
+  }
+  .dash-shadow-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .dash-shadow-hover:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 2px 4px rgba(0,0,0,0.05),
+      0 10px 28px rgba(99,102,241,0.12),
+      0 18px 44px rgba(99,102,241,0.08);
+  }
+  .stat-card-hover {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .stat-card-hover:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 8px 28px rgba(99,102,241,0.18);
+  }
+
+  /* ── Entrance Animations ── */
+  @keyframes dashFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dashFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes progressGrow {
+    from { width: 0%; }
+    to   { width: var(--progress-width); }
+  }
+  @keyframes rowSlide {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .dash-fade-up    { animation: dashFadeUp 0.45s cubic-bezier(.22,.68,0,1.2) both; }
+  .dash-fade-in    { animation: dashFadeIn 0.4s ease both; }
+  .dash-row-slide  { animation: rowSlide 0.35s ease both; }
+  .progress-anim   { animation: progressGrow 0.9s cubic-bezier(.22,.68,0,1) both; }
+  .tab-content     { animation: dashFadeIn 0.3s ease both; }
+
+  .d-delay-0   { animation-delay: 0ms; }
+  .d-delay-80  { animation-delay: 80ms; }
+  .d-delay-120 { animation-delay: 120ms; }
+  .d-delay-160 { animation-delay: 160ms; }
+  .d-delay-200 { animation-delay: 200ms; }
+  .d-delay-250 { animation-delay: 250ms; }
+`;
+
+// Inject styles if not already present
+if (typeof document !== 'undefined' && !document.getElementById('progress-tracker-animations')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'progress-tracker-animations';
+  styleElement.textContent = animationStyles;
+  document.head.appendChild(styleElement);
+}
