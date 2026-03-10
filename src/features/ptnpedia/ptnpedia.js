@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, TrendingUp, Users, Target, ChevronDown, Loader, AlertCircle, BookOpen } from 'lucide-react';
+import { Search, Filter, TrendingUp, Users, Target, ChevronDown, Loader, AlertCircle, BookOpen, ArrowLeft, Sparkles, Zap, Globe, BarChart3 } from 'lucide-react';
 
 const MOCK_UNIVERSITIES = [
   { code: '0001', name: 'Universitas Indonesia' },
@@ -148,101 +148,205 @@ export const PTNPediaView = ({ user, onBack }) => {
   });
 
   return (
-    <div className="min-h-screen bg-[#F3F4F8] relative overflow-x-hidden">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[120px]"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 relative overflow-x-hidden">
+      {/* Premium Background Effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-gradient-to-tl from-blue-400/15 to-cyan-400/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[30%] h-[30%] bg-gradient-to-r from-violet-300/10 to-pink-300/10 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 relative z-10">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={onBack} className="p-2 hover:bg-white rounded-xl transition-all shadow-sm hover:shadow-md">
-              <ChevronDown size={20} className="text-slate-600 rotate-90" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 relative z-10">
+        {/* Premium Header Section */}
+        <div className="mb-8 dash-fade-up d-delay-0">
+          <div className="flex items-center gap-4 mb-6">
+            <button 
+              onClick={onBack} 
+              className="group p-3 bg-white/80 backdrop-blur-sm hover:bg-white rounded-2xl transition-all duration-300 shadow-sm hover:shadow-lg border border-white/50"
+            >
+              <ArrowLeft size={20} className="text-slate-600 group-hover:text-slate-800 transition-colors" />
             </button>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">PTNPedia</h1>
-              <p className="text-sm text-slate-500 mt-1">Informasi lengkap PTN, program studi, dan daya tampung</p>
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 bg-clip-text text-transparent">
+                PTNPedia
+              </h1>
+              <p className="text-sm sm:text-base text-slate-600 mt-1 leading-relaxed">
+                Eksplorasi PTN, program studi & peluang masuk terlengkap
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-6">
-          <div className="flex gap-3 mb-4">
+        {/* Premium Quick Actions Grid */}
+        <div className="mb-8 dash-fade-up d-delay-80">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+            {/* SNBP Card */}
             <button
               onClick={() => setDataType('snbp')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              className={`group relative p-4 sm:p-6 rounded-2xl transition-all duration-300 overflow-hidden ${
                 dataType === 'snbp'
-                  ? 'bg-indigo-600 text-white shadow-lg'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-500/25 scale-[1.02]'
+                  : 'bg-white/70 backdrop-blur-sm text-slate-700 hover:bg-white hover:shadow-lg border border-white/50'
               }`}
             >
-              SNBP (Afirmasi)
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-xl ${
+                    dataType === 'snbp' ? 'bg-white/20' : 'bg-indigo-100'
+                  }`}>
+                    <Sparkles size={20} className={dataType === 'snbp' ? 'text-white' : 'text-indigo-600'} />
+                  </div>
+                  <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    dataType === 'snbp' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'
+                  }`}>
+                    Afirmasi
+                  </div>
+                </div>
+                <h3 className="font-bold text-base sm:text-lg mb-1">SNBP</h3>
+                <p className={`text-xs sm:text-sm opacity-80 leading-tight ${
+                  dataType === 'snbp' ? 'text-white' : 'text-slate-600'
+                }`}>
+                  Jalur prestasi akademik
+                </p>
+              </div>
+              {dataType === 'snbp' && (
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 animate-pulse" />
+              )}
             </button>
+
+            {/* SNBT Card */}
             <button
               onClick={() => setDataType('snbt')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              className={`group relative p-4 sm:p-6 rounded-2xl transition-all duration-300 overflow-hidden ${
                 dataType === 'snbt'
-                  ? 'bg-teal-600 text-white shadow-lg'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/25 scale-[1.02]'
+                  : 'bg-white/70 backdrop-blur-sm text-slate-700 hover:bg-white hover:shadow-lg border border-white/50'
               }`}
             >
-              SNBT (Tes Tulis)
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-xl ${
+                    dataType === 'snbt' ? 'bg-white/20' : 'bg-emerald-100'
+                  }`}>
+                    <Zap size={20} className={dataType === 'snbt' ? 'text-white' : 'text-emerald-600'} />
+                  </div>
+                  <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    dataType === 'snbt' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    Tes Tulis
+                  </div>
+                </div>
+                <h3 className="font-bold text-base sm:text-lg mb-1">SNBT</h3>
+                <p className={`text-xs sm:text-sm opacity-80 leading-tight ${
+                  dataType === 'snbt' ? 'text-white' : 'text-slate-600'
+                }`}>
+                  Ujian tertulis berbasis komputer
+                </p>
+              </div>
+              {dataType === 'snbt' && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 animate-pulse" />
+              )}
             </button>
           </div>
-          <div className="flex gap-2 border-t border-slate-200 pt-4">
+
+          {/* Secondary Actions */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <button
               onClick={() => setViewMode('browse')}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+              className={`group p-4 rounded-xl transition-all duration-300 border ${
                 viewMode === 'browse'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-white/50 backdrop-blur-sm border-white/50 text-slate-600 hover:bg-white hover:shadow-md'
               }`}
             >
-              Jelajah PTN
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${
+                  viewMode === 'browse' ? 'bg-indigo-100' : 'bg-slate-100 group-hover:bg-indigo-100'
+                }`}>
+                  <Globe size={16} className={viewMode === 'browse' ? 'text-indigo-600' : 'text-slate-600 group-hover:text-indigo-600'} />
+                </div>
+                <span className="font-medium text-sm">Jelajah PTN</span>
+              </div>
             </button>
+
             <button
               onClick={() => setViewMode('compare')}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+              className={`group p-4 rounded-xl transition-all duration-300 border ${
                 viewMode === 'compare'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-white/50 backdrop-blur-sm border-white/50 text-slate-600 hover:bg-white hover:shadow-md'
               }`}
             >
-              Bandingkan Prodi
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${
+                  viewMode === 'compare' ? 'bg-indigo-100' : 'bg-slate-100 group-hover:bg-indigo-100'
+                }`}>
+                  <BarChart3 size={16} className={viewMode === 'compare' ? 'text-indigo-600' : 'text-slate-600 group-hover:text-indigo-600'} />
+                </div>
+                <span className="font-medium text-sm">Bandingkan</span>
+              </div>
             </button>
           </div>
         </div>
 
+        {/* Premium Error Display */}
         {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-            <AlertCircle className="text-rose-600" size={20} />
-            <p className="text-sm text-rose-700">{error}</p>
+          <div className="mb-6 dash-fade-up d-delay-160">
+            <div className="bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200/50 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-rose-100 rounded-xl">
+                  <AlertCircle className="text-rose-600" size={20} />
+                </div>
+                <div>
+                  <p className="font-medium text-rose-800 text-sm">{error}</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {viewMode === 'compare' ? (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
-              <h3 className="font-bold text-slate-900 mb-4">Bandingkan Program Studi</h3>
+          <div className="space-y-6 dash-fade-up d-delay-200">
+            {/* Premium Search Section */}
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/50">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl">
+                  <BarChart3 size={20} className="text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Bandingkan Program Studi</h3>
+                  <p className="text-sm text-slate-600">Temukan program terbaik di berbagai PTN</p>
+                </div>
+              </div>
+              
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Ketik nama program studi (contoh: Teknik Informatika)"
-                    value={compareProdiName}
-                    onChange={(e) => setCompareProdiName(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleCompareProdi()}
-                    className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                <div className="flex-1 relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Ketik nama program studi (contoh: Teknik Informatika)"
+                      value={compareProdiName}
+                      onChange={(e) => setCompareProdiName(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleCompareProdi()}
+                      className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-white/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all text-sm placeholder:text-slate-400"
+                    />
+                  </div>
                 </div>
                 <button
                   onClick={handleCompareProdi}
                   disabled={loading || !compareProdiName.trim()}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all"
+                  className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  {loading ? 'Mencari...' : 'Bandingkan'}
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader className="animate-spin" size={16} />
+                      <span>Mencari...</span>
+                    </div>
+                  ) : (
+                    'Bandingkan'
+                  )}
                 </button>
               </div>
             </div>
