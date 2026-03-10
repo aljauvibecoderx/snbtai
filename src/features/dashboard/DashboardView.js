@@ -1390,6 +1390,18 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
               </button>
               
               <button 
+                onClick={() => navigate('/dashboard/question-bank')} 
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
+                  activeTab === 'bank' 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <BookOpen size={18} strokeWidth={2} />
+                <span className="text-sm font-semibold">Bank Soal</span>
+              </button>
+              
+              <button 
                 onClick={() => navigate('/dashboard/wishlist')} 
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap min-h-[44px] ${
                   activeTab === 'wishlist' 
