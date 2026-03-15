@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Disallow admin routes
+Disallow: /admin
+Disallow: /admin/*
+
+# Disallow private user routes
+Disallow: /dashboard/private
+Disallow: /settings
+Disallow: /app
+
+# Allow public dashboard sections
+Allow: /dashboard/overview
+Allow: /dashboard/question-bank
+Allow: /dashboard/official-tryouts
+
+# Sitemap location
+Sitemap: https://snbtai.xyz/sitemap.xml

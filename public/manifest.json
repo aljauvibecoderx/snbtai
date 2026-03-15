@@ -1,0 +1,63 @@
+{
+  "short_name": "SNBT AI",
+  "name": "SNBT AI - AI-Powered Learning Platform",
+  "description": "Platform pembelajaran SNBT terlengkap dengan AI Generator, Tryout Profesional, IRT Scoring, dan Bank Soal 10K+",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#5B50D6",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "id",
+  "categories": ["education", "productivity"],
+  "screenshots": [
+    {
+      "src": "screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Generate Soal",
+      "short_name": "Generate",
+      "description": "Generate soal SNBT dengan AI",
+      "url": "/app",
+      "icons": [{ "src": "icon-generate.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Lihat progress belajar",
+      "url": "/dashboard/overview",
+      "icons": [{ "src": "icon-dashboard.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

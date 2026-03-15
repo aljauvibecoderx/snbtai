@@ -1,0 +1,458 @@
+import React, { useState } from 'react';
+import { useStudyProgress } from '../hooks/useStudyProgress';
+import { silabusData, subjectMetadata } from '../data/silabus';
+import StudyInsights from './StudyInsights';
+import ErrorBoundary from './ErrorBoundary';
+import { CheckCircle2, Circle, RotateCcw, Filter, BookOpen, Target, Award, BarChart3 } from 'lucide-react';
+
+const ProgressTracker = ({ userId }) => {
+  const { progress, loading, toggleCompletion, resetProgress, importProgress } = useStudyProgress(userId);
+  const [filter, setFilter] = useState('all');
+  const [expandedSubjects, setExpandedSubjects] = useState(new Set());
+  const [showInsights, setShowInsights] = useState(false);
+
+  if (loading) {
+    return <ProgressSkeleton />;
+  }
+
+  if (!progress) {
+    return <div className="text-center py-8 text-gray-500">Unable to load progress data</div>;
+  }
+
+  const toggleSubject = (subject) => {
+    const newExpanded = new Set(expandedSubjects);
+    if (newExpanded.has(subject)) {
+      newExpanded.delete(subject);
+    } else {
+      newExpanded.add(subject);
+    }
+    setExpandedSubjects(newExpanded);
+  };
+
+  const getFilteredMaterials = (subject) => {
+    const materials = silabusData.filter(item => item.subject === subject);
+    
+    if (filter === 'completed') {
+      return materials.filter(item => 
+        progress.subjects[subject]?.materials[item.id]?.completed
+      );
+    } else if (filter === 'incomplete') {
+      return materials.filter(item => 
+        !progress.subjects[subject]?.materials[item.id]?.completed
+      );
+    }
+    
+    return materials;
+  };
+
+  const subjects = [...new Set(silabusData.map(item => item.subject))];
+
+  return (
+    <ErrorBoundary>
+      <div className="w-full min-h-screen bg-slate-50">
+        <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Header - Mobile Optimized */}
+        <div className="text-center space-y-3 sm:space-y-4 dash-fade-up d-delay-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 px-2">SNBT Progress Tracker</h1>
+          
+          {/* Stats Container - Responsive Layout */}
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dash-shadow stat-card-hover">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+              {/* Circular Progress */}
+              <div className="flex-shrink-0 dash-fade-up d-delay-80">
+                <CircularProgress percentage={progress.totalProgress * 100} />
+              </div>
+              
+              {/* Stats Grid - Mobile Responsive */}
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full sm:w-auto">
+                <div className="text-center min-w-0 dash-fade-up d-delay-120">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-violet-600 truncate">
+                    {Object.keys(progress.subjects).length}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600">Subjects</div>
+                </div>
+                <div className="text-center min-w-0 dash-fade-up d-delay-160">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 truncate">
+                    {Object.values(progress.subjects).reduce((sum, s) => sum + s.completed, 0)}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600">Completed</div>
+                </div>
+                <div className="text-center min-w-0 dash-fade-up d-delay-200">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900 truncate">
+                    {Object.values(progress.subjects).reduce((sum, s) => sum + s.total, 0)}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600">Total</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Controls - Mobile Optimized */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center dash-fade-up d-delay-250">
+          {/* Filter Buttons */}
+          <div className="flex space-x-2 overflow-x-auto pb-2 sm:pb-0">
+            <FilterButton 
+              active={filter === 'all'} 
+              onClick={() => setFilter('all')}
+            >
+              All
+            </FilterButton>
+            <FilterButton 
+              active={filter === 'completed'} 
+              onClick={() => setFilter('completed')}
+            >
+              Completed
+            </FilterButton>
+            <FilterButton 
+              active={filter === 'incomplete'} 
+              onClick={() => setFilter('incomplete')}
+            >
+              Incomplete
+            </FilterButton>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowInsights(!showInsights)}
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                showInsights 
+                  ? 'bg-violet-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <BarChart3 size={16} />
+              <span className="hidden sm:inline">Analytics</span>
+            </button>
+            
+            <button
+              onClick={resetProgress}
+              className="flex items-center space-x-2 px-3 sm:px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
+            >
+              <RotateCcw size={16} />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Analytics View */}
+        {showInsights && (
+          <div className="tab-content">
+            <StudyInsights 
+              progress={progress} 
+              onImportProgress={importProgress}
+            />
+          </div>
+        )}
+
+        {/* Subject Cards */}
+        {!showInsights && (
+          <div className="space-y-3 sm:space-y-4">
+            {subjects.map((subject, index) => {
+              const subjectData = progress.subjects[subject];
+              const filteredMaterials = getFilteredMaterials(subject);
+              
+              if (filteredMaterials.length === 0) return null;
+
+              return (
+                <div key={subject} className="dash-fade-up" style={{ animationDelay: `${300 + (index * 80)}ms` }}>
+                  <SubjectCard
+                    subject={subject}
+                    subjectData={subjectData}
+                    materials={filteredMaterials}
+                    expanded={expandedSubjects.has(subject)}
+                    onToggle={() => toggleSubject(subject)}
+                    onMaterialToggle={toggleCompletion}
+                    progress={progress}
+                  />
+                </div>
+              );
+            })}
+          </div>
+           )}
+       </div>
+       </div>
+     </ErrorBoundary>
+   );
+ };
+
+const SubjectCard = ({ subject, subjectData, materials, expanded, onToggle, onMaterialToggle, progress }) => {
+  const progressPercentage = (subjectData?.progress || 0) * 100;
+  const metadata = subjectMetadata[subject] || {};
+  
+  // Convert hex color to soft bg and text colors
+  const colorMap = {
+    '#3B82F6': { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-l-blue-600', bar: 'bg-blue-500' },
+    '#EAB308': { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-l-amber-600', bar: 'bg-amber-500' },
+    '#EF4444': { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-l-rose-600', bar: 'bg-rose-500' },
+    '#EC4899': { bg: 'bg-pink-50', text: 'text-pink-600', border: 'border-l-pink-600', bar: 'bg-pink-500' },
+    '#8B5CF6': { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-l-violet-600', bar: 'bg-violet-500' },
+    '#06B6D4': { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'border-l-cyan-600', bar: 'bg-cyan-500' },
+    '#6B7280': { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-l-gray-600', bar: 'bg-gray-500' }
+  };
+  const colorStyle = colorMap[metadata.color] || colorMap['#6B7280'];
+
+  return (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${colorStyle.border} overflow-hidden dash-shadow-hover transition-all`}>
+      <button
+        onClick={onToggle}
+        className="w-full p-4 sm:p-6 text-left hover:bg-slate-50 transition-colors"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+            {/* Icon */}
+            <div 
+              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${colorStyle.bg} flex-shrink-0`}
+            >
+              <i className={`${metadata.icon || 'fas fa-book'} ${colorStyle.text}`} />
+            </div>
+            
+            {/* Content */}
+            <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                {metadata.name || subject.replace('_', ' ')}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">{metadata.description}</p>
+              
+              {/* Progress Bar */}
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="w-20 sm:w-32 bg-gray-200 rounded-full h-1.5 flex-shrink-0">
+                  <div 
+                    className="h-1.5 rounded-full transition-all duration-300 progress-anim"
+                    style={{ 
+                      width: `${progressPercentage}%`,
+                      backgroundColor: metadata.color || '#3B82F6',
+                      '--progress-width': `${progressPercentage}%`
+                    }}
+                  />
+                </div>
+                <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">
+                  {subjectData?.completed || 0}/{subjectData?.total || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Percentage */}
+          <div className="text-right flex-shrink-0">
+            <div className="text-lg sm:text-2xl font-bold text-gray-900">
+              {Math.round(progressPercentage)}%
+            </div>
+            <div className="text-xs text-gray-500 font-medium">
+              {metadata.code}
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-gray-100 p-4 sm:p-6 space-y-2 sm:space-y-3">
+          {materials.map((material, index) => (
+            <div key={material.id} className="dash-row-slide" style={{ animationDelay: `${index * 55}ms` }}>
+              <MaterialItem
+                material={material}
+                completed={progress.subjects[subject]?.materials[material.id]?.completed || false}
+                onToggle={() => onMaterialToggle(material.id)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MaterialItem = ({ material, completed, onToggle }) => {
+  return (
+    <div 
+      className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 min-h-[48px] ${
+        completed ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50'
+      }`}
+      onClick={onToggle}
+    >
+      <div className="flex-shrink-0 mt-0.5">
+        {completed ? (
+          <CheckCircle2 className="w-5 h-5 text-green-600" />
+        ) : (
+          <Circle className="w-5 h-5 text-gray-400" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className={`font-medium text-sm sm:text-base leading-tight ${
+          completed ? 'text-green-900 line-through' : 'text-gray-900'
+        }`}>
+          {material.topic}
+        </div>
+        {material.subtopic && (
+          <div className={`text-xs sm:text-sm mt-1 leading-tight ${
+            completed ? 'text-green-700' : 'text-gray-600'
+          }`}>
+            {material.subtopic}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const CircularProgress = ({ percentage }) => {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative w-20 h-20 sm:w-24 sm:h-24">
+      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+        <circle
+          cx="40"
+          cy="40"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="transparent"
+          className="text-gray-200"
+        />
+        <circle
+          cx="40"
+          cy="40"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="transparent"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          className="text-blue-600 transition-all duration-300"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm sm:text-lg font-bold text-gray-900">
+          {Math.round(percentage)}%
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const FilterButton = ({ children, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap min-h-[40px] ${
+      active 
+        ? 'bg-blue-600 text-white' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+  >
+    {children}
+  </button>
+);
+
+const ProgressSkeleton = () => (
+  <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="text-center space-y-3 sm:space-y-4">
+      <div className="h-6 sm:h-8 bg-gray-200 rounded w-48 sm:w-64 mx-auto animate-pulse" />
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-full animate-pulse" />
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full sm:w-auto">
+            <div className="text-center">
+              <div className="h-6 sm:h-8 bg-gray-200 rounded w-8 sm:w-16 mx-auto animate-pulse mb-2" />
+              <div className="h-3 sm:h-4 bg-gray-200 rounded w-12 sm:w-24 mx-auto animate-pulse" />
+            </div>
+            <div className="text-center">
+              <div className="h-6 sm:h-8 bg-gray-200 rounded w-8 sm:w-16 mx-auto animate-pulse mb-2" />
+              <div className="h-3 sm:h-4 bg-gray-200 rounded w-12 sm:w-24 mx-auto animate-pulse" />
+            </div>
+            <div className="text-center">
+              <div className="h-6 sm:h-8 bg-gray-200 rounded w-8 sm:w-16 mx-auto animate-pulse mb-2" />
+              <div className="h-3 sm:h-4 bg-gray-200 rounded w-12 sm:w-24 mx-auto animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {[1, 2, 3].map(i => (
+      <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div className="space-y-3">
+          <div className="h-5 sm:h-6 bg-gray-200 rounded w-32 sm:w-48 animate-pulse" />
+          <div className="h-2 bg-gray-200 rounded w-full animate-pulse" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+export default ProgressTracker;
+
+// Add the same CSS animations used in DashboardView
+const animationStyles = `
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Premium Shadow System ── */
+  .dash-shadow {
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.04),
+      0 4px 12px rgba(0,0,0,0.05),
+      0 8px 24px rgba(0,0,0,0.03);
+  }
+  .dash-shadow-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .dash-shadow-hover:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 2px 4px rgba(0,0,0,0.05),
+      0 10px 28px rgba(99,102,241,0.12),
+      0 18px 44px rgba(99,102,241,0.08);
+  }
+  .stat-card-hover {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .stat-card-hover:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 8px 28px rgba(99,102,241,0.18);
+  }
+
+  /* ── Entrance Animations ── */
+  @keyframes dashFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dashFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes progressGrow {
+    from { width: 0%; }
+    to   { width: var(--progress-width); }
+  }
+  @keyframes rowSlide {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .dash-fade-up    { animation: dashFadeUp 0.45s cubic-bezier(.22,.68,0,1.2) both; }
+  .dash-fade-in    { animation: dashFadeIn 0.4s ease both; }
+  .dash-row-slide  { animation: rowSlide 0.35s ease both; }
+  .progress-anim   { animation: progressGrow 0.9s cubic-bezier(.22,.68,0,1) both; }
+  .tab-content     { animation: dashFadeIn 0.3s ease both; }
+
+  .d-delay-0   { animation-delay: 0ms; }
+  .d-delay-80  { animation-delay: 80ms; }
+  .d-delay-120 { animation-delay: 120ms; }
+  .d-delay-160 { animation-delay: 160ms; }
+  .d-delay-200 { animation-delay: 200ms; }
+  .d-delay-250 { animation-delay: 250ms; }
+`;
+
+// Inject styles if not already present
+if (typeof document !== 'undefined' && !document.getElementById('progress-tracker-animations')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'progress-tracker-animations';
+  styleElement.textContent = animationStyles;
+  document.head.appendChild(styleElement);
+}
