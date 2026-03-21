@@ -7,7 +7,8 @@ import {
 import { getRoom, leaveRoom } from '../../services/firebase/ambisBattle';
 
 const BattleResult = ({ user }) => {
-  const { roomId } = useParams();
+  const params = useParams();
+  const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
   const navigate = useNavigate();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -206,7 +206,8 @@ const EditQuestionModal = ({ question, onSave, onClose }) => {
 };
 
 const GenerateQuestion = ({ user }) => {
-  const { roomId } = useParams();
+  const params = useParams();
+  const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [room, setRoom] = useState(null);

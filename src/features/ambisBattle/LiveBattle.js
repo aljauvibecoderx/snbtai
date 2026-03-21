@@ -9,7 +9,8 @@ import { listenToRoom, submitAnswer, advanceQuestion, finishBattle } from '../..
 const QUESTION_DURATION = 30; // seconds per question
 
 const LiveBattle = ({ user }) => {
-  const { roomId } = useParams();
+  const params = useParams();
+  const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
