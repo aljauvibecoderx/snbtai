@@ -27,40 +27,47 @@ const getKey = () => {
   return GEMINI_KEYS[idx % GEMINI_KEYS.length]?.key;
 };
 
-const generateQuestionWithAI = async (subtest, topic, difficulty, count) => {
+const generateQuestionWithAI = async (subtest, topic, difficulty, count, context = '') => {
   const apiKey = getKey();
   if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
 
+  const contextPrompt = context.trim() ? `\n\n=== KONTEKS MATERI ACAUN (WAJIB DIGUNAKAN) ===\n"${context}"\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!` : '';
+
   const prompt = `SYSTEM: GENERATOR SOAL UTBK-SNBT DENGAN POLA RESMI
 
-Buatkan ${count} soal pilihan ganda SNBT untuk subtes ${subtest}, topik ${topic}, tingkat kesulitan ${difficulty}.
+Kamu adalah AI profesional pembuat soal quiz pilihan ganda realtime.
+Buatkan ${count} soal pilihan ganda SNBT untuk subtes ${subtest}, topik ${topic}, tingkat kesulitan ${difficulty}.${contextPrompt}
 
-=== PROTOKOL ESCAPING KARAKTER (CRITICAL) ===
-1. Tanda petik ganda di dalam string: WAJIB escape dengan \\" 
-2. Backslash untuk LaTeX: WAJIB TEPAT DUA backslash \\\\ (contoh: \\\\frac, \\\\circ)
-3. Newline: Gunakan \\n
-4. DILARANG teks di luar JSON. DILARANG markdown code blocks.
-5. Markdown Bold: Gunakan **kata** 
+=== PROTOKOL FORMAT MUTLAK (CRITICAL ERROR JIKA DILANGGAR) ===
+1. KEMBALIKAN HANYA ARRAY JSON MURNI TERVALIDASI.
+2. DILARANG ADA TEKS PENGANTAR.
+3. DILARANG MENGGUNAKAN BLOK MARKDOWN (tanpa \`\`\`json).
+4. Setiap string WAJIB escape kutipan ganda dengan single backslash (\\").
+5. Tuliskan rumus/matematika dalam format LaTeX dengan DUA backslash (contoh: \\\\frac{1}{2}, \\\\sqrt{x}). Gunakan $...$ untuk inline math.
+6. NO trailing commas.
+7. NO unlocked strings.
+8. NO line breaks that break JSON format.
+9. DILARANG ADA TEKS DILUAR JSON ARRAY.
 
-=== PROTOKOL LATEX (CRITICAL) ===
-SETIAP ekspresi matematika WAJIB dibungkus dengan $:
-1. Inline math: $x$, $f(x)$, $\\\\frac{1}{2}$
-2. JANGAN gunakan block math $$...$$
-3. Kurung untuk pecahan/pangkat: Gunakan $\\\\left($ dan $\\\\right)$
-
-=== STRUKTUR JSON (WAJIB DIIKUTI) ===
+=== STRUKTUR JSON (WAJIB BERUPA ARRAY DARI OBJECT INI) ===
 [
   {
-    "text": "Teks pertanyaan lengkap...",
-    "options": ["A. opsi 1", "B. opsi 2", "C. opsi 3", "D. opsi 4", "E. opsi 5"],
+    "text": "Teks pertanyaan lengkap yang rapi dan memuat kalimat utuh...",
+    "options": [
+      "A. opsi pertama",
+      "B. opsi kedua",
+      "C. opsi ketiga",
+      "D. opsi keempat",
+      "E. opsi kelima"
+    ],
     "correctIndex": 0,
-    "explanation": "Pembahasan rinci namun ringkas.",
+    "explanation": "Pembahasan rinci dan logis dalam kalimat utuh.",
     "subtest": "${subtest}",
     "topic": "${topic}",
     "difficulty": "${difficulty}"
   }
 ]
-Validasi Akhir: correctIndex WAJIB berupa angka (0-4). Pastikan opsi selalu 5 item. JANGAN BERIKAN TEKS PENGANTAR, HANYA JSON ARRAY.`;
+Validasi Akhir: "options" WAJIB terdiri dari 5 string. "correctIndex" WAJIB number (0-4). JIKA GAGAL MENGIKUTI ATURAN, KEMBALIKAN ARRAY KOSONG: []`;
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -263,7 +270,7 @@ const GenerateQuestion = ({ user }) => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
-  const [aiConfig, setAiConfig] = useState({ subtest: 'pu', topic: TOPICS[0], difficulty: 'Sedang', count: 5 });
+  const [aiConfig, setAiConfig] = useState({ subtest: 'pu', topic: TOPICS[0], difficulty: 'Sedang', count: 5, context: '' });
   const unsubRef = useRef(null);
 
   useEffect(() => {
@@ -291,17 +298,18 @@ const GenerateQuestion = ({ user }) => {
     setAiLoading(true);
     setError('');
     try {
-      const { subtest, topic, difficulty, count } = aiConfig;
+      const { subtest, topic, difficulty, count, context } = aiConfig;
       
       const newQuestions = await generateQuestionWithAI(
         SUBTESTS.find((s) => s.id === subtest)?.label || subtest,
         topic,
         difficulty,
-        count
+        count,
+        context
       );
 
       if (!newQuestions || newQuestions.length === 0) {
-        throw new Error('Semua soal gagal di-generate. Coba lagi.');
+        throw new Error('Semua soal gagal di-generate (Mungkin format salah). Coba lagi.');
       }
       
       setQuestions((prev) => [...prev, ...newQuestions]);
@@ -430,11 +438,24 @@ const GenerateQuestion = ({ user }) => {
               <select
                 value={aiConfig.count}
                 onChange={(e) => setAiConfig({ ...aiConfig, count: parseInt(e.target.value) })}
-                className="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-violet-400"
+                className="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-violet-400 bg-white shadow-sm"
               >
                 {[1, 3, 5, 10].map((n) => <option key={n} value={n}>{n} soal</option>)}
               </select>
             </div>
+          </div>
+
+          <div className="mb-4">
+              <label className="text-xs font-semibold text-slate-600 mb-1 block flex items-center gap-1">
+                Konteks / Referensi Acuan Singkat <span className="text-slate-400 font-normal">(Opsional)</span>
+              </label>
+              <textarea
+                value={aiConfig.context}
+                onChange={(e) => setAiConfig({ ...aiConfig, context: e.target.value })}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-400 shadow-sm resize-none"
+                placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
+                rows={3}
+              />
           </div>
 
           <button
