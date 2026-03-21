@@ -27,14 +27,24 @@ const getKey = () => {
   return GEMINI_KEYS[idx % GEMINI_KEYS.length]?.key;
 };
 
-const generateQuestionWithAI = async (subtest, topic, difficulty) => {
+const generateQuestionWithAI = async (subtest, topic, difficulty, count) => {
   const apiKey = getKey();
-  if (!apiKey) throw new Error('API key tidak tersedia.');
+  if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
 
-  const prompt = `Buatkan 1 soal SNBT pilihan ganda (A-E) untuk subtes ${subtest}, topik ${topic}, level ${difficulty}. 
-Kembalikan HANYA JSON valid tanpa markdown, dengan format:
-{"text":"teks soal","options":["A.opsi1","B.opsi2","C.opsi3","D.opsi4","E.opsi5"],"correctIndex":0,"explanation":"penjelasan singkat","subtest":"${subtest}","topic":"${topic}","difficulty":"${difficulty}"}
-Pastikan correctIndex adalah angka (0-4) yang menunjukkan jawaban benar.`;
+  const prompt = `Buatkan ${count} soal SNBT pilihan ganda (A-E) untuk subtes ${subtest}, topik ${topic}, level ${difficulty}. 
+Kembalikan HANYA format JSON Array (tanpa blok markdown) berisi objek soal dengan struktur:
+[
+  {
+    "text": "teks pertanyaan...",
+    "options": ["A. opsi 1", "B. opsi 2", "C. opsi 3", "D. opsi 4", "E. opsi 5"],
+    "correctIndex": 0,
+    "explanation": "pembahasan singkat kenapa jawaban benar",
+    "subtest": "${subtest}",
+    "topic": "${topic}",
+    "difficulty": "${difficulty}"
+  }
+]
+Validasi: correctIndex WAJIB berupa angka 0-4. DILARANG menambahkan format text lain selain JSON Array murni.`;
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -43,15 +53,30 @@ Pastikan correctIndex adalah angka (0-4) yang menunjukkan jawaban benar.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+        generationConfig: { maxOutputTokens: 2500, temperature: 0.7 },
       }),
     }
   );
-  if (!res.ok) throw new Error('AI request gagal.');
+  
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("AI Request Failed: ", errText);
+    throw new Error('API AI menolak permintaan (mungkin limit/Error). Coba lagi nanti.');
+  }
+
   const data = await res.json();
   const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const clean = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  
+  // Clean off markdown
+  let clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+  
+  try {
+    const parsed = JSON.parse(clean);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch (error) {
+    console.error("Failed to parse JSON array from AI response:", clean);
+    throw new Error("AI gagal mengikuti format JSON. Silakan coba lagi.");
+  }
 };
 
 const QuestionCard = ({ question, index, onEdit, onDelete }) => {
@@ -246,21 +271,21 @@ const GenerateQuestion = ({ user }) => {
     setError('');
     try {
       const { subtest, topic, difficulty, count } = aiConfig;
-      const tasks = Array.from({ length: Math.min(count, 10) }, () =>
-        generateQuestionWithAI(
-          SUBTESTS.find((s) => s.id === subtest)?.label || subtest,
-          topic,
-          difficulty
-        )
+      
+      const newQuestions = await generateQuestionWithAI(
+        SUBTESTS.find((s) => s.id === subtest)?.label || subtest,
+        topic,
+        difficulty,
+        count
       );
-      const results = await Promise.allSettled(tasks);
-      const successful = results
-        .filter((r) => r.status === 'fulfilled')
-        .map((r) => r.value);
 
-      if (successful.length === 0) throw new Error('Semua soal gagal di-generate. Coba lagi.');
-      setQuestions((prev) => [...prev, ...successful]);
+      if (!newQuestions || newQuestions.length === 0) {
+        throw new Error('Semua soal gagal di-generate. Coba lagi.');
+      }
+      
+      setQuestions((prev) => [...prev, ...newQuestions]);
     } catch (e) {
+      console.error("AI Generation Error: ", e);
       setError(e.message || 'Gagal generate soal.');
     } finally {
       setAiLoading(false);
