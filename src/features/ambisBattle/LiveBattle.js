@@ -29,6 +29,8 @@ const LiveBattle = ({ user }) => {
   const unsubRef = useRef(null);
   const answeredRef = useRef(false);
   const currentIndexRef = useRef(0);
+  const targetEndRef = useRef(null);
+  const isInitialMount = useRef(true);
 
   const isHost = room?.hostId === user?.uid;
   const myPlayer = room?.players?.find((p) => p.id === user?.uid);
@@ -51,10 +53,12 @@ const LiveBattle = ({ user }) => {
         navigate(`/ambis-battle/result/${roomId}`);
       }
 
-      // New question from host
-      if (data.currentQuestionIndex !== currentIndexRef.current) {
-        currentIndexRef.current = data.currentQuestionIndex;
-        resetForNewQuestion();
+      const isNewQuestion = data.currentQuestionIndex !== currentIndexRef.current;
+      if (isInitialMount.current || isNewQuestion) {
+        currentIndexRef.current = data.currentQuestionIndex || 0;
+        const stTime = data.questionStartsAt || Date.now();
+        resetForNewQuestion(stTime);
+        isInitialMount.current = false;
       }
     });
 
@@ -69,48 +73,44 @@ const LiveBattle = ({ user }) => {
     clearInterval(countdownRef.current);
   };
 
-  const resetForNewQuestion = () => {
+  const resetForNewQuestion = (syncStartTime) => {
     setSelectedAnswer(null);
     setAnswered(false);
     answeredRef.current = false;
     setShowResult(false);
-    setPhase('playing');
+    setPhase('countdown');
     setTimeLeft(QUESTION_DURATION);
-    setQuestionStartTime(Date.now());
     clearTimers();
-    startTimer();
-  };
 
-  // ─── Countdown on mount ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (phase !== 'countdown') return;
-    setCountdown(3);
-    let count = 3;
     countdownRef.current = setInterval(() => {
-      count -= 1;
-      setCountdown(count);
-      if (count <= 0) {
+      const remainingSeconds = Math.ceil((syncStartTime - Date.now()) / 1000);
+      if (remainingSeconds <= 0) {
         clearInterval(countdownRef.current);
         setPhase('playing');
-        setQuestionStartTime(Date.now());
-        startTimer();
+        setQuestionStartTime(syncStartTime);
+        startTimer(syncStartTime);
+      } else {
+        setCountdown(remainingSeconds);
       }
-    }, 1000);
-    return () => clearInterval(countdownRef.current);
-  }, []);
+    }, 250);
+  };
 
   // ─── Timer ────────────────────────────────────────────────────────────────
-  const startTimer = useCallback(() => {
+  const startTimer = useCallback((syncStartTime) => {
     clearInterval(timerRef.current);
-    let t = QUESTION_DURATION;
+    targetEndRef.current = syncStartTime + (QUESTION_DURATION * 1000);
+
     timerRef.current = setInterval(() => {
-      t -= 1;
-      setTimeLeft(t);
-      if (t <= 0) {
+      const remaining = Math.ceil((targetEndRef.current - Date.now()) / 1000);
+      
+      if (remaining <= 0) {
+        setTimeLeft(0);
         clearInterval(timerRef.current);
         if (!answeredRef.current) {
           handleTimeout();
         }
+      } else {
+        setTimeLeft(remaining > QUESTION_DURATION ? QUESTION_DURATION : remaining);
       }
     }, 1000);
   }, []);

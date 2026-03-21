@@ -117,6 +117,7 @@ export const startBattle = async (roomId) => {
     status: 'playing',
     currentQuestionIndex: 0,
     startTime: now,
+    questionStartsAt: now + 3500, // 3.5s buffer for countdown
     updatedAt: serverTimestamp(),
   });
 };
@@ -130,6 +131,7 @@ export const submitAnswer = async (roomId, userId, questionIndex, answerIndex, t
   const room = roomSnap.data();
   const question = room.questions[questionIndex];
   const isCorrect = question && answerIndex === question.correctIndex;
+  // Calculate points dynamically 
   const pointsEarned = isCorrect ? Math.max(100 - timeTaken * 2, 20) : 0;
 
   const updatedPlayers = room.players.map((p) => {
@@ -154,6 +156,7 @@ export const advanceQuestion = async (roomId, nextIndex, totalQuestions) => {
   } else {
     await updateDoc(roomRef, {
       currentQuestionIndex: nextIndex,
+      questionStartsAt: Date.now() + 3500, // 3.5s buffer for countdown
       updatedAt: serverTimestamp(),
     });
   }
