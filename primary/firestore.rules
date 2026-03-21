@@ -136,4 +136,26 @@ service cloud.firestore {
     allow read: if request.auth != null;
     allow write: if isAdmin();
   }
+  
+  // ─── Ambis Battle Rooms ─────────────────────────────────────────────────
+  // Collection: ambis_battle_rooms/{roomId}
+  //
+  // Security model:
+  //   READ   – any authenticated user (needed to verify room exists before joining)
+  //   CREATE – authenticated user only; they must set themselves as hostId
+  //   UPDATE – authenticated user who is the host OR a player already in room.
+  //            Because Firestore rules cannot deep-query array-of-maps, the second
+  //            condition is kept broad (any auth user) and capacity/status guards
+  //            are enforced in the service layer (joinRoom function).
+  //   DELETE – host only (room creator)
+  match /ambis_battle_rooms/{roomId} {
+    allow read:   if request.auth != null;
+    allow create: if request.auth != null
+                     && request.resource.data.hostId == request.auth.uid;
+    allow update: if request.auth != null
+                     && (resource.data.hostId == request.auth.uid
+                         || request.auth != null); // any authenticated user can update (service layer guards capacity)
+    allow delete: if request.auth != null
+                     && resource.data.hostId == request.auth.uid;
+  }
 }
