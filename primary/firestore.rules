@@ -1,9 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
-  function isAdmin() {
-    return request.auth != null && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
-  }
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
   
   // Users - own data only
   match /users/{userId} {
@@ -157,5 +158,6 @@ service cloud.firestore {
                          || request.auth != null); // any authenticated user can update (service layer guards capacity)
     allow delete: if request.auth != null
                      && resource.data.hostId == request.auth.uid;
+  }
   }
 }
