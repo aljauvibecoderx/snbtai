@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { FileText, BookOpen, History, ArrowLeft, Trophy, Camera, BarChart3 } from 'lucide-react';
+import { FileText, BookOpen, History, ArrowLeft, Trophy, Camera, BarChart3, Swords } from 'lucide-react';
 
 export const DashboardLayout = ({ user, onBack }) => {
   const navigate = useNavigate();
@@ -51,6 +51,9 @@ export const DashboardLayout = ({ user, onBack }) => {
             </NavLink>
             <NavLink to="/dashboard/history" className={({ isActive }) => `px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
               <History size={14} className="sm:w-4 sm:h-4" /><span>Riwayat</span>
+            </NavLink>
+            <NavLink to="/dashboard/ambis-battle" className={({ isActive }) => `px-3 sm:px-5 py-2 sm:py-3 rounded-xl text-[11px] sm:text-sm font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}>
+              <Swords size={14} className="sm:w-4 sm:h-4" /><span>Ambis Battle</span>
             </NavLink>
           </nav>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FileText, BookOpen, History, ArrowLeft, TrendingUp, Award, Target, BarChart3, Trophy, Trash2, Search, Filter, CheckCircle, Camera, X, Bookmark, Globe, BookText, Edit2 } from 'lucide-react';
+import { FileText, BookOpen, History, ArrowLeft, TrendingUp, Award, Target, BarChart3, Trophy, Trash2, Search, Filter, CheckCircle, Camera, X, Bookmark, Globe, BookText, Edit2, Swords, Zap, Users, Plus, LogIn } from 'lucide-react';
 import { auth, loginWithGoogle, getMyQuestions, getPublicQuestions, getMyAttempts, deleteQuestionSet, getWishlist, removeFromWishlist } from '../../services/firebase/firebase';
 import { getPublishedTryouts, getTryoutQuestions } from '../../services/firebase/firebase-admin';
 import { ImageUploader } from '../../components/common/ImageUploader';
@@ -157,6 +157,7 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
     if (path.includes('/ptnpedia')) return 'ptnpedia';
     if (path.includes('/vocab')) return 'vocab';
     if (path.includes('/progress')) return 'progress';
+    if (path.includes('/ambis-battle')) return 'ambis-battle';
 
     return 'overview';
   };
@@ -379,6 +380,49 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
                     <p className="text-sm font-semibold text-gray-600 mb-2">Percobaan</p>
                     <p className="text-3xl font-bold text-gray-900">{stats.totalAttempts}</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Ambis Battle Quick Start Card - Compact UI */}
+              <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl border border-white/10 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden relative group">
+                {/* Decorative background icon */}
+                <Swords size={120} className="absolute -right-6 -bottom-6 text-white/10 transform rotate-12 group-hover:rotate-0 transition-transform duration-700" />
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                      <Swords size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">Ambis Battle</h3>
+                      <p className="text-xs text-white/70">Duel soal 1v1 Real-time</p>
+                    </div>
+                    <span className="ml-auto bg-amber-400 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">New</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Zap size={14} className="text-amber-300" />
+                        <span className="text-xs font-semibold">Tantangan</span>
+                      </div>
+                      <p className="text-[10px] text-white/60">Asah kecepatan & akurasi</p>
+                    </div>
+                    <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm border border-white/5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users size={14} className="text-blue-300" />
+                        <span className="text-xs font-semibold">Duel Teman</span>
+                      </div>
+                      <p className="text-[10px] text-white/60">Maksimal 2 pemain / room</p>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => navigate('/dashboard/ambis-battle')}
+                    className="w-full py-2.5 bg-white text-indigo-700 font-bold rounded-xl text-sm hover:bg-opacity-90 transition-colors shadow-lg"
+                  >
+                    Buka Lobby Battle
+                  </button>
                 </div>
               </div>
 
@@ -794,6 +838,87 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
         </div>
 
         <Pagination currentPage={bankPage} totalPages={totalPages} onPageChange={setBankPage} />
+      </div>
+    );
+  };
+
+  const renderAmbisBattle = () => {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 h-full overflow-hidden flex flex-col">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-200">
+            <Swords size={24} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-slate-900">Ambis Battle Lobby</h2>
+            <p className="text-xs text-slate-500">Duel real-time 1v1 dengan teman</p>
+          </div>
+          <div className="ml-auto hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+               <Zap size={10} className="text-amber-500" /> Real-time
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+               <Users size={10} className="text-indigo-500" /> 2 Players
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-start overflow-y-auto pr-2 custom-scrollbar pb-10">
+          {/* Create Room Card */}
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 border-b-4 border-b-violet-500 hover:shadow-md transition-shadow group">
+            <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center mb-4 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300">
+              <Plus size={24} strokeWidth={3} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Buat Room Duel</h3>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+              Jadilah host, pilih subtes dan tingkat kesulitan. Gunakan AI untuk membuat soal unik dalam sekejap atau tambahkan manual.
+            </p>
+            <button 
+              onClick={() => navigate('/ambis-battle')} 
+              className="w-full py-3 bg-violet-600 text-white font-bold rounded-xl text-sm hover:bg-violet-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-200"
+            >
+              <Plus size={18} /> Buat Room Baru
+            </button>
+          </div>
+
+          {/* Join Room Card */}
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 border-b-4 border-b-indigo-500 hover:shadow-md transition-shadow group">
+            <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center mb-4 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+              <LogIn size={24} strokeWidth={3} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Masuk Room Teman</h3>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+              Punya kode room dari teman? Masukkan kodenya dan bersiaplah untuk bertanding dalam duel kecerdasan real-time.
+            </p>
+            <button 
+              onClick={() => navigate('/ambis-battle')} 
+              className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
+            >
+              <LogIn size={18} /> Masuk ke Room
+            </button>
+          </div>
+
+          {/* Featured/Info Section */}
+          <div className="md:col-span-2 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-2xl p-6 border border-indigo-100 flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-md flex-shrink-0 animate-pulse">
+               <Trophy size={40} className="text-amber-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 mb-1 italic">"Kalahkan lawanmu dengan kecepatan dan ketepatan!"</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Skor dihitung berdasarkan seberapa cepat kamu menjawab soal dengan benar. Semakin cepat menjawab, semakin besar poin bonus yang didapat.
+              </p>
+              <div className="flex gap-4 mt-4">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-violet-600">
+                  <div className="w-1.5 h-1.5 bg-violet-600 rounded-full"></div> SINKRONISASI REAL-TIME
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></div> AI GENERATED CONTENT
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -1828,6 +1953,19 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
                 <Target size={16} strokeWidth={2} />
                 <span className="text-xs sm:text-sm font-semibold">Progress</span>
               </button>
+
+              <button 
+                onClick={() => navigate('/dashboard/ambis-battle')} 
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all duration-300 whitespace-nowrap min-h-[40px] ${
+                  activeTab === 'ambis-battle' 
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30' 
+                    : 'text-slate-600 hover:bg-slate-100/50'
+                }`}
+              >
+                <Swords size={16} strokeWidth={2} />
+                <span className="text-xs sm:text-sm font-semibold">Battle</span>
+                <span className="text-[10px] font-black bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full ml-1">NEW</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1862,6 +2000,11 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
             {activeTab === 'riwayat' && <div className="tab-content">{renderRiwayat()}</div>}
             {activeTab === 'vocab' && <div className="tab-content">{renderVocab()}</div>}
             {activeTab === 'progress' && <div className="tab-content"><ProgressTracker userId={user?.uid} /></div>}
+            {activeTab === 'ambis-battle' && (
+              <div className="tab-content h-full">
+                {renderAmbisBattle()}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1910,13 +2053,16 @@ export const DashboardView = ({ user, onBack, onViewDetail, onStartQuiz, onVisio
             {/* Right Side */}
             <div className="flex flex-1 justify-around items-center pl-3">
               <button 
-                onClick={() => navigate('/dashboard/wishlist')}
+                onClick={() => navigate('/dashboard/ambis-battle')}
                 className={`flex flex-col items-center gap-0.5 transition-colors min-w-[48px] ${
-                  activeTab === 'wishlist' ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'
+                  activeTab === 'ambis-battle' ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'
                 }`}
               >
-                <Bookmark size={18} strokeWidth={1.5} />
-                <span className="text-[9px] font-medium">Saved</span>
+                <div className="relative">
+                  <Swords size={18} strokeWidth={1.5} />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full border border-white"></span>
+                </div>
+                <span className="text-[9px] font-medium">Battle</span>
               </button>
             
               <button 
