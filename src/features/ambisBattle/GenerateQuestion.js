@@ -31,20 +31,36 @@ const generateQuestionWithAI = async (subtest, topic, difficulty, count) => {
   const apiKey = getKey();
   if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
 
-  const prompt = `Buatkan ${count} soal SNBT pilihan ganda (A-E) untuk subtes ${subtest}, topik ${topic}, level ${difficulty}. 
-Kembalikan HANYA format JSON Array (tanpa blok markdown) berisi objek soal dengan struktur:
+  const prompt = `SYSTEM: GENERATOR SOAL UTBK-SNBT DENGAN POLA RESMI
+
+Buatkan ${count} soal pilihan ganda SNBT untuk subtes ${subtest}, topik ${topic}, tingkat kesulitan ${difficulty}.
+
+=== PROTOKOL ESCAPING KARAKTER (CRITICAL) ===
+1. Tanda petik ganda di dalam string: WAJIB escape dengan \\" 
+2. Backslash untuk LaTeX: WAJIB TEPAT DUA backslash \\\\ (contoh: \\\\frac, \\\\circ)
+3. Newline: Gunakan \\n
+4. DILARANG teks di luar JSON. DILARANG markdown code blocks.
+5. Markdown Bold: Gunakan **kata** 
+
+=== PROTOKOL LATEX (CRITICAL) ===
+SETIAP ekspresi matematika WAJIB dibungkus dengan $:
+1. Inline math: $x$, $f(x)$, $\\\\frac{1}{2}$
+2. JANGAN gunakan block math $$...$$
+3. Kurung untuk pecahan/pangkat: Gunakan $\\\\left($ dan $\\\\right)$
+
+=== STRUKTUR JSON (WAJIB DIIKUTI) ===
 [
   {
-    "text": "teks pertanyaan...",
+    "text": "Teks pertanyaan lengkap...",
     "options": ["A. opsi 1", "B. opsi 2", "C. opsi 3", "D. opsi 4", "E. opsi 5"],
     "correctIndex": 0,
-    "explanation": "pembahasan singkat kenapa jawaban benar",
+    "explanation": "Pembahasan rinci namun ringkas.",
     "subtest": "${subtest}",
     "topic": "${topic}",
     "difficulty": "${difficulty}"
   }
 ]
-Validasi: correctIndex WAJIB berupa angka 0-4. DILARANG menambahkan format text lain selain JSON Array murni.`;
+Validasi Akhir: correctIndex WAJIB berupa angka (0-4). Pastikan opsi selalu 5 item. JANGAN BERIKAN TEKS PENGANTAR, HANYA JSON ARRAY.`;
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -67,15 +83,20 @@ Validasi: correctIndex WAJIB berupa angka 0-4. DILARANG menambahkan format text 
   const data = await res.json();
   const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   
-  // Clean off markdown
-  let clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+  let clean = raw;
+  const match = clean.match(/\[\s*\{[\s\S]*\}\s*\]/);
+  if (match) {
+    clean = match[0];
+  } else {
+    clean = clean.replace(/```(?:json)?/gi, '').trim();
+  }
   
   try {
     const parsed = JSON.parse(clean);
     return Array.isArray(parsed) ? parsed : [parsed];
   } catch (error) {
     console.error("Failed to parse JSON array from AI response:", clean);
-    throw new Error("AI gagal mengikuti format JSON. Silakan coba lagi.");
+    throw new Error("AI gagal mengikuti format JSON. Silakan diregenerate.");
   }
 };
 
