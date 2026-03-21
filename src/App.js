@@ -78,6 +78,11 @@ const CommunityView = lazy(() => import('./features/community/CommunityView'));
 const DashboardView = lazy(() => import('./features/dashboard/DashboardView'));
 const DetailSoalView = lazy(() => import('./features/soal/DetailSoalView'));
 const AdminDashboard = lazy(() => import('./features/tryout/AdminDashboard'));
+const AmbisBattleLobby = lazy(() => import('./features/ambisBattle/AmbisBattleLobby'));
+const WaitingRoom = lazy(() => import('./features/ambisBattle/WaitingRoom'));
+const GenerateQuestion = lazy(() => import('./features/ambisBattle/GenerateQuestion'));
+const LiveBattle = lazy(() => import('./features/ambisBattle/LiveBattle'));
+const BattleResult = lazy(() => import('./features/ambisBattle/BattleResult'));
 
 // Toast system replaced by NotificationSystem
 
@@ -3728,6 +3733,24 @@ function AppContent() {
         return;
       }
 
+      // ─── Ambis Battle Routes ───────────────────────────────────────────────
+      if (path === '/ambis-battle') {
+        setView('AMBIS_BATTLE_LOBBY');
+        return;
+      } else if (path.startsWith('/ambis-battle/waiting-room/')) {
+        setView('AMBIS_BATTLE_WAITING');
+        return;
+      } else if (path.startsWith('/ambis-battle/generate-question/')) {
+        setView('AMBIS_BATTLE_GENERATE');
+        return;
+      } else if (path.startsWith('/ambis-battle/live/')) {
+        setView('AMBIS_BATTLE_LIVE');
+        return;
+      } else if (path.startsWith('/ambis-battle/result/')) {
+        setView('AMBIS_BATTLE_RESULT');
+        return;
+      }
+
       // Check for tryout slug route: /tryout/:slug
       if (path.startsWith('/tryout/')) {
         const slug = path.replace('/tryout/', '');
@@ -4644,6 +4667,21 @@ function AppContent() {
       <Suspense fallback={<PageLoadingFallback />}>
         {view === '404' && <NotFoundPage />}
         {view === 'LANDING' && <LandingPage />}
+        {view === 'AMBIS_BATTLE_LOBBY' && (
+          <AmbisBattleLobby user={user} onLogin={handleLogin} />
+        )}
+        {view === 'AMBIS_BATTLE_WAITING' && (
+          <WaitingRoom user={user} />
+        )}
+        {view === 'AMBIS_BATTLE_GENERATE' && (
+          <GenerateQuestion user={user} />
+        )}
+        {view === 'AMBIS_BATTLE_LIVE' && (
+          <LiveBattle user={user} />
+        )}
+        {view === 'AMBIS_BATTLE_RESULT' && (
+          <BattleResult user={user} />
+        )}
         {view === 'HOME' && <HomeView
           formData={formData}
           setFormData={setFormData}

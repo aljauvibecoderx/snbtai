@@ -2,7 +2,7 @@
 // Gunakan component ini di Landing Page, Dashboard, dan Community
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown, Swords } from 'lucide-react';
 import { CoinBalance } from '../common/CoinBalance';
 import { useStats } from '../../context/StatsContext';
 
@@ -131,6 +131,14 @@ export const UnifiedNavbar = ({
                       <span className="text-sm font-medium">Community</span>
                     </button>
                   )}
+                  <button
+                    onClick={() => { navigate?.('/ambis-battle'); }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 hover:border-violet-400 hover:from-violet-100 hover:to-indigo-100 rounded-lg transition-all duration-300"
+                  >
+                    <Swords size={14} className="text-violet-600" strokeWidth={2} />
+                    <span className="text-sm font-semibold text-violet-700">Battle</span>
+                    <span className="text-[9px] font-bold text-white bg-violet-500 px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+                  </button>
                 </>
               )}
 
@@ -279,6 +287,16 @@ export const UnifiedNavbar = ({
                       <span className="text-sm font-medium">Community</span>
                     </button>
                   )}
+                  <button
+                    onClick={() => { navigate?.('/ambis-battle'); setShowMobileMenu?.(false); }}
+                    className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 rounded-xl transition-all hover:border-violet-300"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+                      <Swords size={16} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-violet-800">Ambis Battle</span>
+                    <span className="ml-auto text-[9px] font-bold text-white bg-violet-500 px-1.5 py-0.5 rounded-full">NEW</span>
+                  </button>
                   
                   <button onClick={() => { navigate?.('/settings'); setShowMobileMenu?.(false); }} className="w-full flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-all">
                     <Settings size={18} />
