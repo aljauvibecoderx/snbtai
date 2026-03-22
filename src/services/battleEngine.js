@@ -1,52 +1,96 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { listenToRoom, submitAnswer, advanceQuestion, finishBattle } from './firebase/ambisBattle';
+import { listenToRoom, submitAnswer, advanceQuestion } from './firebase/ambisBattle';
 
-export const QUESTION_DURATION = 30; // 30 seconds per question (as requested - short duration)
+export const QUESTION_DURATION = 30; // 30 seconds per question
 
 /**
  * useBattleEngine - Centralized battle logic hook
- * Manages server-synchronized timers, auto-submissions, and safe transitions
+ * Manages server-synchronized timers, auto-submissions, and safe transitions.
+ * 
+ * Key design: Advancement is triggered DIRECTLY from answer submit and timer
+ * expiry — NOT from a useEffect watching reactive state (which causes stale-state
+ * race conditions and the "stuck on synchronizing" bug).
  */
 export const useBattleEngine = (roomId, user) => {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [phase, setPhase] = useState('countdown'); // countdown | playing | transitioning
   const [countdown, setCountdown] = useState(3);
   const [timeLeft, setTimeLeft] = useState(QUESTION_DURATION);
   const [showExplanation, setShowExplanation] = useState(false);
-  
+
+  // Refs for synchronous state tracking — avoids stale-closure race conditions
+  const hasAdvancedRef = useRef(false); // Prevents double-advance per question
+  const currentIndexRef = useRef(0);
+  const isHostRef = useRef(false);
+  const opponentRef = useRef(null);
+  const questionsLengthRef = useRef(0);
   const timerRef = useRef(null);
   const unsubRef = useRef(null);
 
-  // Derived state
+  // Derived state (rendered from room snapshot)
   const isHost = room?.hostId === user?.uid;
   const myPlayer = room?.players?.find(p => p.id === user?.uid);
   const opponent = room?.players?.find(p => p.id !== user?.uid);
   const questions = room?.questions || [];
   const currentIndex = room?.currentQuestionIndex || 0;
   const currentQuestion = questions[currentIndex];
-  
+
   const hasMyAnswer = myPlayer?.answers?.[currentIndex] !== undefined;
   const hasOpponentAnswer = opponent?.answers?.[currentIndex] !== undefined;
-  const allPlayersAnswered = hasMyAnswer && (!opponent || hasOpponentAnswer); // Single or Dual
-  
+
   const currentStartTime = room?.questionStartsAt;
 
-  // 1. Room Listener Sync
+  // Keep refs in sync with latest derived values for use inside callbacks/intervals
+  useEffect(() => {
+    isHostRef.current = isHost;
+    opponentRef.current = opponent;
+    questionsLengthRef.current = questions.length;
+  });
+
+  // ─── Centralized Advance Function ───────────────────────────────────────────
+  // Called directly from answer submit & timer expiry — NOT from a useEffect.
+  const triggerAdvance = useCallback((questionIndex) => {
+    if (hasAdvancedRef.current) return; // Already advanced this question
+    hasAdvancedRef.current = true;
+
+    setTimeout(() => {
+      // Host (or solo player) always pushes the advance to Firebase
+      if (isHostRef.current || !opponentRef.current) {
+        advanceQuestion(roomId, questionIndex + 1, questionsLengthRef.current)
+          .catch(e => console.error('[BattleEngine] Advance error:', e));
+      }
+      // Non-host fallback: if host appears dead 3s after scheduled advance, client forces it
+      else {
+        setTimeout(() => {
+          advanceQuestion(roomId, questionIndex + 1, questionsLengthRef.current)
+            .catch(e => console.error('[BattleEngine] Client fallback advance:', e));
+        }, 3000);
+      }
+    }, 2500); // 2.5s result-viewing buffer
+  }, [roomId]);
+
+  // ─── 1. Room Listener Sync ───────────────────────────────────────────────────
   useEffect(() => {
     if (!roomId || !user) return;
 
     unsubRef.current = listenToRoom(roomId, (data) => {
       if (!data) {
-        setError('Room not found');
+        setError('Room tidak ditemukan.');
         return;
       }
+
+      // Reset the advance guard when a new question index appears
+      if (data.currentQuestionIndex !== currentIndexRef.current) {
+        hasAdvancedRef.current = false;
+        currentIndexRef.current = data.currentQuestionIndex || 0;
+        setShowExplanation(false);
+      }
+
       setRoom(data);
       setLoading(false);
-      
-      // Auto-finish transition handled by firebase listener natively
     });
 
     return () => {
@@ -55,80 +99,72 @@ export const useBattleEngine = (roomId, user) => {
     };
   }, [roomId, user]);
 
-  // 2. Server-Synchronized Clock Control
+  // ─── 2. Server-Synchronized Timer ───────────────────────────────────────────
   useEffect(() => {
     if (!room || !currentStartTime || room.status === 'finished') return;
-    
+
     clearInterval(timerRef.current);
-    
-    // Safety Fallback loop
+
     timerRef.current = setInterval(() => {
       const now = Date.now();
-      const stTime = currentStartTime;
-      const msSinceStart = now - stTime;
-      
-      // A. Countdown Phase (before question starts)
+      const msSinceStart = now - currentStartTime;
+
+      // A. Countdown phase (question hasn't started yet)
       if (msSinceStart < 0) {
         setPhase('countdown');
-        setShowExplanation(false);
         setCountdown(Math.ceil(Math.abs(msSinceStart) / 1000));
         return;
       }
 
-      // B. Playing Phase
-      setPhase('playing');
+      // B. Playing phase
       const timeRemaining = Math.max(0, QUESTION_DURATION - Math.floor(msSinceStart / 1000));
+      setPhase('playing');
       setTimeLeft(timeRemaining);
 
-      // C. Time Expiration Force Action
+      // C. Time is up — auto-submit null + advance
       if (timeRemaining <= 0) {
         clearInterval(timerRef.current);
-        
-        // AUTO SUBMIT: If user hasn't answered, submit an empty answer (-1) explicitly
-        if (myPlayer && myPlayer.answers?.[currentIndex] === undefined) {
-          console.log("[BattleEngine] Time is up. Auto-submitting null.");
-          submitAnswer(roomId, user.uid, currentIndex, -1, QUESTION_DURATION).catch(console.error);
+
+        const qIdx = currentIndexRef.current;
+        const myAnswers = room.players?.find(p => p.id === user?.uid)?.answers;
+
+        if (myAnswers?.[qIdx] === undefined) {
+          // Auto-submit empty answer
+          submitAnswer(roomId, user.uid, qIdx, -1, QUESTION_DURATION)
+            .then(() => triggerAdvance(qIdx))   // ← advance AFTER submit resolves
+            .catch(console.error);
+        } else {
+          // Already answered — just advance (host only)
+          triggerAdvance(qIdx);
         }
       }
     }, 250);
 
     return () => clearInterval(timerRef.current);
-  }, [room?.status, currentStartTime, myPlayer, currentIndex, roomId, user]);
+  }, [room?.status, currentStartTime, roomId, user, triggerAdvance]);
 
-  // 3. Centralized Advancement Logic
-  useEffect(() => {
-    if (!room || phase !== 'playing' || room.status === 'finished') return;
-
-    // "once it's answered, I'll move on to the next question"
-    if (hasMyAnswer || timeLeft <= 0) {
-      setPhase('transitioning');
-      
-      const advanceTimer = setTimeout(() => {
-        if (isHost || !opponent) {
-           advanceQuestion(roomId, currentIndex + 1, questions.length).catch(e => console.error("Advance error", e));
-        } else if (!isHost && timeLeft <= -2) {
-           advanceQuestion(roomId, currentIndex + 1, questions.length).catch(e => console.error("Client forced advance", e));
-        }
-      }, 2500); // Wait 2.5s for instant snappy feel
-
-      return () => clearTimeout(advanceTimer);
-    }
-  }, [hasMyAnswer, timeLeft, phase, room, roomId, currentIndex, questions.length, isHost, opponent]);
-
-  // 4. Exposed Actions
+  // ─── 3. Answer Submission ────────────────────────────────────────────────────
   const handleAnswerSubmit = useCallback(async (optionIndex) => {
     if (phase !== 'playing' || hasMyAnswer) return;
-    
-    const timeTaken = Math.max(0, QUESTION_DURATION - timeLeft);
-    
+
+    const qIdx = currentIndexRef.current;
+    const timeTaken = Math.max(1, QUESTION_DURATION - timeLeft);
+
     try {
-      await submitAnswer(roomId, user.uid, currentIndex, optionIndex, timeTaken);
+      await submitAnswer(roomId, user.uid, qIdx, optionIndex, timeTaken);
+      triggerAdvance(qIdx); // ← advance DIRECTLY after submit, no useEffect middleman
     } catch (e) {
-      console.error("[BattleEngine] Failed to submit answer. Retrying...", e);
-      // Basic retry mechanism fallback
-      setTimeout(() => submitAnswer(roomId, user.uid, currentIndex, optionIndex, timeTaken), 1000);
+      console.error('[BattleEngine] Submit failed, retrying...', e);
+      setTimeout(async () => {
+        try {
+          await submitAnswer(roomId, user.uid, qIdx, optionIndex, timeTaken);
+          triggerAdvance(qIdx);
+        } catch (e2) {
+          console.error('[BattleEngine] Retry also failed:', e2);
+        }
+      }, 1500);
     }
-  }, [phase, hasMyAnswer, roomId, user, currentIndex, timeLeft]);
+  }, [phase, hasMyAnswer, roomId, user, timeLeft, triggerAdvance]);
 
   return {
     room,
@@ -138,7 +174,7 @@ export const useBattleEngine = (roomId, user) => {
     countdown,
     timeLeft,
     showExplanation,
-    setShowExplanation, // Toggles "View Explanation" rendering
+    setShowExplanation,
     isHost,
     myPlayer,
     opponent,
@@ -147,7 +183,6 @@ export const useBattleEngine = (roomId, user) => {
     currentQuestion,
     hasMyAnswer,
     hasOpponentAnswer,
-    allPlayersAnswered,
-    handleAnswerSubmit
+    handleAnswerSubmit,
   };
 };

@@ -1,71 +1,52 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 /**
- * LatexWrapper Component
- * Renders LaTeX math expressions using KaTeX
- * 
- * @param {Object} props
- * @param {string} props.text - Text containing LaTeX expressions
- * @param {string} props.className - Additional CSS class
+ * Renders a string that may contain mixed text and LaTeX math expressions.
+ * Supports inline math wrapped in $...$ delimiters.
+ *
+ * Uses katex.renderToString() scoped to each individual segment,
+ * injected safely via dangerouslySetInnerHTML.
+ *
+ * @param {string} text - Input string, may contain $math$ segments
+ * @param {string} className - Optional CSS class for the wrapper
  */
-const LatexWrapper = ({ text, className = "" }) => {
-  useEffect(() => {
-    // Load KaTeX CSS if not already loaded
-    if (!document.getElementById('katex-css')) {
-      const link = document.createElement('link');
-      link.id = 'katex-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
-      document.head.appendChild(link);
-    }
-
-    // Load KaTeX JS if not already loaded
-    if (!window.katex && !document.getElementById('katex-js')) {
-      const script = document.createElement('script');
-      script.id = 'katex-js';
-      script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
-      script.onload = () => {
-        if (window.katex) {
-          renderMath();
-        }
-      };
-      document.head.appendChild(script);
-    } else if (window.katex) {
-      renderMath();
-    }
-
-    function renderMath() {
-      if (!text || !window.katex) return;
-
-      const elements = document.querySelectorAll('.latex-content');
-      elements.forEach(el => {
-        try {
-          window.katex.render(el.textContent, el.parentNode, {
-            displayMode: el.getAttribute('data-display') === 'true',
-            throwOnError: false,
-            errorColor: '#cc0000'
-          });
-        } catch (e) {
-          console.error('KaTeX render error:', e);
-        }
-      });
-    }
-
-    renderMath();
-  }, [text]);
-
+const LatexWrapper = ({ text, className = '' }) => {
   if (!text) return null;
 
-  // Check for display math mode
-  const isDisplay = text.includes('$$') || text.includes('\\[');
-  const cleanText = text.replace(/\$\$/g, '').replace(/\\\[/g, '').replace(/\\\]/g, '');
+  // Split on $...$ boundaries, keeping the delimiters in the array
+  const parts = text.split(/(\$[^$]+\$)/g);
 
   return (
-    <span 
-      className={`latex-content ${className}`}
-      data-display={isDisplay}
-    >
-      {cleanText}
+    <span className={className}>
+      {parts.map((part, i) => {
+        const isMath = part.startsWith('$') && part.endsWith('$') && part.length > 2;
+
+        if (isMath) {
+          const mathContent = part.slice(1, -1); // Strip the $ delimiters
+          try {
+            const html = katex.renderToString(mathContent, {
+              throwOnError: false,
+              displayMode: false,
+              output: 'html',
+            });
+            return (
+              <span
+                key={i}
+                className="katex-inline"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            );
+          } catch (e) {
+            // Graceful fallback: render raw text if KaTeX parse fails
+            return <span key={i}>{part}</span>;
+          }
+        }
+
+        // Plain text segment
+        return part ? <span key={i}>{part}</span> : null;
+      })}
     </span>
   );
 };
