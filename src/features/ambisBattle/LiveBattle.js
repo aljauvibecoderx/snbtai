@@ -1,198 +1,60 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Clock, CheckCircle2, XCircle, Zap, Trophy, Loader2,
-  AlertCircle, Crown, Swords
+  Clock, CheckCircle2, XCircle, Zap, Loader2,
+  AlertCircle, Swords, BookOpen, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { listenToRoom, submitAnswer, advanceQuestion, finishBattle } from '../../services/firebase/ambisBattle';
-
-const QUESTION_DURATION = 30; // seconds per question
+import { useBattleEngine, QUESTION_DURATION } from '../../services/battleEngine';
+import LatexWrapper from '../../utils/latex';
 
 const LiveBattle = ({ user }) => {
   const params = useParams();
-  const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
   const navigate = useNavigate();
+  const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
 
-  const [room, setRoom] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [countdown, setCountdown] = useState(3);
-  const [phase, setPhase] = useState('countdown'); // countdown | playing | transitioning
-  const [timeLeft, setTimeLeft] = useState(QUESTION_DURATION);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [answered, setAnswered] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  const [questionStartTime, setQuestionStartTime] = useState(null);
-  const [error, setError] = useState('');
+  // --- 1. Engine Injection (Centralized Server Logic) ---
+  const {
+    room,
+    loading,
+    error,
+    phase,
+    countdown,
+    timeLeft,
+    showExplanation,
+    setShowExplanation,
+    myPlayer,
+    opponent,
+    questions,
+    currentIndex,
+    currentQuestion,
+    hasMyAnswer,
+    hasOpponentAnswer,
+    handleAnswerSubmit
+  } = useBattleEngine(roomId, user);
 
-  const timerRef = useRef(null);
-  const countdownRef = useRef(null);
-  const unsubRef = useRef(null);
-  const answeredRef = useRef(false);
-  const currentIndexRef = useRef(0);
-  const targetEndRef = useRef(null);
-  const isInitialMount = useRef(true);
-
-  const isHost = room?.hostId === user?.uid;
-  const myPlayer = room?.players?.find((p) => p.id === user?.uid);
-  const opponent = room?.players?.find((p) => p.id !== user?.uid);
-  const questions = room?.questions || [];
-  const currentIndex = room?.currentQuestionIndex || 0;
-  const currentQuestion = questions[currentIndex];
-
-  // ─── Listen to room ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!roomId || !user) return;
-
-    unsubRef.current = listenToRoom(roomId, (data) => {
-      if (!data) { navigate('/ambis-battle'); return; }
-      setRoom(data);
-      setLoading(false);
-
-      if (data.status === 'finished') {
-        clearTimers();
-        navigate(`/ambis-battle/result/${roomId}`);
-      }
-
-      const isNewQuestion = data.currentQuestionIndex !== currentIndexRef.current;
-      if (isInitialMount.current || isNewQuestion) {
-        currentIndexRef.current = data.currentQuestionIndex || 0;
-        const stTime = data.questionStartsAt || Date.now();
-        resetForNewQuestion(stTime);
-        isInitialMount.current = false;
-      }
-    });
-
-    return () => {
-      unsubRef.current?.();
-      clearTimers();
-    };
-  }, [roomId, user]);
-
-  const clearTimers = () => {
-    clearInterval(timerRef.current);
-    clearInterval(countdownRef.current);
-  };
-
-  const resetForNewQuestion = (syncStartTime) => {
-    setSelectedAnswer(null);
-    setAnswered(false);
-    answeredRef.current = false;
-    setShowResult(false);
-    setPhase('countdown');
-    setTimeLeft(QUESTION_DURATION);
-    clearTimers();
-
-    countdownRef.current = setInterval(() => {
-      const remainingSeconds = Math.ceil((syncStartTime - Date.now()) / 1000);
-      if (remainingSeconds <= 0) {
-        clearInterval(countdownRef.current);
-        setPhase('playing');
-        setQuestionStartTime(syncStartTime);
-        startTimer(syncStartTime);
-      } else {
-        setCountdown(remainingSeconds);
-      }
-    }, 250);
-  };
-
-  // ─── Timer ────────────────────────────────────────────────────────────────
-  const startTimer = useCallback((syncStartTime) => {
-    clearInterval(timerRef.current);
-    targetEndRef.current = syncStartTime + (QUESTION_DURATION * 1000);
-
-    timerRef.current = setInterval(() => {
-      const remaining = Math.ceil((targetEndRef.current - Date.now()) / 1000);
-      
-      if (remaining <= 0) {
-        setTimeLeft(0);
-        clearInterval(timerRef.current);
-        if (!answeredRef.current) {
-          handleTimeout();
-        }
-      } else {
-        setTimeLeft(remaining > QUESTION_DURATION ? QUESTION_DURATION : remaining);
-      }
-    }, 1000);
-  }, []);
-
-  const handleTimeout = useCallback(async () => {
-    if (answeredRef.current) return;
-    answeredRef.current = true;
-    setAnswered(true);
-    setShowResult(true);
-
-    try {
-      await submitAnswer(roomId, user.uid, currentIndexRef.current, -1, QUESTION_DURATION);
-    } catch (e) { /* silent */ }
-
-    if (isHost) {
-      setTimeout(async () => {
-        await advanceToNext();
-      }, 2500);
-    }
-  }, [roomId, user, isHost]);
-
-  // ─── Answer ───────────────────────────────────────────────────────────────
-  const handleAnswer = useCallback(async (optIndex) => {
-    if (answeredRef.current || phase !== 'playing') return;
-    answeredRef.current = true;
-    clearInterval(timerRef.current);
-
-    setSelectedAnswer(optIndex);
-    setAnswered(true);
-    setShowResult(true);
-
-    const timeTaken = questionStartTime
-      ? Math.round((Date.now() - questionStartTime) / 1000)
-      : QUESTION_DURATION;
-
-    try {
-      await submitAnswer(roomId, user.uid, currentIndexRef.current, optIndex, timeTaken);
-    } catch (e) { /* silent */ }
-
-    if (isHost) {
-      setTimeout(async () => {
-        await advanceToNext();
-      }, 2500);
-    }
-  }, [phase, questionStartTime, roomId, user, isHost]);
-
-  const advanceToNext = async () => {
-    if (!isHost) return;
-    const nextIndex = currentIndexRef.current + 1;
-    try {
-      await advanceQuestion(roomId, nextIndex, questions.length);
-    } catch (e) { /* silent */ }
-  };
-
-  // ─── Opponent progress for current question ───────────────────────────────
-  const opponentAnsweredCurrent = opponent?.answers?.[currentIndex] !== undefined;
-  const myAnsweredCurrent = myPlayer?.answers?.[currentIndex] !== undefined;
-
-  // ─── Score display ─────────────────────────────────────────────────────────
-  const myScore = myPlayer?.score || 0;
-  const opponentScore = opponent?.score || 0;
-  const timerPercent = (timeLeft / QUESTION_DURATION) * 100;
-  const timerColor =
-    timeLeft > 15 ? 'bg-emerald-500' : timeLeft > 7 ? 'bg-amber-400' : 'bg-red-500';
+  // --- Redirects and Error Boundaries ---
+  if (room && room.status === 'finished') {
+    navigate(`/ambis-battle/result/${roomId}`);
+    return null;
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <Loader2 size={40} className="animate-spin mx-auto mb-3 text-violet-600" />
-          <p className="text-slate-500 text-sm">Memuat battle...</p>
+          <p className="text-slate-500 text-sm">Engine menyinkronkan data...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (!room || error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
         <div className="text-center">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-3" />
-          <p className="text-slate-800 font-semibold mb-4">{error}</p>
+          <p className="text-slate-800 font-semibold mb-4">{error || 'Room tidak ditemukan'}</p>
           <button onClick={() => navigate('/ambis-battle')} className="text-violet-600 underline font-medium text-sm">
             Kembali ke Lobby
           </button>
@@ -201,25 +63,30 @@ const LiveBattle = ({ user }) => {
     );
   }
 
-  // ─── Countdown phase ──────────────────────────────────────────────────────
+  // --- Derived UI State ---
+  const myAnswerIndex = myPlayer?.answers?.[currentIndex]?.answerIndex;
+  const isCorrect = myAnswerIndex === currentQuestion?.correctIndex;
+  const myScore = myPlayer?.score || 0;
+  const opponentScore = opponent?.score || 0;
+  
+  const timerPercent = (timeLeft / QUESTION_DURATION) * 100;
+  const timerColor = timeLeft > 15 ? 'bg-emerald-500' : timeLeft > 7 ? 'bg-amber-400' : 'bg-red-500';
+
+  // --- Countdown View Phase ---
   if (phase === 'countdown') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-500/20">
-            <span className="text-5xl font-black text-white">{countdown}</span>
+            <span className="text-5xl font-black text-white">{countdown || 0}</span>
           </div>
-          <p className="text-slate-500 font-semibold text-sm uppercase tracking-widest">Battle dimulai dalam...</p>
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <Swords size={16} className="text-violet-600" />
-            <p className="text-slate-800 font-bold">{questions.length} soal siap</p>
-          </div>
+          <p className="text-slate-500 font-semibold text-sm uppercase tracking-widest">Persiapan Soal...</p>
         </div>
       </div>
     );
   }
 
-  // ─── Main Battle UI ───────────────────────────────────────────────────────
+  // --- Battle Playing Phase ---
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
       {/* Background glow */}
@@ -228,9 +95,9 @@ const LiveBattle = ({ user }) => {
       </div>
 
       <div className="relative z-10 flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-6">
-        {/* ── Top Bar: Scores ── */}
+        {/* -- UI: Scores Board -- */}
         <div className="flex items-center gap-2 mb-3">
-          {/* My score */}
+          {/* P1 */}
           <div className="flex-1 bg-white border border-slate-200 shadow-sm rounded-xl p-3 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0 text-xs font-bold text-violet-700">
               {myPlayer?.name?.[0]?.toUpperCase() || 'M'}
@@ -239,50 +106,39 @@ const LiveBattle = ({ user }) => {
               <p className="text-xs text-slate-500 truncate">{myPlayer?.name || 'Kamu'}</p>
               <p className="text-lg font-black text-slate-800 leading-none">{myScore}</p>
             </div>
-            {myAnsweredCurrent && (
-              <div className="ml-auto">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-              </div>
-            )}
+            {hasMyAnswer && <CheckCircle2 size={16} className="text-emerald-500 ml-auto flex-shrink-0" />}
           </div>
 
-          {/* VS */}
-          <div className="flex flex-col items-center flex-shrink-0">
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-              <Swords size={14} className="text-slate-400" />
-            </div>
-            <p className="text-xs text-slate-400 font-bold mt-0.5">VS</p>
+          <div className="flex flex-col items-center flex-shrink-0 px-2">
+            <Swords size={18} className="text-slate-300" />
+            <span className="text-[10px] font-bold text-slate-400 mt-1">VS</span>
           </div>
 
-          {/* Opponent score */}
+          {/* P2 */}
           <div className="flex-1 bg-white border border-slate-200 shadow-sm rounded-xl p-3 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 text-xs font-bold text-indigo-700">
               {opponent?.name?.[0]?.toUpperCase() || '?'}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 text-right w-full">
               <p className="text-xs text-slate-500 truncate">{opponent?.name || 'Lawan'}</p>
               <p className="text-lg font-black text-slate-800 leading-none">{opponentScore}</p>
             </div>
-            {opponentAnsweredCurrent && (
-              <div className="ml-auto">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-              </div>
-            )}
+            {hasOpponentAnswer && <CheckCircle2 size={16} className="text-emerald-500 ml-auto flex-shrink-0" />}
           </div>
         </div>
 
-        {/* ── Progress & Timer ── */}
+        {/* -- UI: Server Synchronized Timer -- */}
         <div className="bg-white border border-slate-200 shadow-sm rounded-xl px-3 py-2 mb-3 flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-slate-500 flex-shrink-0">
-            <Clock size={12} />
-            <span className={`text-sm font-bold ${timeLeft <= 7 ? 'text-red-500' : timeLeft <= 15 ? 'text-amber-500' : 'text-slate-700'}`}>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Clock size={12} className={timeLeft <= 7 ? 'text-red-500' : 'text-slate-500'} />
+            <span className={`text-sm font-bold ${timeLeft <= 7 ? 'text-red-500' : 'text-slate-700'}`}>
               {timeLeft}s
             </span>
           </div>
           <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-1000 ${timerColor}`}
-              style={{ width: `${timerPercent}%` }}
+              style={{ width: `${Math.max(0, timerPercent)}%` }}
             />
           </div>
           <span className="text-xs font-medium text-slate-500 flex-shrink-0">
@@ -290,97 +146,107 @@ const LiveBattle = ({ user }) => {
           </span>
         </div>
 
-        {/* ── Question Card ── */}
+        {/* -- UI: Question Context & Text (With LaTeX) -- */}
         {currentQuestion && (
-          <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-4 mb-4 flex-1">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-4 mb-4 flex-1 overflow-y-auto min-h-32">
+            <div className="flex items-center justify-between gap-2 mb-3">
               <span className="text-xs font-semibold text-violet-700 bg-violet-100 px-2.5 py-1 rounded-full border border-violet-200">
                 {currentQuestion.subtest || 'SNBT'}
               </span>
               {currentQuestion.difficulty && (
-                <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded-full">
-                  {currentQuestion.difficulty}
+                <span className="text-xs text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full">
+                  Level: {currentQuestion.difficulty}
                 </span>
               )}
             </div>
-            <p className="text-slate-800 text-sm leading-relaxed font-medium mb-2">{currentQuestion.text}</p>
+            <p className="text-slate-800 text-sm leading-relaxed font-medium">
+               <LatexWrapper text={currentQuestion.text || ''} />
+            </p>
           </div>
         )}
 
-        {/* ── Options ── */}
+        {/* -- UI: Interactive Options (With LaTeX) -- */}
         {currentQuestion && (
-          <div className="space-y-2">
+          <div className="space-y-2 mb-4">
             {currentQuestion.options?.map((option, i) => {
-              const isSelected = selectedAnswer === i;
-              const isCorrect = i === currentQuestion.correctIndex;
+              const isSelected = myAnswerIndex === i;
+              const isActuallyCorrect = i === currentQuestion.correctIndex;
+              const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
+              // Wait for answer explicitly to reveal the truth
+              const revealStatus = hasMyAnswer; 
 
-              let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-violet-300 active:scale-[0.98]';
-              if (showResult) {
-                if (isCorrect) {
+              let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
+              if (revealStatus) {
+                if (isActuallyCorrect) {
                   btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800';
-                } else if (isSelected && !isCorrect) {
+                } else if (isSelected && !isActuallyCorrect) {
                   btnClass = 'bg-red-50 border-red-500 text-red-800';
                 } else {
-                  btnClass = 'bg-slate-50 border-slate-200 text-slate-400';
+                  btnClass = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
                 }
-              } else if (isSelected) {
-                btnClass = 'bg-violet-50 border-violet-500 text-violet-800';
               }
 
               return (
                 <button
                   key={i}
-                  onClick={() => handleAnswer(i)}
-                  disabled={answered}
-                  className={`w-full text-left border rounded-xl p-3.5 transition-all flex items-center gap-3 ${btnClass} disabled:cursor-not-allowed`}
+                  onClick={() => handleAnswerSubmit(i)}
+                  disabled={hasMyAnswer || phase !== 'playing'}
+                  className={`w-full text-left border rounded-xl p-3.5 transition-all flex items-center gap-3 ${btnClass} disabled:cursor-default`}
                 >
-                  {showResult ? (
-                    isCorrect ? (
-                      <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
-                    ) : isSelected ? (
-                      <XCircle size={16} className="text-red-500 flex-shrink-0" />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0" />
-                    )
-                  ) : (
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all ${
-                      isSelected ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {String.fromCharCode(65 + i)}
-                    </div>
-                  )}
-                  <span className="text-sm leading-snug">{option}</span>
+                  <div className="flex-1 text-sm leading-snug">
+                     <LatexWrapper text={option || ''} />
+                  </div>
+                  {revealStatus && isActuallyCorrect && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
+                  {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={16} className="text-red-500 shrink-0" />}
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* ── Answer Feedback ── */}
-        {showResult && currentQuestion && (
-          <div className={`mt-3 rounded-xl p-3 border ${
-            selectedAnswer === currentQuestion.correctIndex
-              ? 'bg-emerald-50 border-emerald-200'
-              : 'bg-red-50 border-red-200'
-          }`}>
-            <div className="flex items-center gap-2 mb-1">
-              {selectedAnswer === currentQuestion.correctIndex ? (
-                <><Zap size={14} className="text-emerald-600" />
-                  <span className="text-xs font-bold text-emerald-700">Benar! +{Math.max(100 - (QUESTION_DURATION - timeLeft - 1) * 2, 20)} poin</span></>
-              ) : selectedAnswer === -1 ? (
-                <><Clock size={14} className="text-slate-500" />
-                  <span className="text-xs font-bold text-slate-700">Waktu habis!</span></>
-              ) : (
-                <><XCircle size={14} className="text-red-500" />
-                  <span className="text-xs font-bold text-red-700">Salah! +0 poin</span></>
+        {/* -- UI: Post-Answer Feedback Block -- */}
+        {hasMyAnswer && currentQuestion && (
+          <div className="space-y-2 mt-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className={`rounded-xl p-3 border shadow-sm ${
+              isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isCorrect ? (
+                    <><Zap size={16} className="text-emerald-600" />
+                    <span className="text-sm font-bold text-emerald-700">Tepat Sekali!</span></>
+                  ) : myAnswerIndex === -1 ? (
+                    <><Clock size={16} className="text-red-500" />
+                    <span className="text-sm font-bold text-red-700">Waktu Habis!</span></>
+                  ) : (
+                    <><XCircle size={16} className="text-red-500" />
+                    <span className="text-sm font-bold text-red-700">Salah Jawaban!</span></>
+                  )}
+                </div>
+                
+                {/* View Explanation Button Requirement Met */}
+                {currentQuestion.explanation && (
+                  <button 
+                    onClick={() => setShowExplanation(!showExplanation)}
+                    className="flex items-center gap-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
+                  >
+                    <BookOpen size={12} />
+                    {showExplanation ? 'Tutup Pembahasan' : 'Lihat Pembahasan'}
+                  </button>
+                )}
+              </div>
+
+              {showExplanation && currentQuestion.explanation && (
+                <div className="mt-3 pt-3 border-t border-slate-200/60 transition-all">
+                  <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                    <LatexWrapper text={currentQuestion.explanation} />
+                  </p>
+                </div>
               )}
             </div>
-            {currentQuestion.explanation && (
-              <p className="text-xs text-slate-600 leading-relaxed mt-1.5">{currentQuestion.explanation}</p>
-            )}
-            {!isHost && (
-              <p className="text-xs font-medium text-slate-400 mt-2 text-center">Menunggu host melanjutkan soal...</p>
-            )}
+            <p className="text-xs font-medium text-slate-400 text-center animate-pulse">
+              Mensinkronisasi untuk memuat soal berikutnya...
+            </p>
           </div>
         )}
       </div>
