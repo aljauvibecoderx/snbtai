@@ -80,7 +80,7 @@ Validasi Akhir: "options" WAJIB terdiri dari 5 string. "correctIndex" WAJIB numb
       }),
     }
   );
-  
+
   if (!res.ok) {
     const errText = await res.text();
     console.error("AI Request Failed: ", errText);
@@ -89,7 +89,7 @@ Validasi Akhir: "options" WAJIB terdiri dari 5 string. "correctIndex" WAJIB numb
 
   const data = await res.json();
   const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  
+
   let clean = raw;
   const match = clean.match(/\[\s*\{[\s\S]*\}\s*\]/);
   if (match) {
@@ -97,7 +97,7 @@ Validasi Akhir: "options" WAJIB terdiri dari 5 string. "correctIndex" WAJIB numb
   } else {
     clean = clean.replace(/```(?:json)?/gi, '').trim();
   }
-  
+
   try {
     const parsed = JSON.parse(clean);
     return Array.isArray(parsed) ? parsed : [parsed];
@@ -299,7 +299,7 @@ const GenerateQuestion = ({ user }) => {
     setError('');
     try {
       const { subtest, topic, difficulty, count, context } = aiConfig;
-      
+
       const newQuestions = await generateQuestionWithAI(
         SUBTESTS.find((s) => s.id === subtest)?.label || subtest,
         topic,
@@ -311,7 +311,7 @@ const GenerateQuestion = ({ user }) => {
       if (!newQuestions || newQuestions.length === 0) {
         throw new Error('Semua soal gagal di-generate (Mungkin format salah). Coba lagi.');
       }
-      
+
       setQuestions((prev) => [...prev, ...newQuestions]);
     } catch (e) {
       console.error("AI Generation Error: ", e);
@@ -446,16 +446,16 @@ const GenerateQuestion = ({ user }) => {
           </div>
 
           <div className="mb-4">
-              <label className="text-xs font-semibold text-slate-600 mb-1 block flex items-center gap-1">
-                Konteks / Referensi Acuan Singkat <span className="text-slate-400 font-normal">(Opsional)</span>
-              </label>
-              <textarea
-                value={aiConfig.context}
-                onChange={(e) => setAiConfig({ ...aiConfig, context: e.target.value })}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-400 shadow-sm resize-none"
-                placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
-                rows={3}
-              />
+            <label className="text-xs font-semibold text-slate-600 mb-1 block flex items-center gap-1">
+              Konteks / Referensi Acuan Singkat <span className="text-slate-400 font-normal">(Opsional)</span>
+            </label>
+            <textarea
+              value={aiConfig.context}
+              onChange={(e) => setAiConfig({ ...aiConfig, context: e.target.value })}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-400 shadow-sm resize-none"
+              placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
+              rows={3}
+            />
           </div>
 
           <button
