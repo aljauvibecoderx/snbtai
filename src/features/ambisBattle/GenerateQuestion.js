@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { saveQuestionsToRoom, listenToRoom, startBattle } from '../../services/firebase/ambisBattle';
 import { GEMINI_KEYS } from '../../config/config';
+import { selectTemplate, getAllPatterns } from '../../utils/questionTemplates';
 
 const SUBTESTS = [
   { id: 'pu', label: 'Penalaran Umum' },
@@ -22,89 +23,170 @@ const TOPICS = [
   'Bahasa Inggris', 'Fisika', 'Kimia', 'Biologi', 'Sejarah', 'Ekonomi', 'Geografi'
 ];
 
-const getKey = () => {
-  const idx = parseInt(localStorage.getItem('gemini_key_index') || '0');
-  return GEMINI_KEYS[idx % GEMINI_KEYS.length]?.key;
+const GEMINI_KEY_INDEX = 'gemini_key_index';
+
+const getGeminiKey = () => {
+  const index = parseInt(localStorage.getItem(GEMINI_KEY_INDEX) || '0');
+  return GEMINI_KEYS[index % GEMINI_KEYS.length];
+};
+
+const switchGeminiKey = () => {
+  const currentIndex = parseInt(localStorage.getItem(GEMINI_KEY_INDEX) || '0');
+  const nextIndex = (currentIndex + 1) % GEMINI_KEYS.length;
+  localStorage.setItem(GEMINI_KEY_INDEX, nextIndex.toString());
+  return GEMINI_KEYS[nextIndex];
 };
 
 const generateQuestionWithAI = async (subtest, topic, difficulty, count, context = '') => {
-  const apiKey = getKey();
+  const apiKey = getGeminiKey();
   if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
 
-  const contextPrompt = context.trim() ? `\n\n=== KONTEKS MATERI ACAUN (WAJIB DIGUNAKAN) ===\n"${context}"\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!` : '';
+  // Pilih template yang sesuai
+  const subtestId = SUBTESTS.find((s) => s.label === subtest || s.id === subtest)?.id || 'pu';
+  const levelParam = difficulty === 'Mudah' ? 1 : difficulty === 'Sedang' ? 3 : 5;
+  const allPatterns = getAllPatterns(subtestId);
 
+  // Generate list pola untuk prompt
+  const patternList = allPatterns
+    .filter(p => p.level.includes(levelParam))
+    .map(p => `- "${p.pattern}" (Tipe: ${p.type})`)
+    .join('\\n');
+
+  const contextPrompt = context.trim() 
+    ? `\\n\\n=== KONTEKS MATERI ACUAN (WAJIB DIGUNAKAN) ===\\n"${context}"\\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!` 
+    : '';
+
+  // === PROMPT LENGKAP DENGAN SEMUA PROTOKOL ===
   const prompt = `SYSTEM: GENERATOR SOAL UTBK-SNBT DENGAN POLA RESMI
 
 Kamu adalah AI profesional pembuat soal quiz pilihan ganda realtime.
 Buatkan ${count} soal pilihan ganda SNBT untuk subtes ${subtest}, topik ${topic}, tingkat kesulitan ${difficulty}.${contextPrompt}
 
-=== PROTOKOL FORMAT MUTLAK (CRITICAL ERROR JIKA DILANGGAR) ===
-1. KEMBALIKAN HANYA ARRAY JSON MURNI TERVALIDASI.
-2. DILARANG ADA TEKS PENGANTAR.
-3. DILARANG MENGGUNAKAN BLOK MARKDOWN (tanpa \`\`\`json).
-4. Setiap string WAJIB escape kutipan ganda dengan single backslash (\\").
-5. Tuliskan rumus/matematika dalam format LaTeX dengan DUA backslash (contoh: \\\\frac{1}{2}, \\\\sqrt{x}). Gunakan $...$ untuk inline math.
-6. NO trailing commas.
-7. NO unlocked strings.
-8. NO line breaks that break JSON format.
-9. DILARANG ADA TEKS DILUAR JSON ARRAY.
+=== PROTOKOL ESCAPING KARAKTER (CRITICAL) ===
+SETIAP output JSON WAJIB mengikuti aturan ini:
+1. Tanda petik ganda di dalam string: WAJIB escape dengan \\" (SATU backslash + quote)
+   - SALAH: \\\\" (double backslash)
+   - SALAH: " (tanpa escape)
+   - BENAR: \\" (single backslash)
+2. Backslash untuk LaTeX: WAJIB TEPAT DUA backslash \\\\ (contoh: \\\\frac, \\\\circ)
+   - SALAH: \\frac (satu backslash), \\\\\\frac (tiga backslash)
+   - BENAR: \\\\frac, \\\\circ, \\\\sqrt (dua backslash)
+3. Newline: Gunakan \\n, JANGAN baris baru fisik
+4. DILARANG ada teks di luar JSON
+5. DILARANG markdown code blocks
+6. DILARANG karakter kontrol (form feed, tab manual)
+7. Markdown Bold: Gunakan **kata** untuk kata yang perlu ditebalkan
+8. Kutipan/Dialog: Gunakan \\" untuk dialog atau kutipan dalam teks
 
-=== STRUKTUR JSON (WAJIB BERUPA ARRAY DARI OBJECT INI) ===
+=== ATURAN WAJIB: HIRARKI SIMBOL (The Layering Rule) ===
+Saat menggabungkan format bold (**) dengan tanda petik ganda (\\"):
+1. PRIORITAS TANDA PETIK: Setiap tanda petik ganda yang merupakan bagian dari kalimat WAJIB di-escape dengan tepat satu backslash
+   - SALAH: "kata **"tebal"**"
+   - BENAR: "kata **\\"tebal\\"**"
+2. Format: **\\"Kalimat tebal dan dikutip\\"**
+
+=== PROTOKOL LATEX (CRITICAL) ===
+SETIAP ekspresi matematika WAJIB dibungkus dengan $:
+1. Inline math: $x$, $f(x)$, $\\\\frac{1}{2}$
+2. Display math: $$f(x) = 2x + 1$$
+3. Variabel tunggal: $x$, $y$, $P$, $Q$ (WAJIB dibungkus $)
+4. Angka dalam konteks math: $\\\\frac{1}{9}$, $x^2$
+5. WAJIB kurung kurawal: $\\\\\\\\frac{1}{9}$ BUKAN $\\\\\\\\frac19$
+6. Operator: $\\\\times$, $\\\\div$, $\\\\circ$
+7. Perbandingan: $P > Q$, $P < Q$, $P = Q$ (dibungkus $)
+8. Kurung untuk pecahan/pangkat: Gunakan $\\\\left($ dan $\\\\right)$
+
+=== POLA TERSEDIA ===
+${patternList}
+
+=== FORMAT OUTPUT (JSON ARRAY) ===
 [
   {
-    "text": "Teks pertanyaan lengkap yang rapi dan memuat kalimat utuh...",
-    "options": [
-      "A. opsi pertama",
-      "B. opsi kedua",
-      "C. opsi ketiga",
-      "D. opsi keempat",
-      "E. opsi kelima"
-    ],
+    "text": "Teks pertanyaan utama...",
+    "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
     "correctIndex": 0,
-    "explanation": "Pembahasan rinci dan logis dalam kalimat utuh.",
+    "explanation": "Pembahasan rinci...",
     "subtest": "${subtest}",
     "topic": "${topic}",
     "difficulty": "${difficulty}"
   }
 ]
-Validasi Akhir: "options" WAJIB terdiri dari 5 string. "correctIndex" WAJIB number (0-4). JIKA GAGAL MENGIKUTI ATURAN, KEMBALIKAN ARRAY KOSONG: []`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 2500, temperature: 0.7 },
-      }),
+=== VALIDASI SEBELUM OUTPUT ===
+✓ Semua LaTeX command menggunakan TEPAT DUA backslash (\\\\frac, \\\\circ)
+✓ Semua tanda petik di dalam string di-escape (\\")
+✓ Tidak ada teks di luar JSON. KEMBALIKAN HANYA ARRAY JSON MURNI.`;
+
+  // === RETRY MECHANISM DENGAN API KEY ROTATION ===
+  let attempts = 0;
+  const maxAttempts = GEMINI_KEYS.length;
+
+  while (attempts < maxAttempts) {
+    try {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      
+      const currentKey = getGeminiKey();
+      const genAI = new GoogleGenerativeAI(currentKey.key);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2500,
+        }
+      });
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text().trim();
+
+      // === MULTI-LAYER CLEANING ===
+      // Layer 1: Remove markdown code blocks
+      text = text.replace(/```(?:json)?\s*/gi, '').replace(/```\s*/g, '');
+      
+      // Layer 2: Remove control characters
+      text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+      
+      // Layer 3: Fix over-escaped quotes if they occur
+      text = text.replace(/\\\\\\"/g, '\\"');
+      
+      // Layer 4: Remove trailing commas
+      text = text.replace(/,\s*([\]}])/g, '$1').trim();
+      
+      // Layer 5: Extract JSON array if wrapped in text
+      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (match) {
+        text = match[0];
+      }
+
+      // === PARSE JSON ===
+      try {
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          throw new Error('JSON array kosong atau tidak valid');
+        }
+        return parsed;
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError.message);
+        console.error('Raw text:', text);
+        throw new Error('AI gagal mengikuti format JSON. Silakan diregenerate.');
+      }
+
+    } catch (error) {
+      // Check for quota/limit errors
+      if (error.message?.includes('quota') || error.message?.includes('limit') || error.message?.includes('429')) {
+        switchGeminiKey();
+        attempts++;
+        if (attempts >= maxAttempts) {
+          throw new Error('Semua API key exhausted (limit habis). Silakan coba lagi nanti.');
+        }
+        await new Promise(resolve => setTimeout(resolve, 3000)); // 3s delay
+      } else {
+        throw error;
+      }
     }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text();
-    console.error("AI Request Failed: ", errText);
-    throw new Error('API AI menolak permintaan (mungkin limit/Error). Coba lagi nanti.');
   }
 
-  const data = await res.json();
-  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-  let clean = raw;
-  const match = clean.match(/\[\s*\{[\s\S]*\}\s*\]/);
-  if (match) {
-    clean = match[0];
-  } else {
-    clean = clean.replace(/```(?:json)?/gi, '').trim();
-  }
-
-  try {
-    const parsed = JSON.parse(clean);
-    return Array.isArray(parsed) ? parsed : [parsed];
-  } catch (error) {
-    console.error("Failed to parse JSON array from AI response:", clean);
-    throw new Error("AI gagal mengikuti format JSON. Silakan diregenerate.");
-  }
+  throw new Error('Gagal generate soal setelah multi-retries.');
 };
 
 const QuestionCard = ({ question, index, onEdit, onDelete }) => {
