@@ -3,20 +3,19 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 /**
- * Renders a string that may contain mixed text and LaTeX math expressions.
- * Supports inline math wrapped in $...$ delimiters.
+ * LatexWrapper
+ * Renders mixed text + LaTeX math strings.
+ * Splits on $...$ boundaries; plain text is rendered as normal text,
+ * math segments are rendered via KaTeX.
  *
- * Uses katex.renderToString() scoped to each individual segment,
- * injected safely via dangerouslySetInnerHTML.
- *
- * @param {string} text - Input string, may contain $math$ segments
- * @param {string} className - Optional CSS class for the wrapper
+ * Fix: Plain text spans use `font-family: inherit` to prevent KaTeX CSS
+ * (which applies italic math fonts globally) from bleeding onto non-math text.
  */
 const LatexWrapper = ({ text, className = '' }) => {
   if (!text) return null;
 
-  // Split on $...$ boundaries, keeping the delimiters in the array
-  const parts = text.split(/(\$[^$]+\$)/g);
+  // Split into alternating [plain, $math$, plain, $math$, ...] segments
+  const parts = text.split(/(\$[^$\n]+\$)/g);
 
   return (
     <span className={className}>
@@ -24,7 +23,7 @@ const LatexWrapper = ({ text, className = '' }) => {
         const isMath = part.startsWith('$') && part.endsWith('$') && part.length > 2;
 
         if (isMath) {
-          const mathContent = part.slice(1, -1); // Strip the $ delimiters
+          const mathContent = part.slice(1, -1).trim();
           try {
             const html = katex.renderToString(mathContent, {
               throwOnError: false,
@@ -34,18 +33,34 @@ const LatexWrapper = ({ text, className = '' }) => {
             return (
               <span
                 key={i}
-                className="katex-inline"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             );
-          } catch (e) {
-            // Graceful fallback: render raw text if KaTeX parse fails
-            return <span key={i}>{part}</span>;
+          } catch {
+            // Fallback: show raw $...$ if KaTeX fails
+            return (
+              <span key={i} style={{ fontFamily: 'inherit', fontStyle: 'normal' }}>
+                {part}
+              </span>
+            );
           }
         }
 
-        // Plain text segment
-        return part ? <span key={i}>{part}</span> : null;
+        // Plain text — override KaTeX CSS so text renders normally
+        return part ? (
+          <span
+            key={i}
+            style={{
+              fontFamily: 'inherit',
+              fontStyle: 'normal',
+              fontWeight: 'inherit',
+              letterSpacing: 'normal',
+              wordSpacing: 'normal',
+            }}
+          >
+            {part}
+          </span>
+        ) : null;
       })}
     </span>
   );
