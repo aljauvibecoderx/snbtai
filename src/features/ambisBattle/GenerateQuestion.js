@@ -52,8 +52,8 @@ const generateQuestionWithAI = async (subtest, topic, difficulty, count, context
     .map(p => `- "${p.pattern}" (Tipe: ${p.type})`)
     .join('\\n');
 
-  const contextPrompt = context.trim() 
-    ? `\\n\\n=== KONTEKS MATERI ACUAN (WAJIB DIGUNAKAN) ===\\n"${context}"\\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!` 
+  const contextPrompt = context.trim()
+    ? `\\n\\n=== KONTEKS MATERI ACUAN (WAJIB DIGUNAKAN) ===\\n"${context}"\\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!`
     : '';
 
   // === PROMPT LENGKAP DENGAN SEMUA PROTOKOL ===
@@ -124,7 +124,7 @@ ${patternList}
   while (attempts < maxAttempts) {
     try {
       const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      
+
       const currentKey = getGeminiKey();
       const genAI = new GoogleGenerativeAI(currentKey.key);
       const model = genAI.getGenerativeModel({
@@ -142,16 +142,16 @@ ${patternList}
       // === MULTI-LAYER CLEANING ===
       // Layer 1: Remove markdown code blocks
       text = text.replace(/```(?:json)?\s*/gi, '').replace(/```\s*/g, '');
-      
+
       // Layer 2: Remove control characters
       text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-      
+
       // Layer 3: Fix over-escaped quotes if they occur
       text = text.replace(/\\\\\\"/g, '\\"');
-      
+
       // Layer 4: Remove trailing commas
       text = text.replace(/,\s*([\]}])/g, '$1').trim();
-      
+
       // Layer 5: Extract JSON array if wrapped in text
       const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
       if (match) {

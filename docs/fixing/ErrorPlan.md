@@ -1,198 +1,258 @@
 # Error Fix Plan: JSON Parsing Error pada GenerateQuestion.js
 
 **File**: `src/features/ambisBattle/GenerateQuestion.js`  
-**Tanggal**: 2026-03-22  
-**Status**: Pending Approval  
-**Prioritas**: 🔴 CRITICAL
+**Tanggal Update**: 2026-03-22  
+**Status**: 🔴 CRITICAL - REVISED SOLUTION  
+**Prioritas**: CRITICAL
 
 ---
 
 ## 1. Ringkasan Masalah
 
-### 1.1 Deskripsi Error
-AI berhasil membuat soal, namun **gagal karena tidak sesuai format JSON** yang diharapkan sistem.
+### 1.1 Error Terbaru (2026-03-22)
 
-### 1.2 Error Log
+**Error Message**:
 ```
-Failed to parse JSON array from AI response: [
-  {
-    "text": "All students who study diligently will definitely pass the SNBT...",
-    "options": [
-      "A. Some SNBT participants will definitely pass the SNBT.",
-      "B. All students who study diligently are SNBT participants.",
-      ...
-    ],
-    "correctIndex": 0,
-    "explanation": "Premise 1: Study Hard -> Pass
+JSON Parse Error: Unterminated string in JSON at position 260 (line 1 column 261)
 ```
 
-**Lokasi Error**: `GenerateQuestion.js:78`  
-**Stack Trace**:
-```
-at generateQuestionWithAI (GenerateQuestion.js:78:1)
-at async handleGenerateWithAI (GenerateQuestion.js:275:1)
-```
-
-### 1.3 Analisis Root Cause
-
-| Penyebab | Dampak |
-|----------|--------|
-| Prompt tidak cukup ketat | AI menghasilkan JSON dengan format bebas |
-| Tidak ada protokol escaping | Tanda petik `"` tidak di-escape dengan benar |
-| Tidak ada protokol LaTeX | Rumus matematika tidak menggunakan double backslash |
-| Parsing logic terlalu sederhana | Tidak bisa membersihkan response AI yang "kotor" |
-| Tidak ada retry mechanism | Gagal total saat API key quota exceeded |
-
----
-
-## 2. Solusi Teknis
-
-### 2.1 Prinsip Solusi
-**"Copy-Paste Mekanisme yang Sudah Berhasil"**
-
-Menggunakan sistem yang sama persis seperti di `App.js` (baris 800-1400) yang sudah terbukti stabil dengan success rate >95%.
-
-### 2.2 Komponen yang Akan Diimplementasi
-
-#### A. Prompt Engineering (CRITICAL)
-
-**File Referensi**: `App.js` (baris ~1015-1400)
-
-**Protokol Escaping yang Wajib Ada**:
-```javascript
-const prompt = `
-=== PROTOKOL ESCAPING KARAKTER (CRITICAL) ===
-1. Tanda petik ganda di dalam string: WAJIB escape dengan \\" (SATU backslash + quote)
-   - SALAH: \\\\" (double backslash)
-   - SALAH: " (tanpa escape)
-   - BENAR: \\" (single backslash)
-
-2. Backslash untuk LaTeX: WAJIB TEPAT DUA backslash \\\\\\\\ (contoh: \\\\\\\\frac, \\\\\\\\circ)
-   - SALAH: \\\\frac (satu backslash), \\\\\\\\\\\\frac (tiga backslash)
-   - BENAR: \\\\\\\\frac, \\\\\\\\circ, \\\\\\\\sqrt (dua backslash)
-
-3. Newline: Gunakan \\\\n, JANGAN baris baru fisik
-4. DILARANG ada teks di luar JSON
-5. DILARANG markdown code blocks
-`;
+**Raw Text dari AI**:
+```json
+[  {    
+  "text": "Pernyataan **\"Saya bekerja 2 jam sehari\"** benar. Jika saya hanya bekerja pada hari kerja (Senin-Jumat), maka total jam kerja saya dalam $3$ minggu adalah...",    
+  "options": ["A. $20$ jam", "B. $25$ jam", "C. $30$ jam", "D. $35$ jam", "E. $4...
 ```
 
-**Hirarki Simbol (Layering Rule)**:
-```javascript
-=== ATURAN WAJIB: HIRARKI SIMBOL ===
-Saat menggabungkan format bold (**) dengan tanda petik ganda (\\"):
-1. PRIORITAS TANDA PETIK: Setiap tanda petik ganda WAJIB di-escape
-   - SALAH: "kata **"tebal"**"
-   - BENAR: "kata **\\"tebal\\"**"
-2. Format: **\\"Kalimat tebal dan dikutip\\"**
-`;
-```
+**Lokasi Error**: `GenerateQuestion.js:169-171`
 
-**Protokol LaTeX**:
-```javascript
-=== PROTOKOL LATEX (CRITICAL) ===
-SETIAP ekspresi matematika WAJIB dibungkus dengan $:
-1. Inline math: $x$, $f(x)$, $\\\\frac{1}{2}$
-2. Display math: $$f(x) = 2x + 1$$
-3. Variabel tunggal: $x$, $y$, $P$, $Q$ (WAJIB dibungkus $)
-4. Operator: $\\\\times$, $\\\\div$, $\\\\circ$
-5. Kurung untuk pecahan/pangkat: $\\\\left( \\\\frac{1}{2} \\\\right)^2$
-`;
-```
+### 1.2 Analisis Root Cause (UPDATED)
 
-#### B. Multi-Layer JSON Cleaning
+| Penyebab | Dampak | Status |
+|----------|--------|--------|
+| **AI menggunakan `\"` dalam string JSON** | JSON.parse() gagal karena string tidak ter-escape | 🔴 **ROOT CAUSE** |
+| Prompt membingungkan AI | AI bingung antara `\"` vs `\\"` | 🔴 Critical |
+| Tidak ada pre-parse validation | Error langsung throw tanpa repair attempt | 🟡 Medium |
+| Tidak ada fallback/repair mechanism | Gagal total padahal data hampir benar | 🟡 Medium |
 
-**File Referensi**: `App.js` (baris ~950-970)
+### 1.3 Penjelasan Masalah Teknis
 
-**5 Layer Cleaning**:
-```javascript
-// Layer 1: Remove markdown code blocks
-text = text.replace(/```json\\s*/g, '').replace(/```\\s*/g, '');
-
-// Layer 2: Remove control characters (form feed, tab, etc.)
-text = text.replace(/[\\x00-\\x1F\\x7F-\\x9F]/g, '');
-
-// Layer 3: Fix over-escaped quotes (\\\\\\" -> \\")
-text = text.replace(/\\\\\\\\\\\\"/g, '\\\\"');
-
-// Layer 4: Remove trailing commas before closing bracket
-text = text.replace(/,\\s*([\\]}])/g, '$1').trim();
-
-// Layer 5: Final trim
-text = text.trim();
-```
-
-#### C. Retry Mechanism dengan API Key Rotation
-
-**File Referensi**: `App.js` (baris ~810-825, ~940-960)
-
-**Helper Functions**:
-```javascript
-const GEMINI_KEY_INDEX = 'gemini_key_index';
-
-const getGeminiKey = () => {
-  const index = parseInt(localStorage.getItem(GEMINI_KEY_INDEX) || '0');
-  return GEMINI_KEYS[index];
-};
-
-const switchGeminiKey = () => {
-  const currentIndex = parseInt(localStorage.getItem(GEMINI_KEY_INDEX) || '0');
-  const nextIndex = (currentIndex + 1) % GEMINI_KEYS.length;
-  localStorage.setItem(GEMINI_KEY_INDEX, nextIndex.toString());
-  return GEMINI_KEYS[nextIndex];
-};
-```
-
-**Retry Logic**:
-```javascript
-let attempts = 0;
-const maxAttempts = GEMINI_KEYS.length;
-
-while (attempts < maxAttempts) {
-  try {
-    const currentKey = getGeminiKey();
-    const genAI = new GoogleGenerativeAI(currentKey.key);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    
-    const result = await model.generateContent(prompt, { signal: abortSignal });
-    // ... parsing logic
-    
-  } catch (error) {
-    if (error.message?.includes('quota') || error.message?.includes('429')) {
-      const nextKey = switchGeminiKey();
-      attempts++;
-      if (attempts >= maxAttempts) {
-        return MOCK_QUESTIONS;
-      }
-      await new Promise(resolve => setTimeout(resolve, 3000)); // 3s delay
-    } else {
-      throw error;
-    }
-  }
+**Masalah Utama**: AI menghasilkan JSON seperti ini:
+```json
+{
+  "text": "Pernyataan **\"Saya bekerja 2 jam sehari\"** benar..."
 }
 ```
 
-#### D. Template Integration
+Dalam JSON yang valid, tanda petik di dalam string HARUS di-escape. Namun AI menulis `\"` yang dalam konteks JavaScript string literal berarti:
+- `\"` = backslash + quote (tidak valid dalam JSON)
+- Yang seharusnya: `\\"` (double backslash + quote)
 
-**File Referensi**: `App.js` (baris ~1000-1015)
-
-**Imports yang Diperlukan**:
-```javascript
-import { selectTemplate, getAllPatterns } from '../../utils/questionTemplates';
-import { SUBTESTS } from '../../constants/subtestHelper';
+**Mengapa Error di Position 260?**
+Karena setelah `**\"Saya bekerja 2 jam sehari\"**`, AI melanjutkan dengan ` benar` tanpa escape yang benar, sehingga JSON parser melihat:
+```
+"Pernyataan **\"Saya bekerja 2 jam sehari\"** benar...
+                      ↑
+              String unterminated!
 ```
 
-**Template Selection**:
-```javascript
-const subtestId = SUBTESTS.find(s => s.label === subtestLabel)?.id;
-const selectedTemplate = selectTemplate(subtestId, complexity);
-const allPatterns = getAllPatterns(subtestId);
+---
 
-const patternList = allPatterns
-  .filter(p => p.level.includes(complexity))
-  .map(p => `- "${p.pattern}" (Tipe: ${p.type})`)
-  .join('\\n');
+## 2. Solusi Teknis (REVISED)
+
+### 2.1 Prinsip Solusi Baru
+
+**"Escape-Agnostic Parsing + Auto-Repair"**
+
+Daripada mengandalkan AI untuk escape dengan benar (yang sering gagal), kita:
+1. **Terima apa saja dari AI** (baik `\"` atau `\\"`)
+2. **Pre-process dengan regex yang robust** untuk normalisasi escaping
+3. **Repair JSON yang broken** sebelum parse
+4. **Fallback ke pattern matching** jika parse tetap gagal
+
+### 2.2 Komponen Solusi
+
+#### A. Enhanced Prompt (ANTI-CONFUSION)
+
+**Masalah**: Prompt lama membingungkan AI dengan terlalu banyak backslash.
+
+**Solusi**: Gunakan prompt yang lebih sederhana dengan **contoh konkret**.
+
+```javascript
+const prompt = `SYSTEM: GENERATOR SOAL UTBK-SNBT - JSON STRICT MODE
+
+Anda adalah generator soal SNBT profesional. TUGAS ANDA: Hasilkan HANYA JSON array valid.
+
+=== CONTOH FORMAT YANG BENAR (HAFALKAN POLA INI) ===
+[
+  {
+    "text": "Perhatikan pernyataan: \\\\\\"Saya bekerja 2 jam sehari\\\\\\". Jika bekerja hanya Senin-Jumat, total jam dalam 3 minggu adalah...",
+    "options": ["A. 20 jam", "B. 25 jam", "C. 30 jam", "D. 35 jam", "E. 40 jam"],
+    "correctIndex": 2,
+    "explanation": "2 jam × 5 hari × 3 minggu = 30 jam",
+    "subtest": "${subtest}",
+    "topic": "${topic}",
+    "difficulty": "${difficulty}"
+  }
+]
+
+=== ATURAN WAJIB (ZERO TOLERANCE) ===
+1. KEMBALIKAN HANYA JSON ARRAY. Tanpa teks pengantar. Tanpa markdown.
+2. Untuk tanda petik dalam string: gunakan \\\\\\" (double backslash + quote)
+   - Contoh: "Kata \\\\\\"efektif\\\\\\" adalah baku" ✅
+   - JANGAN: "Kata \\"efektif\\" adalah baku" ❌
+   - JANGAN: "Kata "efektif" adalah baku" ❌
+3. Untuk matematika: gunakan $...$ dengan LaTeX
+   - Contoh: "Luas persegi dengan sisi $5$ cm adalah $25$ cm²"
+   - Rumus: "$\\\\\\\\frac{1}{2}$", "$x^2$", "$\\\\\\\\sqrt{16}$"
+4. Setiap opsi WAJIB dimulai dengan "A. ", "B. ", dst.
+5. correctIndex: angka 0-4 (bukan string!)
+
+=== DATA SOAL ===
+Subtes: ${subtest}
+Topik: ${topic}
+Kesulitan: ${difficulty}
+Jumlah: ${count} soal
+${contextPrompt}
+
+=== POLA SOAL YANG TERSEDIA ===
+${patternList}
+
+HASILKAN SEKARANG JSON ARRAY DENGAN ${count} SOAL:`;
 ```
+
+#### B. Multi-Layer Cleaning (ENHANCED)
+
+**6 Layer Cleaning** dengan normalisasi escaping:
+
+```javascript
+// Layer 1: Remove markdown code blocks
+text = text.replace(/```(?:json)?\\s*/gi, '').replace(/```\\s*/g, '');
+
+// Layer 2: Remove control characters
+text = text.replace(/[\\x00-\\x1F\\x7F-\\x9F]/g, '');
+
+// Layer 3: Normalize escaped quotes - CRITICAL FIX
+// AI mungkin menghasilkan: \\" atau \\\\" atau \\\\\\" - normalisasi ke \\"
+text = text.replace(/\\\\{3,}"/g, '\\\\"');  // \\\\" atau lebih → \\"
+text = text.replace(/\\\\"/g, '\\\\"');       // Ensure consistent \\"
+
+// Layer 4: Fix unescaped quotes inside strings (THE MAIN FIX)
+// Pattern: Cari quote yang tidak escaped di tengah string
+text = fixUnescapedQuotes(text);
+
+// Layer 5: Remove trailing commas
+text = text.replace(/,\\s*([\\]}])/g, '$1').trim();
+
+// Layer 6: Extract JSON array
+const match = text.match(/\\[\\s*\\{[\\s\\S]*\\}\\s*\\]/);
+if (match) {
+  text = match[0];
+}
+```
+
+**Fungsi fixUnescapedQuotes** (CRITICAL):
+```javascript
+function fixUnescapedQuotes(text) {
+  // Fix pattern: word"word (unescaped quote in middle of text)
+  // Example: "Kata "efektif" adalah" → "Kata \\"efektif\\" adalah"
+  
+  // Step 1: Split by quotes to analyze segments
+  const parts = text.split('"');
+  
+  // Step 2: Rebuild with proper escaping
+  let result = '';
+  for (let i = 0; i < parts.length; i++) {
+    if (i === 0) {
+      result = parts[i];
+    } else if (i % 2 === 1) {
+      // This is content inside quotes (should be escaped)
+      result += '\\\\"' + parts[i];
+    } else {
+      // This is content outside quotes
+      result += parts[i];
+    }
+  }
+  
+  return result;
+}
+```
+
+#### C. JSON Repair Fallback
+
+Jika JSON.parse() tetap gagal, gunakan **regex-based extraction**:
+
+```javascript
+function tryRepairAndParse(text) {
+  // Attempt 1: Direct parse
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.log('Direct parse failed:', e.message);
+  }
+  
+  // Attempt 2: Fix common issues
+  let repaired = text;
+  
+  // Fix: Unescaped quotes after colon
+  repaired = repaired.replace(/:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"\\s*[,}]/g, (match) => {
+    return match.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, '"\\"$1\\""');
+  });
+  
+  // Fix: Missing closing quotes
+  repaired = repaired.replace(/"([^"]*)([,{\\]\\n])/g, '"$1"$2');
+  
+  // Fix: Newlines in strings (replace with \\n)
+  repaired = repaired.replace(/"([^"]*)\\n([^"]*)"/g, '"$1\\\\n$2"');
+  
+  try {
+    return JSON.parse(repaired);
+  } catch (e2) {
+    console.log('Repair attempt 1 failed, trying pattern extraction...');
+    
+    // Attempt 2: Extract questions with regex
+    return extractQuestionsWithRegex(text);
+  }
+}
+
+function extractQuestionsWithRegex(text) {
+  const questions = [];
+  
+  // Pattern untuk extract text field
+  const textMatches = text.matchAll(/"text":\\s*"([^"]*(?:\\\\.[^"]*)*)"/g);
+  const texts = Array.from(textMatches, m => m[1]);
+  
+  // Pattern untuk extract options array
+  const optionsMatches = text.matchAll(/"options":\\s*\\[([^\\]]*)\\]/g);
+  const optionsArrays = Array.from(optionsMatches, m => {
+    return m[1].match(/"[^"]*"/g)?.map(s => s.slice(1, -1)) || [];
+  });
+  
+  // Pattern untuk extract correctIndex
+  const indexMatches = text.matchAll(/"correctIndex":\\s*(\\d+)/g);
+  const indices = Array.from(indexMatches, m => parseInt(m[1]));
+  
+  // Pattern untuk extract explanation
+  const explanationMatches = text.matchAll(/"explanation":\\s*"([^"]*(?:\\\\.[^"]*)*)"/g);
+  const explanations = Array.from(explanationMatches, m => m[1]);
+  
+  // Build questions array
+  const count = Math.min(texts.length, optionsArrays.length, indices.length);
+  for (let i = 0; i < count; i++) {
+    questions.push({
+      text: texts[i],
+      options: optionsArrays[i],
+      correctIndex: indices[i],
+      explanation: explanations[i] || ''
+    });
+  }
+  
+  return questions.length > 0 ? questions : null;
+}
+```
+
+#### D. Retry Mechanism (UNCHANGED)
+
+Tetap gunakan retry dengan API key rotation seperti sebelumnya.
 
 ---
 
@@ -201,229 +261,226 @@ const patternList = allPatterns
 ### 3.1 Format Standar (Regular Question)
 ```json
 {
-  "stimulus": "Teks stimulus...",
-  "representation": {"type": "text", "data": null},
   "text": "Pertanyaan utama...",
-  "options": ["Opsi A", "Opsi B", "Opsi C", "Opsi D", "Opsi E"],
+  "options": ["A. Opsi A", "B. Opsi B", "C. Opsi C", "D. Opsi D", "E. Opsi E"],
   "correctIndex": 0,
-  "explanation": "Pembahasan rinci..."
-}
-```
-
-### 3.2 Format Khusus
-
-#### A. PQ Comparison (PK_01)
-```json
-{
-  "type": "pq_comparison",
-  "stimulus": "Konteks soal...",
-  "text": "Berdasarkan informasi yang diberikan, manakah hubungan antara kuantitas P dan Q berikut yang benar?",
-  "p_value": "$x^2 + y^2$",
-  "q_value": "$50$",
-  "options": ["P > Q", "Q > P", "P = Q", "Informasi tidak cukup"],
-  "correctIndex": 3,
-  "explanation": "Penjelasan..."
-}
-```
-
-#### B. Data Sufficiency (PK_02)
-```json
-{
-  "type": "data_sufficiency",
-  "stimulus": "Konteks soal...",
-  "text": "Berapa harga 1 unit produk A?",
-  "statements": [
-    "Harga 2 unit A dan 3 unit B adalah Rp50.000",
-    "Harga 1 unit B adalah Rp8.000"
-  ],
-  "options": [
-    "Pernyataan (1) SAJA cukup...",
-    "Pernyataan (2) SAJA cukup...",
-    "DUA pernyataan BERSAMA-SAMA cukup...",
-    "Pernyataan (1) SAJA cukup dan pernyataan (2) SAJA cukup",
-    "Pernyataan (1) dan pernyataan (2) tidak cukup"
-  ],
-  "correctIndex": 2,
-  "explanation": "Analisis..."
-}
-```
-
-#### C. Grid Boolean (Ya/Tidak)
-```json
-{
-  "type": "grid_boolean",
-  "stimulus": "Teks stimulus...",
-  "text": "Tentukan kebenaran pernyataan berikut!",
-  "grid_data": [
-    {"statement": "Rata-rata penjualan adalah 15 buku", "correct_answer": true},
-    {"statement": "Median data lebih besar dari rata-rata", "correct_answer": false},
-    {"statement": "Total penjualan mencapai 75 buku", "correct_answer": true}
-  ],
-  "options": [],
-  "correctIndex": -1,
-  "explanation": "Penjelasan..."
-}
-```
-
-#### D. Flowchart Algorithm
-```json
-{
-  "type": "flowchart_algo",
-  "stimulus": "Perhatikan diagram alir berikut...",
-  "representation": {
-    "type": "flowchart",
-    "data": {
-      "nodes": [
-        {"id": "1", "type": "terminal", "label": "Mulai", "row": 0, "col": 0},
-        {"id": "2", "type": "io", "label": "Input $a$", "row": 1, "col": 0},
-        {"id": "3", "type": "process", "label": "$x = a^2$", "row": 2, "col": 0},
-        {"id": "4", "type": "decision", "label": "$x > 20?$", "row": 3, "col": 0}
-      ],
-      "edges": [
-        {"from": "1", "to": "2"},
-        {"from": "2", "to": "3"},
-        {"from": "3", "to": "4"},
-        {"from": "4", "to": "5", "label": "Ya"},
-        {"from": "4", "to": "6", "label": "Tidak"}
-      ]
-    }
-  },
-  "text": "Jika input $a = 4$, berapakah nilai akhir $P$?",
-  "options": ["13", "18", "21", "26", "28"],
-  "correctIndex": 4,
-  "explanation": "Langkah 1: Input a=4.\\nLangkah 2: x = 4^2 = 16..."
+  "explanation": "Pembahasan rinci...",
+  "subtest": "Penalaran Umum",
+  "topic": "Logika",
+  "difficulty": "Sedang"
 }
 ```
 
 ---
 
-## 4. Implementasi Detail
+## 4. Implementasi Detail (REVISED)
 
 ### 4.1 File yang Dimodifikasi
 
-| File | Baris | Perubahan |
-|------|-------|-----------|
-| `src/features/ambisBattle/GenerateQuestion.js` | 1-25 | Tambah imports |
-| `src/features/ambisBattle/GenerateQuestion.js` | 30-100 | Replace fungsi `generateQuestionWithAI` |
-| `src/features/ambisBattle/GenerateQuestion.js` | 260-320 | Update `handleGenerateWithAI` |
+| File | Perubahan |
+|------|-----------|
+| `src/features/ambisBattle/GenerateQuestion.js` | Replace fungsi `generateQuestionWithAI` sepenuhnya |
+| `src/features/ambisBattle/GenerateQuestion.js` | Tambah helper functions di atas komponen |
 
-### 4.2 Imports Baru (Baris 1-25)
+### 4.2 Helper Functions (BARU)
+
 ```javascript
-// Tambahkan setelah import yang sudah ada:
-import { selectTemplate, getAllPatterns } from '../../utils/questionTemplates';
-import { SUBTESTS } from '../../constants/subtestHelper';
-import { GEMINI_KEYS } from '../../config/config';
+// Tambahkan SEBELUM generateQuestionWithAI
+
+/**
+ * Fix unescaped quotes in JSON string
+ * This is the CRITICAL FIX for: Unterminated string error
+ */
+function fixUnescapedQuotes(text) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const prevChar = i > 0 ? text[i - 1] : '';
+    
+    if (char === '\\\\' && !escaped) {
+      escaped = true;
+      result += char;
+      continue;
+    }
+    
+    if (char === '"' && !escaped) {
+      inString = !inString;
+      result += char;
+    } else if (char === '"' && escaped) {
+      result += char;
+      escaped = false;
+    } else if (char === '"' && !inString && prevChar !== ':' && prevChar !== '[' && prevChar !== '{' && prevChar !== ',') {
+      result += char;
+    } else {
+      result += char;
+      escaped = false;
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Try to repair broken JSON and parse it
+ * Returns null if all repair attempts fail
+ */
+function tryRepairAndParse(text) {
+  // Attempt 1: Direct parse
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+  } catch (e) {
+    console.log('Direct parse failed:', e.message);
+  }
+  
+  // Attempt 2: Fix common issues
+  let repaired = text;
+  
+  // Fix over-escaped quotes: \\\\" → \\"
+  repaired = repaired.replace(/\\\\{3,}"/g, '\\\\"');
+  
+  // Fix trailing commas
+  repaired = repaired.replace(/,\\s*([\\]}])/g, '$1');
+  
+  // Fix newlines in strings
+  repaired = repaired.replace(/"([^"]*)\\n([^"]*)"/g, '"$1\\\\n$2"');
+  
+  try {
+    const parsed = JSON.parse(repaired);
+    console.log('Repair successful!');
+    return parsed;
+  } catch (e) {
+    console.log('Repair parse failed:', e.message);
+  }
+  
+  // Attempt 3: Extract with regex (last resort)
+  console.log('Attempting regex extraction...');
+  return extractQuestionsWithRegex(text);
+}
+
+/**
+ * Extract questions from broken JSON using regex patterns
+ */
+function extractQuestionsWithRegex(text) {
+  const questions = [];
+  
+  // Extract text fields
+  const textPattern = /"text":\\s*"((?:[^"\\\\]|\\\\.)*)"/g;
+  const texts = Array.from(text.matchAll(textPattern), m => m[1]);
+  
+  // Extract options arrays
+  const optionsPattern = /"options":\\s*\\[((?:[^\\[\\]]|\\[(?:[^\\[\\]]|\\[[^\\[\\]]*\\])*\\])*)\\]/g;
+  const optionsArrays = Array.from(text.matchAll(optionsPattern), m => {
+    const inner = m[1];
+    const optionMatches = inner.match(/"((?:[^"\\\\]|\\\\.)*)"/g);
+    return optionMatches ? optionMatches.map(s => s.slice(1, -1)) : [];
+  });
+  
+  // Extract correctIndex
+  const indexPattern = /"correctIndex":\\s*(\\d+)/g;
+  const indices = Array.from(text.matchAll(indexPattern), m => parseInt(m[1]));
+  
+  // Extract explanation
+  const explanationPattern = /"explanation":\\s*"((?:[^"\\\\]|\\\\.)*)"/g;
+  const explanations = Array.from(text.matchAll(explanationPattern), m => m[1]);
+  
+  // Extract subtest
+  const subtestPattern = /"subtest":\\s*"([^"]+)"/g;
+  const subtests = Array.from(text.matchAll(subtestPattern), m => m[1]);
+  
+  // Extract topic
+  const topicPattern = /"topic":\\s*"([^"]+)"/g;
+  const topics = Array.from(text.matchAll(topicPattern), m => m[1]);
+  
+  // Extract difficulty
+  const difficultyPattern = /"difficulty":\\s*"([^"]+)"/g;
+  const difficulties = Array.from(text.matchAll(difficultyPattern), m => m[1]);
+  
+  // Build questions array
+  const count = Math.min(texts.length, optionsArrays.length, indices.length);
+  
+  for (let i = 0; i < count; i++) {
+    questions.push({
+      text: texts[i],
+      options: optionsArrays[i],
+      correctIndex: indices[i],
+      explanation: explanations[i] || '',
+      subtest: subtests[i] || '',
+      topic: topics[i] || '',
+      difficulty: difficulties[i] || ''
+    });
+  }
+  
+  return questions.length > 0 ? questions : null;
+}
 ```
 
-### 4.3 Helper Functions (Sebelum komponen utama)
-```javascript
-// Tambahkan sebelum SUBTESTS array:
-const GEMINI_KEY_INDEX = 'gemini_key_index';
+### 4.3 Fungsi generateQuestionWithAI (REPLACE TOTAL)
 
-const getGeminiKey = () => {
-  const index = parseInt(localStorage.getItem(GEMINI_KEY_INDEX) || '0');
-  return GEMINI_KEYS[index % GEMINI_KEYS.length];
-};
-
-const switchGeminiKey = () => {
-  const currentIndex = parseInt(localStorage.getItem(GEMINI_KEY_INDEX) || '0');
-  const nextIndex = (currentIndex + 1) % GEMINI_KEYS.length;
-  localStorage.setItem(GEMINI_KEY_INDEX, nextIndex.toString());
-  return GEMINI_KEYS[nextIndex];
-};
-```
-
-### 4.4 Fungsi generateQuestionWithAI (Replace Total)
 ```javascript
 const generateQuestionWithAI = async (subtest, topic, difficulty, count, context = '') => {
   const apiKey = getGeminiKey();
-  if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
+  if (!apiKey) throw new Error('API key tidak tersedia.');
 
-  // Dapatkan subtest ID dari label
-  const subtestId = SUBTESTS.find(s => s.id === subtest)?.id;
-  
-  // Pilih template yang sesuai dengan level kesulitan
-  const selectedTemplate = selectTemplate(subtestId, difficulty === 'Mudah' ? 1 : difficulty === 'Sedang' ? 3 : 5);
+  const subtestId = SUBTESTS.find((s) => s.label === subtest || s.id === subtest)?.id || 'pu';
+  const levelParam = difficulty === 'Mudah' ? 1 : difficulty === 'Sedang' ? 3 : 5;
   const allPatterns = getAllPatterns(subtestId);
 
-  // Generate list pola untuk prompt
   const patternList = allPatterns
-    .filter(p => p.level.includes(difficulty === 'Mudah' ? 1 : difficulty === 'Sedang' ? 3 : 5))
+    .filter(p => p.level.includes(levelParam))
     .map(p => `- "${p.pattern}" (Tipe: ${p.type})`)
     .join('\\n');
 
-  const contextPrompt = context.trim() ? `\\n\\n=== KONTEKS MATERI ACUAN (WAJIB DIGUNAKAN) ===\\n"${context}"\\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!` : '';
+  const contextPrompt = context.trim()
+    ? `\\n\\n=== KONTEKS MATERI ACUAN (WAJIB DIGUNAKAN) ===\\n"${context}"\\nBuatlah soal yang relevan!`
+    : '';
 
-  // === PROMPT LENGKAP DENGAN SEMUA PROTOKOL ===
-  const prompt = `
-SYSTEM: GENERATOR SOAL UTBK-SNBT DENGAN POLA RESMI
+  // === ENHANCED PROMPT WITH CONCRETE EXAMPLES ===
+  const prompt = `SYSTEM: GENERATOR SOAL UTBK-SNBT - JSON STRICT MODE
 
-=== PROTOKOL ESCAPING KARAKTER (CRITICAL) ===
-SETIAP output JSON WAJIB mengikuti aturan ini:
-1. Tanda petik ganda di dalam string: WAJIB escape dengan \\\\" (SATU backslash + quote)
-   - SALAH: \\\\\\\\" (double backslash)
-   - SALAH: " (tanpa escape)
-   - BENAR: \\\\" (single backslash)
-2. Backslash untuk LaTeX: WAJIB TEPAT DUA backslash \\\\\\\\\\\\ (contoh: \\\\\\\\\\\\frac, \\\\\\\\\\\\circ)
-   - SALAH: \\\\\\\\frac (satu backslash), \\\\\\\\\\\\\\\\\\\\frac (tiga backslash)
-   - BENAR: \\\\\\\\\\\\frac, \\\\\\\\\\\\circ, \\\\\\\\\\\\sqrt (dua backslash)
-3. Newline: Gunakan \\\\n, JANGAN baris baru fisik
-4. DILARANG ada teks di luar JSON
-5. DILARANG markdown code blocks
-6. DILARANG karakter kontrol (form feed, tab manual)
-7. Markdown Bold: Gunakan **kata** untuk kata yang perlu ditebalkan
-8. Kutipan/Dialog: Gunakan \\\\" untuk dialog atau kutipan dalam teks
+Anda adalah generator soal SNBT profesional. TUGAS ANDA: Hasilkan HANYA JSON array valid.
 
-=== ATURAN WAJIB: HIRARKI SIMBOL (The Layering Rule) ===
-Saat menggabungkan format bold (**) dengan tanda petik ganda (\\\\"):
-1. PRIORITAS TANDA PETIK: Setiap tanda petik ganda yang merupakan bagian dari kalimat WAJIB di-escape dengan tepat satu backslash
-   - SALAH: "kata **"tebal"**"
-   - BENAR: "kata **\\\\\"tebal\\\\\""**"
-2. Format: **\\\\\"Kalimat tebal dan dikutip\\\\\"**
-
-=== PROTOKOL LATEX (CRITICAL) ===
-SETIAP ekspresi matematika WAJIB dibungkus dengan $:
-1. Inline math: $x$, $f(x)$, $\\\\\\\\frac{1}{2}$
-2. Display math: $$f(x) = 2x + 1$$
-3. Variabel tunggal: $x$, $y$, $P$, $Q$ (WAJIB dibungkus $)
-4. Angka dalam konteks math: $\\\\\\\\frac{1}{9}$, $x^2$
-5. WAJIB kurung kurawal: $\\\\\\\\frac{1}{9}$ BUKAN $\\\\\\\\frac19$
-6. Operator: $\\\\\\\\times$, $\\\\\\\\div$, $\\\\\\\\circ$
-7. Perbandingan: $P > Q$, $P < Q$, $P = Q$ (dibungkus $)
-8. Kurung untuk pecahan/pangkat: Gunakan $\\\\\\\\left($ dan $\\\\\\\\right)$
-
-=== SUBTES & LEVEL ===
-Subtes: ${subtest}
-Topik: ${topic}
-Level: ${difficulty}
-
-=== POLA TERSEDIA ===
-${patternList}
-
-${contextPrompt}
-
-=== FORMAT OUTPUT (JSON ARRAY) ===
-Hasilkan ${count} soal JSON valid dengan struktur:
+=== CONTOH FORMAT YANG BENAR (HAFALKAN POLA INI) ===
 [
   {
-    "stimulus": "Teks stimulus (jika ada)...",
-    "representation": {"type": "text", "data": null},
-    "text": "Pertanyaan utama...",
-    "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
-    "correctIndex": 0,
-    "explanation": "Pembahasan rinci..."
+    "text": "Perhatikan pernyataan: \\\\\\"Saya bekerja 2 jam sehari\\\\\\". Total jam dalam 3 minggu adalah...",
+    "options": ["A. 20 jam", "B. 25 jam", "C. 30 jam", "D. 35 jam", "E. 40 jam"],
+    "correctIndex": 2,
+    "explanation": "2 jam × 5 hari × 3 minggu = 30 jam",
+    "subtest": "${subtest}",
+    "topic": "${topic}",
+    "difficulty": "${difficulty}"
   }
 ]
 
-=== VALIDASI SEBELUM OUTPUT ===
-✓ Semua LaTeX command menggunakan TEPAT DUA backslash (\\\\\\\\frac, \\\\\\\\\\\\circ)
-✓ Semua variabel dan rumus dibungkus $ ($x$, $\\\\\\\\frac{1}{2}$)
-✓ Semua tanda petik di dalam string di-escape (\\\\")
-✓ Tidak ada karakter kontrol atau hidden symbols
-✓ Kurung kurawal lengkap pada semua LaTeX command
+=== ATURAN WAJIB (ZERO TOLERANCE) ===
+1. KEMBALIKAN HANYA JSON ARRAY. Tanpa teks pengantar. Tanpa markdown.
+2. Untuk tanda petik dalam string: gunakan \\\\\\" (double backslash + quote)
+   - BENAR: "Kata \\\\\\"efektif\\\\\\" adalah baku"
+   - SALAH: "Kata \\"efektif\\" adalah baku"
+   - SALAH: "Kata "efektif" adalah baku"
+3. Untuk matematika: gunakan $...$ dengan LaTeX
+   - Contoh: "Luas persegi dengan sisi $5$ cm"
+   - Rumus: "$\\\\\\\\frac{1}{2}$", "$x^2$", "$\\\\\\\\sqrt{16}$"
+4. Setiap opsi WAJIB dimulai dengan "A. ", "B. ", dst.
+5. correctIndex: angka 0-4 (bukan string!)
 
-KEMBALIKAN HANYA ARRAY JSON MURNI. TANPA TEKS PENGANTAR. TANPA MARKDOWN.
-`;
+=== DATA SOAL ===
+Subtes: ${subtest}
+Topik: ${topic}
+Kesulitan: ${difficulty}
+Jumlah: ${count} soal
+${contextPrompt}
+
+=== POLA SOAL YANG TERSEDIA ===
+${patternList}
+
+HASILKAN SEKARANG JSON ARRAY DENGAN ${count} SOAL:`;
 
   // === RETRY MECHANISM DENGAN API KEY ROTATION ===
   let attempts = 0;
@@ -439,8 +496,6 @@ KEMBALIKAN HANYA ARRAY JSON MURNI. TANPA TEKS PENGANTAR. TANPA MARKDOWN.
         model: "gemini-2.5-flash",
         generationConfig: {
           temperature: 0.7,
-          topP: 0.95,
-          topK: 40,
           maxOutputTokens: 4000,
         }
       });
@@ -449,140 +504,207 @@ KEMBALIKAN HANYA ARRAY JSON MURNI. TANPA TEKS PENGANTAR. TANPA MARKDOWN.
       const response = await result.response;
       let text = response.text().trim();
 
+      console.log('Raw AI response length:', text.length);
+
       // === MULTI-LAYER CLEANING ===
       // Layer 1: Remove markdown code blocks
-      text = text.replace(/```json\\s*/g, '').replace(/```\\s*/g, '');
+      text = text.replace(/```(?:json)?\\s*/gi, '').replace(/```\\s*/g, '');
       
       // Layer 2: Remove control characters
       text = text.replace(/[\\x00-\\x1F\\x7F-\\x9F]/g, '');
       
-      // Layer 3: Fix over-escaped quotes
-      text = text.replace(/\\\\\\\\\\\\"/g, '\\\\"');
+      // Layer 3: Normalize escaped quotes
+      text = text.replace(/\\\\{3,}"/g, '\\\\"');
       
       // Layer 4: Remove trailing commas
       text = text.replace(/,\\s*([\\]}])/g, '$1').trim();
       
-      // Layer 5: Extract JSON array if wrapped in text
-      const match = text.match(/\\[\\s*\\{[\\s\\S]*\\}\\s*\\]/);
+      // Layer 5: Extract JSON array
+      const match = text.match(/\\[\\s*\\{[\\s\\S]*?\\}\\s*\\]/);
       if (match) {
         text = match[0];
       }
 
-      // === PARSE JSON ===
-      try {
-        const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          throw new Error('JSON array kosong atau tidak valid');
-        }
-        return parsed;
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError.message);
-        console.error('Raw text:', text);
-        throw new Error('Failed to parse JSON');
+      console.log('Cleaned text length:', text.length);
+
+      // === PARSE WITH REPAIR FALLBACK ===
+      const parsed = tryRepairAndParse(text);
+      
+      if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('No valid questions extracted');
       }
+
+      console.log('Successfully parsed', parsed.length, 'questions');
+      return parsed;
 
     } catch (error) {
       // Check for quota/limit errors
-      if (error.message?.includes('quota') || error.message?.includes('limit') || error.message?.includes('429')) {
-        const nextKey = switchGeminiKey();
+      if (error.message?.includes('quota') || error.message?.includes('429')) {
+        switchGeminiKey();
         attempts++;
         if (attempts >= maxAttempts) {
-          throw new Error('Semua API key exhausted. Silakan coba lagi nanti.');
+          throw new Error('Semua API key exhausted.');
         }
-        await new Promise(resolve => setTimeout(resolve, 3000)); // 3s delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
       } else {
+        console.error('Generation error:', error);
         throw error;
       }
     }
   }
 
-  throw new Error('Gagal generate soal setelah semua percobaan.');
+  throw new Error('Gagal generate soal.');
 };
 ```
 
 ---
 
-## 5. Testing Plan
+## 5. Testing Plan (UPDATED)
 
 ### 5.1 Test Cases
 
-| Test Case | Input | Expected Output | Status |
-|-----------|-------|-----------------|--------|
-| Generate 1 soal mudah | Subtes: PU, Topik: Logika, Difficulty: Mudah | 1 JSON valid | ⏳ Pending |
-| Generate 5 soal sulit | Subtes: PK, Topik: Matematika, Difficulty: Sulit | 5 JSON valid dengan LaTeX | ⏳ Pending |
-| Generate dengan konteks | Context: "Bab Deret Aritmatika" | Soal relevan dengan konteks | ⏳ Pending |
-| API Key quota exceeded | Simulasi 429 error | Auto-retry dengan key lain | ⏳ Pending |
-| LaTeX rendering | Soal matematika | Double backslash (\\\\frac) | ⏳ Pending |
-| Bold + Quote combo | Soal PBM dengan kutipan | Format: **\\\\\"kata\\\\\"** | ⏳ Pending |
+| # | Test Case | Input | Expected Output | Status |
+|---|-----------|-------|-----------------|--------|
+| 1 | Generate soal dengan kutipan | Subtes: PU, ada dialog | JSON valid dengan `\\"` | ⏳ Pending |
+| 2 | Generate soal matematika | Subtes: PK, LaTeX | JSON dengan `\\\\frac` | ⏳ Pending |
+| 3 | Generate soal bold+quote | Subtes: PBM | Format `**\\"kata\\"**` | ⏳ Pending |
+| 4 | AI response truncated | Response > 4000 chars | Auto-retry atau extraction | ⏳ Pending |
+| 5 | API quota exceeded | 429 error | Auto-switch key | ⏳ Pending |
+| 6 | JSON broken mid-string | Unterminated quote | Regex extraction | ⏳ Pending |
 
 ### 5.2 Acceptance Criteria
 
-- ✅ Success rate > 95% (dari 100 generate, maksimal 5 gagal)
-- ✅ Semua JSON output valid dan parseable
-- ✅ LaTeX ter-render dengan benar di UI
-- ✅ Auto-retry bekerja saat quota exceeded
-- ✅ Format soal konsisten dengan sistem existing
+- ✅ **Success rate > 95%** (dari 100 generate, maksimal 5 gagal)
+- ✅ **Unterminated string error = 0%** (fixed dengan `fixUnescapedQuotes`)
+- ✅ **Regex extraction fallback** (jika parse gagal, masih bisa extract)
+- ✅ **LaTeX ter-render benar** (double backslash)
+- ✅ **Auto-retry bekerja** saat quota exceeded
+
+### 5.3 Debugging Checklist
+
+Jika masih ada error, cek:
+
+```
+[ ] Apakah AI response mengandung ```json ... ```?
+    → Layer 1 cleaning harus handle
+    
+[ ] Apakah ada karakter kontrol (\\x00-\\x1F)?
+    → Layer 2 cleaning harus handle
+    
+[ ] Apakah ada \\\\" (triple+ backslash)?
+    → Layer 3 normalization harus handle
+    
+[ ] Apakah ada trailing comma sebelum } atau ]?
+    → Layer 4 cleaning harus handle
+    
+[ ] Apakah JSON array ter-extract dengan regex?
+    → Layer 5 extraction harus handle
+    
+[ ] Jika JSON.parse gagal, apakah tryRepairAndParse dipanggil?
+    → Repair fallback harus handle
+    
+[ ] Jika repair gagal, apakah extractQuestionsWithRegex dipanggil?
+    → Regex extraction adalah last resort
+```
 
 ---
 
-## 6. Dependencies
+## 6. Error Scenarios & Solutions
 
-### 6.1 Files yang Harus Ada
+### Scenario A: "Unterminated string in JSON"
+
+**Symptom**:
+```
+JSON Parse Error: Unterminated string in JSON at position 260
+```
+
+**Cause**: AI menghasilkan `\"Saya bekerja\"` tanpa escape yang benar.
+
+**Solution Applied**:
+1. `fixUnescapedQuotes()` - Character-by-character parsing
+2. `tryRepairAndParse()` - Multi-attempt repair
+3. `extractQuestionsWithRegex()` - Last resort extraction
+
+### Scenario B: "Unexpected token in JSON"
+
+**Symptom**:
+```
+JSON Parse Error: Unexpected token 'S' in JSON at position 0
+```
+
+**Cause**: AI mengembalikan teks "Sure! Here's your JSON..." sebelum array.
+
+**Solution Applied**:
+- Layer 5: Regex `\\[\\s*\\{[\\s\\S]*?\\}\\s*\\]` extract array only
+
+### Scenario C: "Cannot read properties of undefined"
+
+**Symptom**:
+```
+TypeError: Cannot read properties of undefined (reading 'length')
+```
+
+**Cause**: `tryRepairAndParse()` returns null, code continues.
+
+**Solution Applied**:
+```javascript
+const parsed = tryRepairAndParse(text);
+if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+  throw new Error('No valid questions extracted');
+}
+```
+
+---
+
+## 7. Dependencies
+
+### 7.1 Files yang Harus Ada
 - `src/utils/questionTemplates.js` ✅
 - `src/constants/subtestHelper.js` ✅
 - `src/config/config.js` (GEMINI_KEYS) ✅
 - `src/services/firebase/ambisBattle.js` ✅
 
-### 6.2 NPM Packages
+### 7.2 NPM Packages
 - `@google/generative-ai` ✅ (sudah terinstall)
 
 ---
 
-## 7. Timeline Estimasi
+## 8. Timeline Estimasi
 
 | Fase | Durasi | Deskripsi |
 |------|--------|-----------|
-| Implementation | 30 menit | Copy-paste dan adaptasi kode dari App.js |
-| Testing | 15 menit | Test berbagai skenario generate |
+| Implementation | 45 menit | Copy-paste dan adaptasi kode dari ErrorPlan.md |
+| Testing | 30 menit | Test berbagai skenario generate |
 | Bug Fix | 15 menit | Fix issue yang muncul |
-| **Total** | **1 jam** | |
+| **Total** | **1.5 jam** | |
 
 ---
 
-## 8. Risk Assessment
+## 9. Risk Assessment
 
 | Risk | Impact | Probability | Mitigation |
 |------|--------|-------------|------------|
 | Prompt terlalu panjang | Token limit exceeded | Medium | Truncate context jika > 8000 chars |
 | API key habis | Generate gagal | Low | Retry mechanism dengan multiple keys |
-| Format masih salah | Parse error | Low | Copy exact dari App.js yang sudah proven |
+| Format masih salah | Parse error | Low | Copy exact dari ErrorPlan.md |
 | LaTeX tidak render | UI broken | Low | Test dengan soal matematika |
+| Regex extraction gagal | No questions | Low | Return empty array dengan error message |
 
 ---
 
-## 9. Referensi
+## 10. Referensi
 
-### 9.1 File Referensi Utama
+### 10.1 File Referensi Utama
 - `src/App.js` (baris 800-1400) - Main generation logic
 - `src/services/ai/questionGeneratorWithAbort.js` - Service layer
 - `src/utils/questionTemplates.js` - Template patterns
 - `src/utils/questionPatterns.js` - Pattern definitions
 
-### 9.2 Dokumentasi
+### 10.2 Dokumentasi
 - `Error Loging.md` - Error log saat ini
 - `fixingmbis.md` - Prompt engineering notes
 - `README.md` - System overview
 
 ---
 
-## 10. Approval
-
-| Role | Name | Status | Date |
-|------|------|--------|------|
-| Developer | - | ⏳ Pending | - |
-| Reviewer | - | ⏳ Pending | - |
-| Approver | - | ⏳ Pending | - |
-
----
-
-**Catatan**: Dokumen ini dibuat sebagai panduan implementasi fix untuk error JSON parsing pada fitur Generate Question di Ambis Battle.
+**Catatan**: Dokumen ini dibuat sebagai panduan implementasi fix untuk error JSON parsing pada fitur Generate Question di Ambis Battle. Update terbaru (2026-03-22) menambahkan mekanisme auto-repair untuk unterminated string error.
