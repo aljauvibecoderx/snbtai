@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { listenToRoom, submitAnswer, advanceQuestion, finishBattle } from './firebase/ambisBattle';
 
-export const QUESTION_DURATION = 60; // 60 seconds per question (as requested)
+export const QUESTION_DURATION = 30; // 30 seconds per question (as requested - short duration)
 
 /**
  * useBattleEngine - Centralized battle logic hook
@@ -95,32 +95,25 @@ export const useBattleEngine = (roomId, user) => {
     return () => clearInterval(timerRef.current);
   }, [room?.status, currentStartTime, myPlayer, currentIndex, roomId, user]);
 
-  // 3. Centralized Advancement Logic (No longer stuck on waiting!)
+  // 3. Centralized Advancement Logic
   useEffect(() => {
-    // If we're fully synced, check if it's time to forcefully advance to next node
-    // Condition to advance: Both players answered OR Timer is solidly expired + everyone got mapped answers.
     if (!room || phase !== 'playing' || room.status === 'finished') return;
 
-    if (allPlayersAnswered || timeLeft <= 0) {
+    // "once it's answered, I'll move on to the next question"
+    if (hasMyAnswer || timeLeft <= 0) {
       setPhase('transitioning');
       
-      // Display explanations optionally right before advancing 
-      
-      // We rely on ANY host/client to push the advance if it's lagging. The Server/Firebase transactional safety prevents duplicate advances!
-      // But typically, only the Host pushes it to avoid spam, UNLESS the host is dead. Let's make the engine completely independent.
-      // Small buffer to allow players to read the "Wrong/Right" result before switching
       const advanceTimer = setTimeout(() => {
         if (isHost || !opponent) {
            advanceQuestion(roomId, currentIndex + 1, questions.length).catch(e => console.error("Advance error", e));
-        } else if (!isHost && timeLeft <= -5) {
-           // Fallback mechanism: if Client sees host is dead for 5 seconds after timeout, client forces advance.
+        } else if (!isHost && timeLeft <= -2) {
            advanceQuestion(roomId, currentIndex + 1, questions.length).catch(e => console.error("Client forced advance", e));
         }
-      }, 4000); // Wait 4 seconds for result viewing before triggering standard next
+      }, 2500); // Wait 2.5s for instant snappy feel
 
       return () => clearTimeout(advanceTimer);
     }
-  }, [allPlayersAnswered, timeLeft, phase, room, roomId, currentIndex, questions.length, isHost, opponent]);
+  }, [hasMyAnswer, timeLeft, phase, room, roomId, currentIndex, questions.length, isHost, opponent]);
 
   // 4. Exposed Actions
   const handleAnswerSubmit = useCallback(async (optionIndex) => {
