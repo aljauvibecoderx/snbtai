@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { UnifiedNavbar } from '../components/layout/UnifiedNavbar';
 import { useTokenBalance } from '../hooks/useTokenBalance';
+import SNBTExamPage from './SNBTExamPage';
 
 // ─── Data & Config ────────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ function computeSimulation({ baselineScores, populationScale, targetPtn }) {
 
 const StepIndicator = ({ step }) => (
   <div className="flex items-center justify-center gap-2 mb-8">
-    {[1, 2, 3].map((s) => (
+    {[1, 2, 3, 4].map((s) => (
       <React.Fragment key={s}>
         <div className={`flex items-center gap-2 ${step >= s ? 'opacity-100' : 'opacity-40'}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -132,10 +133,10 @@ const StepIndicator = ({ step }) => (
             {step > s ? <CheckCircle2 size={14} /> : s}
           </div>
           <span className={`text-xs font-semibold hidden sm:block ${step >= s ? 'text-violet-700' : 'text-gray-400'}`}>
-            {s === 1 ? 'Konfigurasi' : s === 2 ? 'Input Skor TO' : 'Hasil Analisis'}
+            {s === 1 ? 'Konfigurasi' : s === 2 ? 'Metode Input' : s === 3 ? 'Input Data' : 'Hasil Analisis'}
           </span>
         </div>
-        {s < 3 && <div className={`flex-1 h-0.5 max-w-12 rounded-full ${step > s ? 'bg-violet-400' : 'bg-gray-200'}`} />}
+        {s < 4 && <div className={`flex-1 h-0.5 max-w-12 rounded-full ${step > s ? 'bg-violet-400' : 'bg-gray-200'}`} />}
       </React.Fragment>
     ))}
   </div>
@@ -208,8 +209,129 @@ const Step1Config = ({ config, setConfig, onNext }) => {
   );
 };
 
-// Step 2: Input TO Scores
-const Step2Scores = ({ scores, setScores, onNext, onBack }) => {
+// Step 2: Pilih Metode Input
+const Step2Method = ({ onNext, onBack, onTakeExam, onManualInput }) => {
+  const [selectedMethod, setSelectedMethod] = useState('');
+
+  return (
+    <div className="space-y-5 animate-fadeSlideUp">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Pilih Metode Input Skor</h2>
+        <p className="text-xs text-gray-500">Pilih cara untuk menginput data ke simulasi IRT.</p>
+      </div>
+
+      {/* Method Selection */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => setSelectedMethod('manual')}
+          className={`p-4 rounded-xl border-2 text-left transition-all ${
+            selectedMethod === 'manual'
+              ? 'border-violet-500 bg-violet-50'
+              : 'border-gray-200 bg-white hover:border-violet-300'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+              <Target size={18} className="text-violet-600" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-gray-900">Input Manual</div>
+              <div className="text-xs text-gray-500">Masukkan skor TO terakhir</div>
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setSelectedMethod('exam')}
+          className={`p-4 rounded-xl border-2 text-left transition-all ${
+            selectedMethod === 'exam'
+              ? 'border-violet-500 bg-violet-50'
+              : 'border-gray-200 bg-white hover:border-violet-300'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <Brain size={18} className="text-emerald-600" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-gray-900">Kerjakan Ujian</div>
+              <div className="text-xs text-gray-500">Simulasi SNBT nyata</div>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {selectedMethod && (
+        <div className="space-y-4">
+          {selectedMethod === 'manual' ? (
+            <div className="p-4 bg-violet-50 border border-violet-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <Target size={20} className="text-violet-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-violet-800 mb-1">Input Manual</h3>
+                  <p className="text-sm text-violet-700 leading-relaxed">
+                    Masukkan skor try out terakhir kamu secara manual untuk setiap subtes.
+                    Data ini akan menjadi dasar untuk simulasi IRT.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <Brain size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-emerald-800 mb-1">Ujian Simulasi SNBT</h3>
+                  <p className="text-sm text-emerald-700 leading-relaxed">
+                    Kerjakan 7 subtes ujian SNBT dengan soal dummy berdasarkan aturan resmi SNPMB. 
+                    Hasil jawabanmu akan otomatis menjadi input untuk simulasi IRT.
+                  </p>
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-emerald-600">
+                      <CheckCircle2 size={12} />
+                      <span>125 soal total (sesuai SNPMB)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-600">
+                      <CheckCircle2 size={12} />
+                      <span>Timer per subtes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-600">
+                      <CheckCircle2 size={12} />
+                      <span>Hasil otomatis ke IRT simulation</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={onBack} className="flex items-center gap-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-all">
+              <ChevronLeft size={16} /> Kembali
+            </button>
+            <button
+              onClick={() => selectedMethod === 'exam' ? onTakeExam() : onManualInput()}
+              className="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg"
+            >
+              {selectedMethod === 'exam' ? (
+                <>
+                  <Play size={16} /> Mulai Ujian Simulasi
+                </>
+              ) : (
+                <>
+                  <Target size={16} /> Input Skor Manual
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Step 3: Input TO Scores Manual
+const Step3Scores = ({ scores, setScores, onNext, onBack }) => {
   const allFilled = SUBTESTS_CONFIG.every(st => scores[st.id] !== undefined && scores[st.id] !== '');
 
   return (
@@ -265,8 +387,8 @@ const Step2Scores = ({ scores, setScores, onNext, onBack }) => {
   );
 };
 
-// Step 3: Results
-const Step3Results = ({ result, config, onReset }) => {
+// Step 4: Results
+const Step4Results = ({ result, config, onReset }) => {
   const { matrix, breakdowns, totalIRT, adjustedSafe, percentile } = result;
   const selectedPtn = TOP_PTN_LIST.find(p => p.id === config.targetPtn);
   const isPass = totalIRT >= adjustedSafe;
@@ -455,6 +577,7 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
   const [scores, setScores] = useState({});
   const [result, setResult] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showExam, setShowExam] = useState(false);
   const tokenBalance = useTokenBalance();
 
   const handleGenerateResult = useCallback(() => {
@@ -468,13 +591,53 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [scores, config]);
 
+  const handleTakeExam = useCallback(() => {
+    setShowExam(true);
+  }, []);
+
+  const handleManualInput = useCallback(() => {
+    setStep(3);
+  }, []);
+
+  const handleExamComplete = useCallback((examData) => {
+    // Convert exam results to scores format
+    const examScores = examData.subtestScores;
+    setScores(examScores);
+    setShowExam(false);
+    
+    // Auto-generate IRT results after exam
+    const computed = computeSimulation({
+      baselineScores: examScores,
+      populationScale: config.populationScale,
+      targetPtn: config.targetPtn,
+    });
+    setResult(computed);
+    setStep(4);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [config]);
+
   const handleReset = () => {
     setStep(1);
     setConfig({ populationScale: null, targetPtn: null });
     setScores({});
     setResult(null);
+    setShowExam(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // If showing exam, render exam page
+  if (showExam) {
+    return (
+      <SNBTExamPage
+        user={user}
+        onLogin={onLogin}
+        onLogout={onLogout}
+        navigate={navigate}
+        setView={setView}
+        onExamComplete={handleExamComplete}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] relative">
@@ -529,10 +692,23 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
               <Step1Config config={config} setConfig={setConfig} onNext={() => setStep(2)} />
             )}
             {step === 2 && (
-              <Step2Scores scores={scores} setScores={setScores} onNext={handleGenerateResult} onBack={() => setStep(1)} />
+              <Step2Method 
+                onNext={() => {}}
+                onBack={() => setStep(1)}
+                onTakeExam={handleTakeExam}
+                onManualInput={handleManualInput}
+              />
             )}
-            {step === 3 && result && (
-              <Step3Results result={result} config={config} onReset={handleReset} />
+            {step === 3 && (
+              <Step3Scores 
+                scores={scores} 
+                setScores={setScores} 
+                onNext={handleGenerateResult} 
+                onBack={() => setStep(2)}
+              />
+            )}
+            {step === 4 && result && (
+              <Step4Results result={result} config={config} onReset={handleReset} />
             )}
           </div>
 
