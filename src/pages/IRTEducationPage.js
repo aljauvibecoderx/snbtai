@@ -192,6 +192,9 @@ const irtSections = [
 
 const SectionCard = ({ section, isActive, onClick }) => {
   const Icon = section.icon;
+  const firstContent = section.content[0]?.content || '';
+  const preview = firstContent.length > 60 ? firstContent.substring(0, 60) + '...' : firstContent;
+  
   return (
     <button
       onClick={() => onClick(section.id)}
@@ -208,7 +211,7 @@ const SectionCard = ({ section, isActive, onClick }) => {
         <div className="flex-1">
           <h3 className="font-bold text-gray-900">{section.title}</h3>
           <p className="text-xs text-gray-500 mt-1">
-            {section.content[0].content.substring(0, 60)}...
+            {preview}
           </p>
         </div>
         <ChevronRight 
