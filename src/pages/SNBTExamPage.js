@@ -512,15 +512,26 @@ const SNBTExamPage = ({ user, onLogin, onLogout, navigate, setView, onExamComple
     
     // Calculate scores for each subtest
     const subtestScores = {};
+    const detailedAnswers = {}; // Store all answers
+    
     SUBTESTS_CONFIG.forEach((subtest, index) => {
       const subtestQuestions = questions.filter(q => q.id.startsWith(subtest.id));
       const correctAnswers = subtestQuestions.filter(q => q.userAnswer === q.correct).length;
       const percentage = Math.round((correctAnswers / subtest.total) * 100);
       subtestScores[subtest.id] = percentage;
+      
+      // Store detailed answers for this subtest
+      detailedAnswers[subtest.id] = {};
+      subtestQuestions.forEach(q => {
+        if (q.userAnswer !== null && q.userAnswer !== undefined) {
+          detailedAnswers[subtest.id][q.id] = q.userAnswer;
+        }
+      });
     });
 
     const examData = {
       subtestScores,
+      answers: detailedAnswers, // Include detailed answers
       totalDuration: duration,
       completedAt: new Date().toISOString(),
       answers

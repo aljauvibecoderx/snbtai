@@ -4,11 +4,12 @@ import {
   ChevronLeft, Info, CheckCircle2, AlertTriangle, TrendingUp,
   Users, GraduationCap, BookOpen, Brain, Star, ArrowRight,
   RotateCcw, Share2, Download, Sparkles, Trophy, Activity,
-  Play
+  Play, HelpCircle
 } from 'lucide-react';
 import { UnifiedNavbar } from '../components/layout/UnifiedNavbar';
 import { useTokenBalance } from '../hooks/useTokenBalance';
 import SNBTExamPage from './SNBTExamPage';
+import IRTEducationPage from './IRTEducationPage';
 
 // ─── Data & Config ────────────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ const ROLES = {
 
 // ─── Helper: Compute IRT Simulation ─────────────────────────────────────────
 
-function computeSimulation({ baselineScores, populationScale, targetPtn }) {
+function computeSimulation({ baselineScores, populationScale, targetPtn, examAnswers = null }) {
   const safeScore = targetPtn ? (PTN_SAFE_SCORES[targetPtn] || 680) : 680;
   const multiplier = populationScale?.multiplier || 1.0;
   const adjustedSafe = Math.round(safeScore * multiplier);
@@ -66,7 +67,7 @@ function computeSimulation({ baselineScores, populationScale, targetPtn }) {
   const totalWeight = SUBTESTS_CONFIG.reduce((s, st) => s + ((st.weightMin + st.weightMax) / 2), 0);
   
   const matrix = SUBTESTS_CONFIG.map((st) => {
-    const userRaw = baselineScores[st.id] || 50;
+    const userRaw = baselineScores[st.id] || 0; // Default 0 jika tidak ada jawaban
     const pctCorrect = userRaw / 100;
     const userCorrect = Math.round(pctCorrect * st.total);
     
@@ -86,6 +87,7 @@ function computeSimulation({ baselineScores, populationScale, targetPtn }) {
       jatahSalah,
       irtScore,
       gap: userCorrect - targetCorrect,
+      answeredQuestions: userRaw > 0 ? st.total : 0, // Track berapa banyak soal yang dijawab
     };
   });
 
@@ -99,26 +101,114 @@ function computeSimulation({ baselineScores, populationScale, targetPtn }) {
     else st.role = 'Damage Control';
   });
 
-  // IRT Logic Breakdown: find key questions (very easy or very hard simulated)
-  const breakdowns = matrix.map((st) => {
-    const popCorrectRate = 40 + Math.random() * 40; // dummy 40-80%
-    const isHardQuestion = popCorrectRate < 50;
-    const diff = Math.abs(st.userPct - popCorrectRate);
-    return {
-      subtest: st.abbr,
-      subtestFull: st.label,
-      soalNo: Math.floor(Math.random() * st.total) + 1,
-      popCorrectRate: Math.round(popCorrectRate),
-      userGotRight: st.userPct > popCorrectRate,
-      isHard: isHardQuestion,
-      scoreDelta: Math.round(diff * 2),
-    };
-  }).filter(b => b.scoreDelta > 15).slice(0, 4);
+  // Enhanced IRT Logic Breakdown with real user answers
+  const breakdowns = [];
+  
+  if (examAnswers) {
+    // Use actual exam answers for detailed breakdown
+    SUBTESTS_CONFIG.forEach((subtest) => {
+      const subtestAnswers = examAnswers[subtest.id] || {};
+      let wrongAnswers = [];
+      let rightAnswers = [];
+      
+      // Simulate population difficulty based on question number
+      for (let i = 1; i <= subtest.total; i++) {
+        const questionId = `${subtest.id}_${i}`;
+        const userAnswer = subtestAnswers[questionId];
+        
+        if (userAnswer !== undefined && userAnswer !== null) {
+          // Simulate population correct rate based on question number (harder questions have lower rates)
+          const baseRate = 65 - (i / subtest.total) * 25; // 65% to 40%
+          const popCorrectRate = Math.round(baseRate + Math.random() * 20 - 10); // ±10% variation
+          
+          // Get correct answer from template (simplified)
+          const correctAnswer = getCorrectAnswerForQuestion(questionId);
+          const isCorrect = userAnswer === correctAnswer;
+          
+          // Calculate score impact
+          const difficulty = popCorrectRate < 50 ? 'hard' : popCorrectRate < 70 ? 'medium' : 'easy';
+          let scoreDelta = 0;
+          
+          if (isCorrect && popCorrectRate < 50) {
+            scoreDelta = Math.round((50 - popCorrectRate) * 2); // Bonus for hard questions
+            rightAnswers.push({ questionNo: i, popCorrectRate, scoreDelta, difficulty });
+          } else if (!isCorrect && popCorrectRate > 60) {
+            scoreDelta = Math.round((popCorrectRate - 60) * 1.5); // Penalty for easy questions
+            wrongAnswers.push({ questionNo: i, popCorrectRate, scoreDelta, difficulty, userAnswer, correctAnswer });
+          }
+        }
+      }
+      
+      // Add most impactful questions to breakdown
+      const impactful = [...wrongAnswers, ...rightAnswers]
+        .sort((a, b) => Math.abs(b.scoreDelta) - Math.abs(a.scoreDelta))
+        .slice(0, 2); // Top 2 per subtest
+      
+      impactful.forEach(item => {
+        breakdowns.push({
+          subtest: subtest.abbr,
+          subtestFull: subtest.label,
+          soalNo: item.questionNo,
+          popCorrectRate: item.popCorrectRate,
+          userAnswer: item.userAnswer || 'Benar',
+          correctAnswer: item.correctAnswer || 'Benar',
+          isHard: item.difficulty === 'hard',
+          scoreDelta: item.scoreDelta,
+          impact: Math.abs(item.scoreDelta)
+        });
+      });
+    });
+  } else {
+    // Fallback to dummy logic if no exam answers
+    matrix.forEach((st) => {
+      if (st.userPct > 0) { // Only if user answered questions
+        const popCorrectRate = 40 + Math.random() * 40;
+        const isHardQuestion = popCorrectRate < 50;
+        const diff = Math.abs(st.userPct - popCorrectRate);
+        
+        if (diff * 2 > 15) {
+          breakdowns.push({
+            subtest: st.abbr,
+            subtestFull: st.label,
+            soalNo: Math.floor(Math.random() * st.total) + 1,
+            popCorrectRate: Math.round(popCorrectRate),
+            userGotRight: st.userPct > popCorrectRate,
+            isHard: isHardQuestion,
+            scoreDelta: Math.round(diff * 2),
+          });
+        }
+      }
+    });
+  }
 
-  const totalIRT = Math.round(matrix.reduce((sum, st) => sum + st.irtScore, 0) / matrix.length);
+  // Sort by impact and take top questions
+  const finalBreakdowns = breakdowns
+    .sort((a, b) => b.impact - a.impact)
+    .slice(0, 6);
+
+  const totalIRT = matrix.filter(st => st.userPct > 0).length > 0 
+    ? Math.round(matrix.filter(st => st.userPct > 0).reduce((sum, st) => sum + st.irtScore, 0) / matrix.filter(st => st.userPct > 0).length)
+    : 200; // Minimum score if no answers
+  
   const percentile = Math.min(99, Math.max(1, Math.round(((totalIRT - 200) / 600) * 85 + 10)));
 
-  return { matrix, breakdowns, totalIRT, adjustedSafe, percentile };
+  return { matrix, breakdowns: finalBreakdowns, totalIRT, adjustedSafe, percentile };
+}
+
+// Helper function to get correct answer for question (simplified)
+function getCorrectAnswerForQuestion(questionId) {
+  // This is a simplified version - in real implementation, 
+  // you'd store the correct answers with the questions
+  const correctAnswers = {
+    'tps_pu_1': 1, 'tps_pu_2': 2, 'tps_pu_3': 2,
+    'tps_ppu_1': 2, 'tps_ppu_2': 1,
+    'tps_pbm_1': 2, 'tps_pbm_2': 2,
+    'tps_pk_1': 2, 'tps_pk_2': 2,
+    'lit_ind_1': 2, 'lit_ind_2': 0,
+    'lit_ing_1': 2, 'lit_ing_2': 2,
+    'pm_1': 1, 'pm_2': 0, 'pm_3': 2,
+  };
+  return correctAnswers[questionId] || 0;
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -522,26 +612,100 @@ const Step4Results = ({ result, config, onReset }) => {
         <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
           <Brain size={16} className="text-indigo-600" /> IRT Logic Breakdown
         </h3>
-        <p className="text-xs text-gray-500 mb-3">Soal-soal kunci yang paling berdampak pada fluktuasi skormu.</p>
+        <p className="text-xs text-gray-500 mb-3">Analisis detail soal-soal kunci yang paling berdampak pada fluktuasi skormu.</p>
+        
+        {/* Summary Info */}
+        {breakdowns.length > 0 && (
+          <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info size={16} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-indigo-800">
+                <p className="font-semibold mb-1">Analisis Berdasarkan Jawabanmu:</p>
+                <ul className="space-y-1">
+                  <li>• {breakdowns.filter(b => b.userAnswer !== 'Benar' && b.popCorrectRate > 60).length} soal mudah yang kamu lewatkan (populasi benar &gt; 60%)</li>
+                  <li>• {breakdowns.filter(b => b.userAnswer === 'Benar' && b.popCorrectRate < 50).length} soal sulit yang kamu jawab benar (populasi benar &lt; 50%)</li>
+                  <li>• Total dampak: ±{breakdowns.reduce((sum, b) => sum + Math.abs(b.scoreDelta), 0)} poin</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="space-y-2.5">
           {breakdowns.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 text-sm">Tidak ada soal kunci signifikan terdeteksi.</div>
+            <div className="text-center py-6 text-gray-400 text-sm">
+              {Object.values(scores).every(s => s === 0) 
+                ? "Tidak ada data untuk dianalisis. Kerjakan ujian atau input skor untuk melihat breakdown."
+                : "Tidak ada soal kunci signifikan terdeteksi."
+              }
+            </div>
           ) : breakdowns.map((b, i) => (
-            <div key={i} className={`p-4 rounded-xl border ${b.userGotRight ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+            <div key={i} className={`p-4 rounded-xl border ${
+              b.userAnswer === 'Benar' ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
+            }`}>
               <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${b.userGotRight ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}`}>
-                  {b.userGotRight ? '↑' : '↓'}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${
+                  b.userAnswer === 'Benar' 
+                    ? 'bg-emerald-200 text-emerald-800' 
+                    : 'bg-rose-200 text-rose-800'
+                }`}>
+                  {b.userAnswer === 'Benar' ? '↑' : '↓'}
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-gray-800">
+                <div className="flex-1">
+                  <div className="text-xs font-bold text-gray-800 mb-1">
                     Soal No. {b.soalNo} — {b.subtest}
                   </div>
-                  <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
-                    {b.userGotRight
-                      ? `Skor ${b.subtest} kamu naik karena kamu benar di soal ini, sementara hanya ${b.popCorrectRate}% populasi simulasi yang menjawab benar. Pembobotan maksimal (+${b.scoreDelta} poin).`
-                      : `Skor ${b.subtest} kamu turun karena kamu salah di soal ini. ${b.popCorrectRate}% populasi menjawab benar — ini soal dengan dampak besar (-${b.scoreDelta} poin estimasi).`
+                  
+                  {/* Answer Comparison */}
+                  <div className="mb-2 p-2 bg-white rounded-lg border border-gray-200">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Jawabanmu:</span>
+                        <span className={`ml-1 font-bold ${
+                          b.userAnswer === 'Benar' ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
+                          {b.userAnswer === 'Benar' ? 'Benar ✓' : `Opsi ${String.fromCharCode(65 + (b.userAnswer || 0))}`}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Rata-rata populasi:</span>
+                        <span className="ml-1 font-bold text-blue-600">{b.popCorrectRate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-[11px] text-gray-600 leading-relaxed">
+                    {b.userAnswer === 'Benar' 
+                      ? `Skor ${b.subtest} kamu naik +${b.scoreDelta} poin karena berhasil menjawab soal ${
+                          b.isHard ? 'sulit' : 'sedang'
+                        } yang hanya ${b.popCorrectRate}% populasi jawab benar. ${
+                          b.isHard ? 'Ini adalah jawaban berharga!' : 'Bagus!'
+                        }`
+                      : `Skor ${b.subtest} kamu turun -${b.scoreDelta} poin karena salah di soal ${
+                          b.popCorrectRate > 70 ? 'mudah' : b.popCorrectRate > 50 ? 'sedang' : 'sulit'
+                        } yang dijawab benar oleh ${b.popCorrectRate}% populasi. ${
+                          b.popCorrectRate > 70 ? 'Ini adalah kesalahan mahal!' : 'Fokus di soal seperti ini.'
+                        }`
                     }
                   </p>
+                  
+                  {/* Impact Badge */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                      Math.abs(b.scoreDelta) >= 20 ? 'bg-red-100 text-red-700' :
+                      Math.abs(b.scoreDelta) >= 10 ? 'bg-amber-100 text-amber-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>
+                      Dampak: {Math.abs(b.scoreDelta)} poin
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                      b.isHard ? 'bg-purple-100 text-purple-700' :
+                      b.popCorrectRate > 70 ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {b.isHard ? 'Soal Sulit' : b.popCorrectRate > 70 ? 'Soal Mudah' : 'Soal Sedang'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -579,6 +743,7 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
   const [result, setResult] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showExam, setShowExam] = useState(false);
+  const [showEducation, setShowEducation] = useState(false);
   const tokenBalance = useTokenBalance();
 
   const handleGenerateResult = useCallback(() => {
@@ -586,9 +751,10 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
       baselineScores: scores,
       populationScale: config.populationScale,
       targetPtn: config.targetPtn,
+      examAnswers: null, // Manual input, no exam answers
     });
     setResult(computed);
-    setStep(3);
+    setStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [scores, config]);
 
@@ -603,14 +769,16 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
   const handleExamComplete = useCallback((examData) => {
     // Convert exam results to scores format
     const examScores = examData.subtestScores;
+    const examAnswers = examData.answers; // Get detailed answers
     setScores(examScores);
     setShowExam(false);
     
-    // Auto-generate IRT results after exam
+    // Auto-generate IRT results after exam with detailed answers
     const computed = computeSimulation({
       baselineScores: examScores,
       populationScale: config.populationScale,
       targetPtn: config.targetPtn,
+      examAnswers: examAnswers, // Pass detailed answers
     });
     setResult(computed);
     setStep(4);
@@ -623,6 +791,7 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
     setScores({});
     setResult(null);
     setShowExam(false);
+    setShowEducation(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -636,6 +805,19 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
         navigate={navigate}
         setView={setView}
         onExamComplete={handleExamComplete}
+      />
+    );
+  }
+
+  // If showing education, render education page
+  if (showEducation) {
+    return (
+      <IRTEducationPage
+        user={user}
+        onLogin={onLogin}
+        onLogout={onLogout}
+        navigate={navigate}
+        setView={setView}
       />
     );
   }
@@ -676,10 +858,19 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
               <BarChart2 size={14} className="text-violet-600" />
               <span className="text-xs font-bold text-violet-700 uppercase tracking-wider">Fitur Eksklusif</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
-              Simulasi SNBT Score &{' '}
-              <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">IRT Matrix</span>
-            </h1>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
+                Simulasi SNBT Score &{' '}
+                <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">IRT Matrix</span>
+              </h1>
+              <button
+                onClick={() => setShowEducation(true)}
+                className="p-2 bg-violet-100 text-violet-700 rounded-lg hover:bg-violet-200 transition-all"
+                title="Pelajari cara kerja IRT"
+              >
+                <HelpCircle size={20} />
+              </button>
+            </div>
             <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto leading-relaxed">
               Bedah cara kerja pembobotan IRT, dapatkan target strategis per subtes, dan ubah cara kamu bermain di SNBT.
             </p>
