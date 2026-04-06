@@ -3,7 +3,8 @@ import {
   BarChart2, Target, Zap, Shield, Sword, ChevronRight,
   ChevronLeft, Info, CheckCircle2, AlertTriangle, TrendingUp,
   Users, GraduationCap, BookOpen, Brain, Star, ArrowRight,
-  RotateCcw, Share2, Download, Sparkles, Trophy, Activity
+  RotateCcw, Share2, Download, Sparkles, Trophy, Activity,
+  Play
 } from 'lucide-react';
 import { UnifiedNavbar } from '../components/layout/UnifiedNavbar';
 import { useTokenBalance } from '../hooks/useTokenBalance';
