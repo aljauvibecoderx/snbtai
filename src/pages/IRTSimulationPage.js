@@ -479,7 +479,7 @@ const Step3Scores = ({ scores, setScores, onNext, onBack }) => {
 };
 
 // Step 4: Results
-const Step4Results = ({ result, config, onReset }) => {
+const Step4Results = ({ result, config, onReset, scores }) => {
   const { matrix, breakdowns, totalIRT, adjustedSafe, percentile } = result;
   const selectedPtn = TOP_PTN_LIST.find(p => p.id === config.targetPtn);
   const isPass = totalIRT >= adjustedSafe;
@@ -900,7 +900,12 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
               />
             )}
             {step === 4 && result && (
-              <Step4Results result={result} config={config} onReset={handleReset} />
+              <Step4Results 
+                result={result} 
+                config={config} 
+                onReset={handleReset} 
+                scores={scores}
+              />
             )}
           </div>
 
