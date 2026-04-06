@@ -83,6 +83,7 @@ const WaitingRoom = lazy(() => import('./features/ambisBattle/WaitingRoom'));
 const GenerateQuestion = lazy(() => import('./features/ambisBattle/GenerateQuestion'));
 const LiveBattle = lazy(() => import('./features/ambisBattle/LiveBattle'));
 const BattleResult = lazy(() => import('./features/ambisBattle/BattleResult'));
+const IRTSimulationPage = lazy(() => import('./pages/IRTSimulationPage'));
 
 // Toast system replaced by NotificationSystem
 
@@ -3859,6 +3860,8 @@ function AppContent() {
         setView('VOCAB');
       } else if (path === '/404' || path === '/error') {
         setView('404');
+      } else if (path === '/simulasi-skor') {
+        setView('IRT_SIMULATION');
       } else if (path === '/app') {
         setView('HOME');
       } else if (path === '/') {
@@ -4714,6 +4717,15 @@ function AppContent() {
         {view === 'CONTACT' && <ContactUs />}
         {view === 'SNBT_QUESTION_TYPES' && <SNBTQuestionTypes />}
         {view === 'SNBT_QUESTION_PATTERNS' && <SNBTQuestionPatterns />}
+        {view === 'IRT_SIMULATION' && (
+          <IRTSimulationPage
+            user={user}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+            navigate={navigate}
+            setView={setView}
+          />
+        )}
         {view === 'DASHBOARD' && (
           <DashboardView
             user={user}

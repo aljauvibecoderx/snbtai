@@ -2,7 +2,7 @@
 // Gunakan component ini di Landing Page, Dashboard, dan Community
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown, Swords } from 'lucide-react';
+import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown, Swords, BarChart2 } from 'lucide-react';
 import { CoinBalance } from '../common/CoinBalance';
 import { useStats } from '../../context/StatsContext';
 
@@ -138,6 +138,13 @@ export const UnifiedNavbar = ({
                     <Swords size={14} className="text-violet-600" strokeWidth={2} />
                     <span className="text-sm font-semibold text-violet-700">Battle</span>
                     <span className="text-[9px] font-bold text-white bg-violet-500 px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+                  </button>
+                  <button
+                    onClick={() => { setView?.('IRT_SIMULATION'); navigate?.('/simulasi-skor'); }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 hover:border-indigo-400 rounded-lg transition-all duration-300"
+                  >
+                    <BarChart2 size={14} className="text-indigo-600" strokeWidth={2} />
+                    <span className="text-sm font-semibold text-indigo-700">IRT Sim</span>
                   </button>
                 </>
               )}
@@ -296,6 +303,15 @@ export const UnifiedNavbar = ({
                     </div>
                     <span className="text-sm font-semibold text-violet-800">Ambis Battle</span>
                     <span className="ml-auto text-[9px] font-bold text-white bg-violet-500 px-1.5 py-0.5 rounded-full">NEW</span>
+                  </button>
+                  <button
+                    onClick={() => { setView?.('IRT_SIMULATION'); navigate?.('/simulasi-skor'); setShowMobileMenu?.(false); }}
+                    className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl transition-all hover:border-indigo-300"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                      <BarChart2 size={16} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-indigo-800">Simulasi IRT</span>
                   </button>
                   
                   <button onClick={() => { navigate?.('/settings'); setShowMobileMenu?.(false); }} className="w-full flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-all">
