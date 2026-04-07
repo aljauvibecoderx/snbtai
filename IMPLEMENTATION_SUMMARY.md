@@ -39,10 +39,10 @@ Admin Panel → Bank Soal →
 - ✅ User configuration storage
 
 **Default Groups**:
-1. **TPS Lengkap** - 15 soal (PU, PK, PBM)
+1. **TPS Lengkap** - 20 soal (PU, PK, PBM, PPU)
 2. **Literasi Lengkap** - 10 soal (Indo, Inggris)
 3. **SNBT Mini** - 12 soal (PU, PK, Lit Indo, PM)
-4. **SNBT Lengkap** - 30 soal (All 6 subtests)
+4. **SNBT Lengkap** - 35 soal (All 7 subtests)
 
 **API**:
 ```javascript
