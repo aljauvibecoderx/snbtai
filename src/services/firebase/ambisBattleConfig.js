@@ -10,9 +10,9 @@ export const DEFAULT_SUBTEST_GROUPS = [
   {
     id: 'tps_all',
     name: 'TPS Lengkap',
-    subtests: ['tps_pu', 'tps_pk', 'tps_pbm'],
+    subtests: ['tps_pu', 'tps_pk', 'tps_pbm', 'tps_ppu'],
     questionsPerSubtest: 5,
-    totalQuestions: 15
+    totalQuestions: 20
   },
   {
     id: 'literasi_all',
@@ -31,9 +31,9 @@ export const DEFAULT_SUBTEST_GROUPS = [
   {
     id: 'snbt_full',
     name: 'SNBT Lengkap',
-    subtests: ['tps_pu', 'tps_pk', 'tps_pbm', 'lit_ind', 'lit_ing', 'pm'],
+    subtests: ['tps_pu', 'tps_pk', 'tps_pbm', 'tps_ppu', 'lit_ind', 'lit_ing', 'pm'],
     questionsPerSubtest: 5,
-    totalQuestions: 30
+    totalQuestions: 35
   }
 ];
 

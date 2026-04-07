@@ -87,15 +87,16 @@ Pastikan subtest di soal sesuai dengan grup:
 ### Default Groups:
 | Grup | Subtests yang Dicari |
 |------|---------------------|
-| TPS Lengkap | `tps_pu`, `tps_pk`, `tps_pbm` |
-| Literasi Lengkap | `lit_ind`, `lit_ing` |
-| SNBT Mini | `tps_pu`, `tps_pk`, `lit_ind`, `pm` |
-| SNBT Lengkap | `tps_pu`, `tps_pk`, `tps_pbm`, `lit_ind`, `lit_ing`, `pm` |
+| TPS Lengkap | `tps_pu`, `tps_pk`, `tps_pbm`, `tps_ppu` (20 soal) |
+| Literasi Lengkap | `lit_ind`, `lit_ing` (10 soal) |
+| SNBT Mini | `tps_pu`, `tps_pk`, `lit_ind`, `pm` (12 soal) |
+| SNBT Lengkap | `tps_pu`, `tps_pk`, `tps_pbm`, `tps_ppu`, `lit_ind`, `lit_ing`, `pm` (35 soal) |
 
 ### Subtest IDs yang Valid:
 - `tps_pu` - TPS Penalaran Umum
 - `tps_pk` - TPS Pengetahuan Kuantitatif
 - `tps_pbm` - TPS Pemahaman Bacaan
+- `tps_ppu` - TPS Pengetahuan & Pemahaman Umum
 - `lit_ind` - Literasi Indonesia
 - `lit_ing` - Literasi Inggris
 - `pm` - Penalaran Matematika

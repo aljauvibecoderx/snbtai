@@ -156,6 +156,7 @@ const GroupFormModal = ({ group, onSave, onCancel }) => {
     { id: 'tps_pu', label: 'TPS - Penalaran Umum' },
     { id: 'tps_pk', label: 'TPS - Pengetahuan Kuantitatif' },
     { id: 'tps_pbm', label: 'TPS - Pemahaman Bacaan' },
+    { id: 'tps_ppu', label: 'TPS - Pengetahuan & Pemahaman Umum' },
     { id: 'lit_ind', label: 'Literasi Indonesia' },
     { id: 'lit_ing', label: 'Literasi Inggris' },
     { id: 'pm', label: 'Penalaran Matematika' }
