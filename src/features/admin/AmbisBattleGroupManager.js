@@ -24,12 +24,20 @@ export const AmbisBattleGroupManager = ({ user, showToast }) => {
   const handleSaveGroup = async (groupData) => {
     try {
       await saveSubtestGroup(groupData, user.uid);
-      showToast('Grup berhasil disimpan', 'success');
+      if (showToast) {
+        showToast('Grup berhasil disimpan', 'success');
+      } else {
+        alert('✅ Grup berhasil disimpan');
+      }
       setEditingGroup(null);
       setShowAddForm(false);
       loadGroups();
     } catch (error) {
-      showToast('Gagal menyimpan grup: ' + error.message, 'error');
+      if (showToast) {
+        showToast('Gagal menyimpan grup: ' + error.message, 'error');
+      } else {
+        alert('❌ Gagal menyimpan grup: ' + error.message);
+      }
     }
   };
 
@@ -38,10 +46,18 @@ export const AmbisBattleGroupManager = ({ user, showToast }) => {
     
     try {
       await deleteDoc(doc(db, 'ambis_battle_groups', groupId));
-      showToast('Grup berhasil dihapus', 'success');
+      if (showToast) {
+        showToast('Grup berhasil dihapus', 'success');
+      } else {
+        alert('✅ Grup berhasil dihapus');
+      }
       loadGroups();
     } catch (error) {
-      showToast('Gagal menghapus grup', 'error');
+      if (showToast) {
+        showToast('Gagal menghapus grup', 'error');
+      } else {
+        alert('❌ Gagal menghapus grup');
+      }
     }
   };
 

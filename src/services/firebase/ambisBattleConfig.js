@@ -71,34 +71,54 @@ export const getSubtestGroups = async (userId = null) => {
 export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubtest) => {
   const allQuestions = [];
   
-  for (const subtest of subtests) {
+  try {
+    // Get all public question sets
     const q = query(
       collection(db, 'question_sets'),
       where('visibility', '==', 'public')
     );
     const snapshot = await getDocs(q);
     
-    const validSets = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(set => {
-        if (!set.questions || set.questions.length === 0) return false;
-        return set.questions.some(q => q.subtest === subtest);
-      });
-    
-    const subtestQuestions = [];
-    for (const set of validSets) {
-      const questions = set.questions.filter(q => q.subtest === subtest);
-      subtestQuestions.push(...questions.map(q => ({ ...q, setId: set.id })));
+    // Process each subtest
+    for (const subtest of subtests) {
+      const subtestQuestions = [];
+      
+      // Collect questions from all sets for this subtest
+      for (const docSnap of snapshot.docs) {
+        const setData = docSnap.data();
+        
+        // Check if set has questions array
+        if (setData.questions && Array.isArray(setData.questions)) {
+          // Filter questions by subtest
+          const matchingQuestions = setData.questions.filter(q => {
+            // Check both subtest field and category field
+            return q.subtest === subtest || setData.category === subtest;
+          });
+          
+          // Add to collection with set metadata
+          matchingQuestions.forEach(q => {
+            subtestQuestions.push({
+              ...q,
+              setId: docSnap.id,
+              setTitle: setData.title || 'Untitled'
+            });
+          });
+        }
+      }
+      
+      // Shuffle and pick random questions
+      if (subtestQuestions.length > 0) {
+        const shuffled = subtestQuestions.sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, Math.min(questionsPerSubtest, subtestQuestions.length));
+        allQuestions.push(...selected);
+      }
     }
     
-    // Shuffle and pick random
-    const shuffled = subtestQuestions.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, questionsPerSubtest);
-    
-    allQuestions.push(...selected);
+    return allQuestions;
+  } catch (error) {
+    console.error('Error getting random questions:', error);
+    return [];
   }
-  
-  return allQuestions;
 };
 
 // Save config

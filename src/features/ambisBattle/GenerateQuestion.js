@@ -395,16 +395,37 @@ const GenerateQuestion = ({ user }) => {
     setError('');
     setShowGroupSelector(false);
     try {
+      console.log('Fetching questions for group:', group.name);
+      console.log('Subtests:', group.subtests);
+      console.log('Questions per subtest:', group.questionsPerSubtest);
+      
       const randomQuestions = await getRandomQuestionsFromSubtests(
         group.subtests,
         group.questionsPerSubtest
       );
       
+      console.log('Questions fetched:', randomQuestions.length);
+      
       if (!randomQuestions || randomQuestions.length === 0) {
-        throw new Error('Tidak ada soal tersedia untuk grup ini. Pastikan ada soal di bank soal.');
+        throw new Error(
+          `Tidak ada soal tersedia untuk grup "${group.name}".\n\n` +
+          `Subtests yang dicari: ${group.subtests.join(', ')}\n\n` +
+          `Pastikan ada soal di Bank Soal dengan subtest yang sesuai.\n` +
+          `Atau gunakan AI Generator untuk membuat soal baru.`
+        );
+      }
+      
+      // Show warning if not enough questions
+      if (randomQuestions.length < group.totalQuestions) {
+        alert(
+          `⚠️ Perhatian:\n\n` +
+          `Hanya ${randomQuestions.length} soal tersedia dari ${group.totalQuestions} yang diharapkan.\n\n` +
+          `Soal akan tetap dimuat, tapi mungkin kurang dari target.`
+        );
       }
       
       setQuestions(randomQuestions);
+      alert(`✅ Berhasil memuat ${randomQuestions.length} soal dari grup "${group.name}"`);
     } catch (e) {
       console.error('Group generation error:', e);
       setError(e.message || 'Gagal mengambil soal dari grup.');
@@ -599,6 +620,14 @@ const GenerateQuestion = ({ user }) => {
             <span className="font-bold text-slate-900 text-sm">Ambil dari Bank Soal</span>
           </div>
           <p className="text-xs text-slate-500 mb-3">Pilih grup subtest untuk mengambil soal random dari bank soal</p>
+          
+          {/* Info Box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+            <p className="text-xs text-blue-800">
+              <span className="font-bold">ℹ️ Info:</span> Soal diambil dari Bank Soal yang sudah ada. 
+              Jika tidak ada soal, gunakan AI Generator di atas untuk membuat soal baru terlebih dahulu.
+            </p>
+          </div>
           
           {!showGroupSelector ? (
             <button
