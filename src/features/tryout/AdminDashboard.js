@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Eye, TrendingUp, ArrowLeft, Trash2, CheckCircle, Edit, Clock, ChevronUp, ChevronDown, Key, Check, X as XIcon } from 'lucide-react';
+import { Shield, Plus, Eye, TrendingUp, ArrowLeft, Trash2, CheckCircle, Edit, Clock, ChevronUp, ChevronDown, Key, Check, X as XIcon, Zap } from 'lucide-react';
 import { checkAdminRole, getGlobalQuestions, createTryout, getDraftTryouts, getPublishedTryouts, publishTryout, deleteTryout, updateTryout, getTryoutById } from '../../services/firebase/firebase-admin';
 import { ManageQuestionsPanel } from '../soal/ManageQuestionsPanel';
+import { AmbisBattleGroupManager } from '../admin/AmbisBattleGroupManager';
 import { getAllKeys, addApiKey, deleteApiKey, updateKeyStatus, testApiKey } from '../../services/api/api-key-manager';
 import { resetKeyCache } from '../../config/config';
 
@@ -278,6 +279,13 @@ export const AdminDashboard = ({ user, onBack, showToast }) => {
             <Shield size={16} className="inline mr-2" />
             API Keys
           </button>
+          <button 
+            onClick={() => setView('ambisBattle')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${view === 'ambisBattle' ? 'bg-rose-100 text-rose-700' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
+            <Zap size={16} className="inline mr-2" />
+            Ambis Battle
+          </button>
         </div>
       </nav>
       
@@ -287,6 +295,7 @@ export const AdminDashboard = ({ user, onBack, showToast }) => {
         {view === 'manage' && <ManageTryoutPanel user={user} />}
         {view === 'questions' && <ManageQuestionsPanel user={user} showToast={showToast} />}
         {view === 'apikeys' && <ApiKeysPanel user={user} showToast={showToast} />}
+        {view === 'ambisBattle' && <AmbisBattleGroupManager user={user} showToast={showToast} />}
       </main>
     </div>
   );

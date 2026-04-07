@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, ChevronUp, ChevronDown, Eye, Bookmark, BookmarkCheck, Search, Filter, Calendar, Hash, FileText } from 'lucide-react';
+import { Trash2, ChevronUp, ChevronDown, Eye, Bookmark, BookmarkCheck, Search, Filter, Calendar, Hash, FileText, AlertTriangle } from 'lucide-react';
 import { deleteQuestionSet, getAllQuestionSetsForManagement } from '../../services/firebase/firebase-admin';
 import { getQuestionsBySetId, addToWishlist, removeFromWishlist, checkWishlistStatus } from '../../services/firebase/firebase';
 import { DetailSoalView } from './DetailSoalView';
@@ -18,6 +18,9 @@ export const ManageQuestionsPanel = ({ user, showToast }) => {
   const [viewingSet, setViewingSet] = useState(null);
   const [viewingQuestions, setViewingQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [qualityFilter, setQualityFilter] = useState('all');
+  const [minQuestions, setMinQuestions] = useState('');
+  const [maxQuestions, setMaxQuestions] = useState('');
 
   useEffect(() => {
     setSets([]);
@@ -109,7 +112,21 @@ export const ManageQuestionsPanel = ({ user, showToast }) => {
     const matchSearch = !searchQuery || 
       s.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.id?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchSubtest && matchSearch;
+    
+    // Quality filter
+    let matchQuality = true;
+    if (qualityFilter === 'incomplete') {
+      matchQuality = !s.totalQuestions || s.totalQuestions === 0;
+    } else if (qualityFilter === 'valid') {
+      matchQuality = s.totalQuestions && s.totalQuestions > 0;
+    }
+    
+    // Question count filter
+    const questionCount = s.totalQuestions || 0;
+    const matchMin = !minQuestions || questionCount >= parseInt(minQuestions);
+    const matchMax = !maxQuestions || questionCount <= parseInt(maxQuestions);
+    
+    return matchSubtest && matchSearch && matchQuality && matchMin && matchMax;
   });
 
   const subtests = ['tps_pu', 'tps_pk', 'tps_pbm', 'lit_ind', 'lit_ing', 'pm'];
@@ -181,7 +198,8 @@ export const ManageQuestionsPanel = ({ user, showToast }) => {
 
       {/* Filters Bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
           {/* Search */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -209,6 +227,58 @@ export const ManageQuestionsPanel = ({ user, showToast }) => {
               ))}
             </select>
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+          </div>
+          </div>
+          
+          {/* Advanced Filters Row */}
+          <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100">
+            {/* Quality Filter */}
+            <select
+              value={qualityFilter}
+              onChange={(e) => setQualityFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
+            >
+              <option value="all">Semua Kualitas</option>
+              <option value="valid">✓ Valid (Ada Soal)</option>
+              <option value="incomplete">⚠ Bermasalah (Kosong)</option>
+            </select>
+            
+            {/* Question Count Range */}
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Min soal"
+                value={minQuestions}
+                onChange={(e) => setMinQuestions(e.target.value)}
+                className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                min="0"
+              />
+              <span className="text-slate-400">-</span>
+              <input
+                type="number"
+                placeholder="Max soal"
+                value={maxQuestions}
+                onChange={(e) => setMaxQuestions(e.target.value)}
+                className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                min="0"
+              />
+            </div>
+            
+            {/* Clear Filters */}
+            {(qualityFilter !== 'all' || minQuestions || maxQuestions || searchQuery || filterSubtest) && (
+              <button
+                onClick={() => {
+                  setQualityFilter('all');
+                  setMinQuestions('');
+                  setMaxQuestions('');
+                  setSearchQuery('');
+                  setFilterSubtest('');
+                }}
+                className="px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors whitespace-nowrap"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -266,6 +336,14 @@ export const ManageQuestionsPanel = ({ user, showToast }) => {
                       {subtestLabels[set.subtest] || set.subtest || '-'}
                     </span>
                   </div>
+
+                  {/* Quality Warning Badge */}
+                  {(!set.totalQuestions || set.totalQuestions === 0) && (
+                    <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded mb-2">
+                      <AlertTriangle size={12} />
+                      <span>Paket kosong / bermasalah</span>
+                    </div>
+                  )}
 
                   {/* Meta Info */}
                   <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">

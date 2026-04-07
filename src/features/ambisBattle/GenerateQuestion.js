@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Edit3, CheckCircle2, BookOpen,
-  Sparkles, Loader2, AlertCircle, Check, ChevronDown, ChevronUp, Swords
+  Sparkles, Loader2, AlertCircle, Check, ChevronDown, ChevronUp, Swords, Shuffle
 } from 'lucide-react';
 import { saveQuestionsToRoom, listenToRoom, startBattle } from '../../services/firebase/ambisBattle';
+import { getSubtestGroups, getRandomQuestionsFromSubtests } from '../../services/firebase/ambisBattleConfig';
 import { GEMINI_KEYS } from '../../config/config';
 import { selectTemplate, getAllPatterns } from '../../utils/questionTemplates';
 
@@ -353,6 +354,9 @@ const GenerateQuestion = ({ user }) => {
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [aiConfig, setAiConfig] = useState({ subtest: 'pu', topic: TOPICS[0], difficulty: 'Sedang', count: 5, context: '' });
+  const [showGroupSelector, setShowGroupSelector] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
   const unsubRef = useRef(null);
 
   useEffect(() => {
@@ -360,14 +364,24 @@ const GenerateQuestion = ({ user }) => {
     unsubRef.current = listenToRoom(roomId, (data) => {
       if (!data) { navigate('/ambis-battle'); return; }
       setRoom(data);
-      // Load existing questions if returning to this page
       if (data.questions?.length > 0 && questions.length === 0) {
         setQuestions(data.questions);
       }
       setLoading(false);
     });
+    
+    // Load groups
+    loadGroups();
+    
     return () => unsubRef.current?.();
   }, [roomId]);
+
+  const loadGroups = async () => {
+    setLoadingGroups(true);
+    const allGroups = await getSubtestGroups(user?.uid);
+    setGroups(allGroups);
+    setLoadingGroups(false);
+  };
 
   // Host guard
   useEffect(() => {
@@ -375,6 +389,29 @@ const GenerateQuestion = ({ user }) => {
       navigate(`/ambis-battle/waiting-room/${roomId}`);
     }
   }, [room, user]);
+
+  const handleGenerateFromGroup = async (group) => {
+    setAiLoading(true);
+    setError('');
+    setShowGroupSelector(false);
+    try {
+      const randomQuestions = await getRandomQuestionsFromSubtests(
+        group.subtests,
+        group.questionsPerSubtest
+      );
+      
+      if (!randomQuestions || randomQuestions.length === 0) {
+        throw new Error('Tidak ada soal tersedia untuk grup ini. Pastikan ada soal di bank soal.');
+      }
+      
+      setQuestions(randomQuestions);
+    } catch (e) {
+      console.error('Group generation error:', e);
+      setError(e.message || 'Gagal mengambil soal dari grup.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleGenerateWithAI = async () => {
     setAiLoading(true);
@@ -551,6 +588,62 @@ const GenerateQuestion = ({ user }) => {
               <><Sparkles size={14} /> Generate {aiConfig.count} Soal AI</>
             )}
           </button>
+        </div>
+
+        {/* Group-Based Generator */}
+        <div className="bg-white border border-indigo-200 rounded-2xl p-4 mb-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
+              <Shuffle size={14} className="text-white" />
+            </div>
+            <span className="font-bold text-slate-900 text-sm">Ambil dari Bank Soal</span>
+          </div>
+          <p className="text-xs text-slate-500 mb-3">Pilih grup subtest untuk mengambil soal random dari bank soal</p>
+          
+          {!showGroupSelector ? (
+            <button
+              onClick={() => setShowGroupSelector(true)}
+              disabled={loadingGroups}
+              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl text-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <Shuffle size={14} />
+              Pilih Grup Subtest
+            </button>
+          ) : (
+            <div className="space-y-2">
+              {groups.map(group => (
+                <button
+                  key={group.id}
+                  onClick={() => handleGenerateFromGroup(group)}
+                  disabled={aiLoading}
+                  className="w-full p-3 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl text-left transition-all disabled:opacity-50"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-slate-900 text-sm">{group.name}</span>
+                    {group.isCustom && (
+                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">Custom</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    {group.totalQuestions} soal • {group.subtests.length} subtest
+                  </p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {group.subtests.map(st => (
+                      <span key={st} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded">
+                        {st}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+              <button
+                onClick={() => setShowGroupSelector(false)}
+                className="w-full py-2 text-sm text-slate-600 hover:text-slate-900 font-medium"
+              >
+                Batal
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Manual Add */}
