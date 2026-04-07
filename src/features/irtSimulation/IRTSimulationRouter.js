@@ -66,7 +66,7 @@ const IRTSimulationRouter = ({ user, onLogin, onLogout, setView }) => {
     if (!code) return;
     try {
       sessionStorage.setItem(configKey(code), JSON.stringify({ ptnId, scaleId }));
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   // ── Navigate helper used by child pages ─────────────────────────────────
@@ -95,7 +95,7 @@ const IRTSimulationRouter = ({ user, onLogin, onLogout, setView }) => {
       // Persist exam result so IRTSimulationPage can pick it up after redirect
       try {
         sessionStorage.setItem(examResultKey(code), JSON.stringify(examData));
-      } catch (_) {}
+      } catch (_) { }
       // Navigate back to the hasil-analisis (step 4) section
       navigate(buildIRTPath(4, null, null, code), { replace: true });
     },
@@ -109,7 +109,7 @@ const IRTSimulationRouter = ({ user, onLogin, onLogout, setView }) => {
       try {
         sessionStorage.removeItem(examResultKey(oldCode));
         sessionStorage.removeItem(configKey(oldCode));
-      } catch (_) {}
+      } catch (_) { }
     }
     const code = generateSessionCode();
     sessionCodeRef.current = code;
