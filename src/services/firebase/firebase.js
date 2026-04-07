@@ -18,15 +18,51 @@ export const loginWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
     
+    console.log('🔐 Login berhasil:', user.email);
+    
     // Auto-set admin role for superuser email
     if (user.email === 'superuserdeveloper@protonmail.com') {
+      console.log('👑 Superuser terdeteksi, setting role admin...');
+      
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
+        displayName: user.displayName || 'Superuser',
+        photoURL: user.photoURL || '',
         role: 'admin',
-        lastLogin: serverTimestamp()
+        lastLogin: serverTimestamp(),
+        updatedAt: serverTimestamp()
       }, { merge: true });
+      
+      // Verify role was set
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('✅ Role admin berhasil di-set:', userData.role);
+        if (userData.role !== 'admin') {
+          console.error('⚠️ WARNING: Role tidak ter-set dengan benar!');
+        }
+      } else {
+        console.error('⚠️ WARNING: Dokumen user tidak ditemukan setelah setDoc!');
+      }
+    } else {
+      // Regular user - ensure document exists
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          displayName: user.displayName || 'User',
+          photoURL: user.photoURL || '',
+          role: 'user',
+          lastLogin: serverTimestamp(),
+          createdAt: serverTimestamp()
+        });
+      } else {
+        await setDoc(userRef, {
+          lastLogin: serverTimestamp()
+        }, { merge: true });
+      }
     }
     
     return user;
@@ -47,10 +83,18 @@ export const logout = async () => {
 
 export const saveUserData = async (userId, data) => {
   try {
+    // Force admin role for superuser
     if (data.email === 'superuserdeveloper@protonmail.com') {
       data.role = 'admin';
+      console.log('👑 Forcing admin role for superuser');
     }
-    await setDoc(doc(db, 'users', userId), data, { merge: true });
+    
+    await setDoc(doc(db, 'users', userId), {
+      ...data,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    
+    console.log('✅ User data saved:', { userId, role: data.role });
   } catch (error) {
     console.error("Save error:", error);
     throw error;
