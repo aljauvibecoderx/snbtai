@@ -736,8 +736,19 @@ const Step4Results = ({ result, config, onReset, scores }) => {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
-  const [step, setStep] = useState(1);
+const IRTSimulationPage = ({
+  user, onLogin, onLogout, navigate, setView,
+  // ── Router-injected props (optional) ──────────────────────────────────
+  // When rendered inside IRTSimulationRouter these are provided so each
+  // step transition updates the browser URL with a session code.
+  initialStep      = 1,
+  sessionCode      = null,      // Current session code (read-only for display/debug)
+  pendingExamResult = null,     // Exam data from router (stored in sessionStorage)
+  onStepChange     = null,      // (step, ptnId, scaleId) => void
+  onStartExam      = null,      // () => void — overrides internal exam rendering
+  onRouterReset    = null,      // () => void — called instead of internal handleReset
+}) => {
+  const [step, setStep] = useState(initialStep);
   const [config, setConfig] = useState({ populationScale: null, targetPtn: null });
   const [scores, setScores] = useState({});
   const [result, setResult] = useState(null);
@@ -745,6 +756,34 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
   const [showExam, setShowExam] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
   const tokenBalance = useTokenBalance();
+
+  // ── Auto-process exam result from router (cross-route session bridge) ──────
+  // When the router redirects from /irt-simulation/snbt-simulation/{code}
+  // back to /irt-simulation/hasil-analisis/{code}, it passes the exam data
+  // via pendingExamResult so we can compute IRT immediately on mount.
+  useEffect(() => {
+    if (!pendingExamResult) return;
+    const { subtestScores, answers } = pendingExamResult;
+    if (!subtestScores) return;
+    setScores(subtestScores);
+    const computed = computeSimulation({
+      baselineScores: subtestScores,
+      populationScale: config.populationScale,
+      targetPtn: config.targetPtn,
+      examAnswers: answers || null,
+    });
+    setResult(computed);
+    setStep(4);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Internal step setter — also fires router callback ──────────────────
+  const goToStep = useCallback((nextStep) => {
+    setStep(nextStep);
+    if (onStepChange) {
+      onStepChange(nextStep, config.targetPtn, config.populationScale?.id);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [onStepChange, config.targetPtn, config.populationScale?.id]);
 
   const handleGenerateResult = useCallback(() => {
     const computed = computeSimulation({
@@ -755,16 +794,22 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
     });
     setResult(computed);
     setStep(4);
+    if (onStepChange) onStepChange(4, config.targetPtn, config.populationScale?.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [scores, config]);
+  }, [scores, config, onStepChange]);
 
   const handleTakeExam = useCallback(() => {
-    setShowExam(true);
-  }, []);
+    // If a router-level exam handler exists, delegate to it (updates URL)
+    if (onStartExam) {
+      onStartExam();
+    } else {
+      setShowExam(true);
+    }
+  }, [onStartExam]);
 
   const handleManualInput = useCallback(() => {
-    setStep(3);
-  }, []);
+    goToStep(3);
+  }, [goToStep]);
 
   const handleExamComplete = useCallback((examData) => {
     // Convert exam results to scores format
@@ -792,7 +837,12 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
     setResult(null);
     setShowExam(false);
     setShowEducation(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Let the router generate a fresh session code if available
+    if (onRouterReset) {
+      onRouterReset();
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // If showing exam, render exam page
@@ -881,12 +931,12 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
             <StepIndicator step={step} />
 
             {step === 1 && (
-              <Step1Config config={config} setConfig={setConfig} onNext={() => setStep(2)} />
+              <Step1Config config={config} setConfig={setConfig} onNext={() => goToStep(2)} />
             )}
             {step === 2 && (
               <Step2Method 
                 onNext={() => {}}
-                onBack={() => setStep(1)}
+                onBack={() => goToStep(1)}
                 onTakeExam={handleTakeExam}
                 onManualInput={handleManualInput}
               />
@@ -896,7 +946,7 @@ const IRTSimulationPage = ({ user, onLogin, onLogout, navigate, setView }) => {
                 scores={scores} 
                 setScores={setScores} 
                 onNext={handleGenerateResult} 
-                onBack={() => setStep(2)}
+                onBack={() => goToStep(2)}
               />
             )}
             {step === 4 && result && (

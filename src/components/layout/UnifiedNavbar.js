@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Menu, LogIn, LogOut, Users, BookOpen, Settings, Activity, TrendingUp, Wallet, X, ArrowLeft, ChevronDown, Swords, BarChart2 } from 'lucide-react';
 import { CoinBalance } from '../common/CoinBalance';
 import { useStats } from '../../context/StatsContext';
+import { generateSessionCode } from '../../features/irtSimulation/irtSessionUtils';
 
 export const UnifiedNavbar = ({ 
   user, 
@@ -140,7 +141,11 @@ export const UnifiedNavbar = ({
                     <span className="text-[9px] font-bold text-white bg-violet-500 px-1.5 py-0.5 rounded-full leading-none">NEW</span>
                   </button>
                   <button
-                    onClick={() => { setView?.('IRT_SIMULATION'); navigate?.('/simulasi-skor'); }}
+                    onClick={() => {
+                      const code = generateSessionCode();
+                      setView?.('IRT_SIMULATION_ROUTER');
+                      navigate?.(`/irt-simulation/konfigurasi/${code}`);
+                    }}
                     className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 hover:border-indigo-400 rounded-lg transition-all duration-300"
                   >
                     <BarChart2 size={14} className="text-indigo-600" strokeWidth={2} />
@@ -305,7 +310,12 @@ export const UnifiedNavbar = ({
                     <span className="ml-auto text-[9px] font-bold text-white bg-violet-500 px-1.5 py-0.5 rounded-full">NEW</span>
                   </button>
                   <button
-                    onClick={() => { setView?.('IRT_SIMULATION'); navigate?.('/simulasi-skor'); setShowMobileMenu?.(false); }}
+                    onClick={() => {
+                      const code = generateSessionCode();
+                      setView?.('IRT_SIMULATION_ROUTER');
+                      navigate?.(`/irt-simulation/konfigurasi/${code}`);
+                      setShowMobileMenu?.(false);
+                    }}
                     className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl transition-all hover:border-indigo-300"
                   >
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center flex-shrink-0">

@@ -84,6 +84,8 @@ const GenerateQuestion = lazy(() => import('./features/ambisBattle/GenerateQuest
 const LiveBattle = lazy(() => import('./features/ambisBattle/LiveBattle'));
 const BattleResult = lazy(() => import('./features/ambisBattle/BattleResult'));
 const IRTSimulationPage = lazy(() => import('./pages/IRTSimulationPage'));
+// IRT Simulation Router — handles /irt-simulation/{section}/{sessionCode} paths
+const IRTSimulationRouter = lazy(() => import('./features/irtSimulation/IRTSimulationRouter'));
 
 // Toast system replaced by NotificationSystem
 
@@ -3861,7 +3863,13 @@ function AppContent() {
       } else if (path === '/404' || path === '/error') {
         setView('404');
       } else if (path === '/simulasi-skor') {
+        // Legacy short URL — keep working
         setView('IRT_SIMULATION');
+      } else if (path.startsWith('/irt-simulation')) {
+        // New session-based URL pattern:
+        //   /irt-simulation/{section}/{sessionCode}
+        //   /irt-simulation/snbt-simulation/{sessionCode}
+        setView('IRT_SIMULATION_ROUTER');
       } else if (path === '/app') {
         setView('HOME');
       } else if (path === '/') {
@@ -4723,6 +4731,15 @@ function AppContent() {
             onLogin={handleLogin}
             onLogout={handleLogout}
             navigate={navigate}
+            setView={setView}
+          />
+        )}
+        {view === 'IRT_SIMULATION_ROUTER' && (
+          /* Session-aware routing: /irt-simulation/{section}/{sessionCode} */
+          <IRTSimulationRouter
+            user={user}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
             setView={setView}
           />
         )}
