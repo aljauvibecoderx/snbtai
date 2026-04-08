@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Clock, CheckCircle2, XCircle, Zap, Loader2,
@@ -127,10 +127,16 @@ const LiveBattle = ({ user }) => {
     handleAnswerSubmit
   } = useBattleEngine(roomId, user);
 
-  // --- Redirects and Error Boundaries ---
-  if (room && room.status === 'finished') {
-    navigate(`/ambis-battle/result/${roomId}`);
-    return null;
+  // --- Handle Redirects in useEffect to avoid setState during render warning ---
+  useEffect(() => {
+    if (room && room.status === 'finished') {
+      navigate(`/ambis-battle/result/${roomId}`);
+    }
+  }, [room, roomId, navigate]);
+
+  // --- Error Boundaries ---
+  if (room?.status === 'finished') {
+    return null; // Return null while redirect happens in useEffect
   }
 
   if (loading) {
