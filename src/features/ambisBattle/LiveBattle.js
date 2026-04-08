@@ -180,7 +180,31 @@ const LiveBattle = ({ user }) => {
   // --- Countdown View Phase ---
   if (phase === 'countdown') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center relative">
+        {/* Soundtrack Toggle */}
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={() => setShowSoundtrack(!showSoundtrack)}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            <Volume2 size={16} className="text-slate-600" />
+            <span className="text-sm font-medium text-slate-700">
+              {showSoundtrack ? 'Musik: ON' : 'Musik: OFF'}
+            </span>
+          </button>
+        </div>
+
+        {/* Soundtrack Player */}
+        {showSoundtrack && (
+          <div className="absolute top-16 right-4 w-64">
+            <AudioPlayer 
+              src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
+              autoPlay={true}
+              showControls={true}
+            />
+          </div>
+        )}
+
         <div className="text-center">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-500/20">
             <span className="text-5xl font-black text-white">{countdown || 0}</span>
@@ -218,7 +242,7 @@ const LiveBattle = ({ user }) => {
           <div className="mb-4">
             <AudioPlayer 
               src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
-              autoPlay={phase === 'playing'}
+              autoPlay={phase === 'playing' || phase === 'countdown'}
               showControls={true}
             />
           </div>
