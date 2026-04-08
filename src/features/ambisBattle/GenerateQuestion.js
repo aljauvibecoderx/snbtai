@@ -254,7 +254,7 @@ const GenerateQuestion = ({ user }) => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
-  const [aiConfig, setAiConfig] = useState({ subtest: 'pu', topic: TOPICS[0], difficulty: 'Sedang', count: 5, context: '' });
+  const [aiConfig, setAiConfig] = useState({ subtest: 'tps_pu', topic: TOPICS[0], difficulty: 'Sedang', count: 5, context: '' });
   const [showGroupSelector, setShowGroupSelector] = useState(false);
   const [groups, setGroups] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
@@ -335,11 +335,38 @@ const GenerateQuestion = ({ user }) => {
     }
   };
 
+  // Word count validation constants
+  const MIN_WORDS = 10;
+  const MAX_WORDS = 200;
+
+  const getWordCount = (text) => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  const validateWordCount = (text) => {
+    const wordCount = getWordCount(text);
+    if (text.trim() && wordCount < MIN_WORDS) {
+      return `Minimal ${MIN_WORDS} kata diperlukan. Saat ini: ${wordCount} kata.`;
+    }
+    if (wordCount > MAX_WORDS) {
+      return `Maksimal ${MAX_WORDS} kata diperbolehkan. Saat ini: ${wordCount} kata.`;
+    }
+    return null;
+  };
+
   const handleGenerateWithAI = async () => {
     setAiLoading(true);
     setError('');
     try {
       const { subtest, topic, difficulty, count, context } = aiConfig;
+
+      // Validate word count if context is provided
+      if (context.trim()) {
+        const validationError = validateWordCount(context);
+        if (validationError) {
+          throw new Error(validationError);
+        }
+      }
 
       const newQuestions = await generateQuestionWithAI(
         subtest, // Pass subtest ID directly (e.g., 'tps_pu')
@@ -488,15 +515,49 @@ const GenerateQuestion = ({ user }) => {
 
           <div className="mb-4">
             <label className="text-xs font-semibold text-slate-600 mb-1 block flex items-center gap-1">
-              Konteks / Referensi Acuan Singkat <span className="text-slate-400 font-normal">(Opsional)</span>
+              Konteks / Referensi Acuan <span className="text-slate-400 font-normal">(Opsional)</span>
             </label>
-            <textarea
-              value={aiConfig.context}
-              onChange={(e) => setAiConfig({ ...aiConfig, context: e.target.value })}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-400 shadow-sm resize-none"
-              placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
-              rows={3}
-            />
+            <div className="relative">
+              <textarea
+                value={aiConfig.context}
+                onChange={(e) => setAiConfig({ ...aiConfig, context: e.target.value })}
+                className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none resize-none ${
+                  aiConfig.context.trim() && validateWordCount(aiConfig.context)
+                    ? 'border-red-300 focus:border-red-400 bg-red-50'
+                    : 'border-slate-200 focus:border-violet-400'
+                } shadow-sm`}
+                placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
+                rows={3}
+              />
+              {/* Word count indicator */}
+              {aiConfig.context.trim() && (
+                <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                  <span className={`text-xs font-medium ${
+                    validateWordCount(aiConfig.context) ? 'text-red-600' : 'text-slate-500'
+                  }`}>
+                    {getWordCount(aiConfig.context)} kata
+                  </span>
+                  {validateWordCount(aiConfig.context) && (
+                    <AlertCircle size={12} className="text-red-500" />
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Validation message */}
+            {aiConfig.context.trim() && validateWordCount(aiConfig.context) && (
+              <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-xs text-red-700">{validateWordCount(aiConfig.context)}</p>
+                <p className="text-xs text-red-600 mt-1">
+                  💡 Tip: Gunakan {MIN_WORDS}-{MAX_WORDS} kata untuk hasil terbaik.
+                </p>
+              </div>
+            )}
+            {/* Help text */}
+            {!aiConfig.context.trim() && (
+              <p className="text-xs text-slate-500 mt-1">
+                💡 Minimal {MIN_WORDS} kata, maksimal {MAX_WORDS} kata untuk kualitas soal yang optimal.
+              </p>
+            )}
           </div>
 
           <button

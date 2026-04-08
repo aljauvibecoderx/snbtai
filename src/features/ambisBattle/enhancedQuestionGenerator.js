@@ -186,7 +186,16 @@ EVERY question must include:
 - "text": The actual question
 - "options": 5 answer options (unless special type)
 - "correctIndex": Index of correct answer
-- "explanation": Clear explanation
+- "explanation": Comprehensive, detailed explanation
+
+=== ENHANCED EXPLANATION REQUIREMENTS ===
+Setiap explanation HARUS:
+1. **Langkah demi Langkah**: Jelaskan proses penyelesaian secara detail
+2. **Konsep Dasar**: Sebutkan konsep/rumus/prinsip yang digunakan
+3. **Analisis Opsi**: Jelaskan mengapa opsi lain salah (2-3 alasan)
+4. **Aplikasi**: Berikan contoh penerapan konsep dalam konteks nyata
+5. **Tips**: Berikan tips untuk menyelesaikan soal serupa
+6. **Minimal 3 kalimat** untuk setiap bagian penjelasan
 
 === FORMAT OUTPUT (JSON ARRAY) ===
 [
@@ -196,7 +205,7 @@ EVERY question must include:
     "text": "Pertanyaan utama berdasarkan stimulus...",
     "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
     "correctIndex": 0,
-    "explanation": "Penjelasan lengkap mengapa jawaban benar...",
+    "explanation": "**Langkah 1: Identifikasi Konsep**\nSoal ini menguji pemahaman tentang [konsep dasar]...\n\n**Langkah 2: Proses Penyelesaian**\nBerdasarkan stimulus, kita dapat mengidentifikasi bahwa...\n\n**Langkah 3: Analisis Opsi**\n✓ Opsi A benar karena [alasan detail]\n✗ Opsi B salah karena [alasan detail]\n✗ Opsi C salah karena [alasan detail]\n✗ Opsi D salah karena [alasan detail]\n✗ Opsi E salah karena [alasan detail]\n\n**Aplikasi Praktis**\nKonsep ini berguna dalam [contoh aplikasi nyata]...\n\n**Tips untuk Soal Serupa**\n1. [Tips 1]\n2. [Tips 2]",
     "subtest": "${subtestLabel}",
     "topic": "${topic}",
     "difficulty": "${difficulty}"

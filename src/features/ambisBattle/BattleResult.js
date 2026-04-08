@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Trophy, Swords, Home, RotateCcw, Crown, CheckCircle2,
-  XCircle, Clock, Target, Zap, Loader2, Star
+  XCircle, Clock, Target, Zap, Loader2, Star, ChevronDown,
+  ChevronUp, BookOpen, AlertCircle
 } from 'lucide-react';
 import { getRoom, leaveRoom } from '../../services/firebase/ambisBattle';
+import LatexWrapper from '../../utils/latex';
 
 const BattleResult = ({ user }) => {
   const params = useParams();
@@ -12,6 +14,7 @@ const BattleResult = ({ user }) => {
   const navigate = useNavigate();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedQuestions, setExpandedQuestions] = useState(new Set());
 
   useEffect(() => {
     if (!roomId) return;
@@ -31,6 +34,16 @@ const BattleResult = ({ user }) => {
   };
 
   const handleHome = () => navigate('/app');
+
+  const toggleQuestionExpansion = (index) => {
+    const newExpanded = new Set(expandedQuestions);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedQuestions(newExpanded);
+  };
 
   if (loading) {
     return (
@@ -156,48 +169,155 @@ const BattleResult = ({ user }) => {
           </div>
         </div>
 
-        {/* ── Question Breakdown ── */}
+        {/* ── Detailed Question Breakdown & Explanations ── */}
         {questions.length > 0 && (
           <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 mb-6">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Detail per Soal</p>
-            <div className="space-y-2">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Evaluasi & Pembahasan Lengkap</p>
+              <div className="flex items-center gap-1 text-xs text-amber-600">
+                <BookOpen size={12} />
+                <span>Klik untuk detail</span>
+              </div>
+            </div>
+            <div className="space-y-3">
               {questions.map((q, i) => {
                 const myA = myAnswers[i];
                 const opA = opAnswers[i];
                 const myCorrect = myA?.isCorrect;
                 const opCorrect = opA?.isCorrect;
+                const isExpanded = expandedQuestions.has(i);
 
                 return (
-                  <div key={i} className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
-                    <div className="w-6 h-6 rounded-lg bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 flex-shrink-0">
-                      {i + 1}
-                    </div>
-                    <p className="text-xs font-medium text-slate-600 flex-1 line-clamp-1">{q.text}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* My answer */}
-                      <div className="flex flex-col items-center">
-                        {myA === undefined ? (
-                          <div className="w-5 h-5 rounded-md bg-slate-200" />
-                        ) : myCorrect ? (
-                          <CheckCircle2 size={18} className="text-emerald-500" />
-                        ) : (
-                          <XCircle size={18} className="text-red-500" />
-                        )}
-                        <span className="text-[9px] font-semibold text-slate-400">Kamu</span>
+                  <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
+                    {/* Question Header */}
+                    <div 
+                      className="flex items-center gap-3 p-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => toggleQuestionExpansion(i)}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white flex-shrink-0 ${
+                        myCorrect ? 'bg-emerald-500' : myA === undefined ? 'bg-slate-400' : 'bg-red-500'
+                      }`}>
+                        {i + 1}
                       </div>
-                      <div className="w-px h-6 bg-slate-300" />
-                      {/* Opponent answer */}
-                      <div className="flex flex-col items-center">
-                        {opA === undefined ? (
-                          <div className="w-5 h-5 rounded-md bg-slate-200" />
-                        ) : opCorrect ? (
-                          <CheckCircle2 size={18} className="text-emerald-500" />
-                        ) : (
-                          <XCircle size={18} className="text-red-500" />
-                        )}
-                        <span className="text-[9px] font-semibold text-slate-400">Lawan</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 line-clamp-2">{q.text}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-slate-500">{q.subtest || 'SNBT'}</span>
+                          {q.difficulty && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-slate-300" />
+                              <span className="text-xs text-slate-500">{q.difficulty}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* My answer indicator */}
+                        <div className="flex flex-col items-center">
+                          {myA === undefined ? (
+                            <div className="w-5 h-5 rounded-md bg-slate-300" />
+                          ) : myCorrect ? (
+                            <CheckCircle2 size={16} className="text-emerald-500" />
+                          ) : (
+                            <XCircle size={16} className="text-red-500" />
+                          )}
+                          <span className="text-[9px] font-semibold text-slate-400">Kamu</span>
+                        </div>
+                        <div className="w-px h-5 bg-slate-300" />
+                        {/* Opponent answer indicator */}
+                        <div className="flex flex-col items-center">
+                          {opA === undefined ? (
+                            <div className="w-5 h-5 rounded-md bg-slate-300" />
+                          ) : opCorrect ? (
+                            <CheckCircle2 size={16} className="text-emerald-500" />
+                          ) : (
+                            <XCircle size={16} className="text-red-500" />
+                          )}
+                          <span className="text-[9px] font-semibold text-slate-400">Lawan</span>
+                        </div>
+                        {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                       </div>
                     </div>
+
+                    {/* Detailed Explanation (Expanded) */}
+                    {isExpanded && (
+                      <div className="border-t border-slate-200 p-4 space-y-4 bg-white">
+                        {/* Stimulus Section */}
+                        {q.stimulus && (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-xs font-semibold text-amber-800 mb-2">📄 Stimulus:</p>
+                            <p className="text-xs text-amber-700 leading-relaxed">
+                              <LatexWrapper text={q.stimulus} />
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Question Text */}
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                          <p className="text-xs font-semibold text-slate-800 mb-2">❓ Pertanyaan:</p>
+                          <p className="text-sm text-slate-700 leading-relaxed">
+                            <LatexWrapper text={q.text} />
+                          </p>
+                        </div>
+
+                        {/* Options with Correct Answer Highlight */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-slate-800">📝 Pilihan Jawaban:</p>
+                          {q.options?.map((option, optIndex) => {
+                            const isCorrect = optIndex === q.correctIndex;
+                            const myAnswer = myA?.answerIndex;
+                            const iSelected = myAnswer === optIndex;
+                            
+                            return (
+                              <div 
+                                key={optIndex}
+                                className={`p-2.5 rounded-lg border text-sm ${
+                                  isCorrect 
+                                    ? 'bg-emerald-50 border-emerald-300' 
+                                    : iSelected && !isCorrect
+                                    ? 'bg-red-50 border-red-300'
+                                    : 'bg-slate-50 border-slate-200'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isCorrect && <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0" />}
+                                  {iSelected && !isCorrect && <XCircle size={14} className="text-red-600 flex-shrink-0" />}
+                                  <span className={`leading-relaxed ${isCorrect ? 'font-medium text-emerald-800' : iSelected && !isCorrect ? 'text-red-800' : 'text-slate-700'}`}>
+                                    <LatexWrapper text={option} />
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Detailed Explanation */}
+                        {q.explanation && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs font-semibold text-blue-800 mb-2">🔍 Pembahasan Lengkap:</p>
+                            <p className="text-sm text-blue-700 leading-relaxed">
+                              <LatexWrapper text={q.explanation} />
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Performance Summary */}
+                        <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg">
+                          <div className="text-center">
+                            <p className="text-xs text-slate-500 mb-1">Jawaban Kamu</p>
+                            <p className={`text-sm font-bold ${myCorrect ? 'text-emerald-600' : myA === undefined ? 'text-slate-400' : 'text-red-600'}`}>
+                              {myA === undefined ? 'Tidak dijawab' : myCorrect ? '✓ Benar' : '✗ Salah'}
+                            </p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-slate-500 mb-1">Waktu</p>
+                            <p className="text-sm font-bold text-slate-600">
+                              {myA?.timeTaken ? `${myA.timeTaken}s` : '-'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
