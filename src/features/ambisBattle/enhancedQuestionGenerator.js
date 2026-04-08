@@ -188,14 +188,12 @@ EVERY question must include:
 - "correctIndex": Index of correct answer
 - "explanation": Comprehensive, detailed explanation
 
-=== ENHANCED EXPLANATION REQUIREMENTS ===
-Setiap explanation HARUS:
-1. **Langkah demi Langkah**: Jelaskan proses penyelesaian secara detail
-2. **Konsep Dasar**: Sebutkan konsep/rumus/prinsip yang digunakan
-3. **Analisis Opsi**: Jelaskan mengapa opsi lain salah (2-3 alasan)
-4. **Aplikasi**: Berikan contoh penerapan konsep dalam konteks nyata
-5. **Tips**: Berikan tips untuk menyelesaikan soal serupa
-6. **Minimal 3 kalimat** untuk setiap bagian penjelasan
+=== EXPLANATION REQUIREMENTS ===
+Setiap explanation harus:
+1. Jelas dan mudah dipahami
+2. Jelaskan mengapa jawaban benar
+3. Berikan langkah penyelesaian singkat
+4. 2-4 kalimat yang padat dan jelas
 
 === FORMAT OUTPUT (JSON ARRAY) ===
 [
@@ -205,7 +203,7 @@ Setiap explanation HARUS:
     "text": "Pertanyaan utama berdasarkan stimulus...",
     "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
     "correctIndex": 0,
-    "explanation": "**Langkah 1: Identifikasi Konsep**\nSoal ini menguji pemahaman tentang [konsep dasar]...\n\n**Langkah 2: Proses Penyelesaian**\nBerdasarkan stimulus, kita dapat mengidentifikasi bahwa...\n\n**Langkah 3: Analisis Opsi**\n✓ Opsi A benar karena [alasan detail]\n✗ Opsi B salah karena [alasan detail]\n✗ Opsi C salah karena [alasan detail]\n✗ Opsi D salah karena [alasan detail]\n✗ Opsi E salah karena [alasan detail]\n\n**Aplikasi Praktis**\nKonsep ini berguna dalam [contoh aplikasi nyata]...\n\n**Tips untuk Soal Serupa**\n1. [Tips 1]\n2. [Tips 2]",
+    "explanation": "Jawaban A benar karena [alasan singkat]. Langkah penyelesaian: [proses singkat]. Konsep yang digunakan adalah [konsep dasar].",
     "subtest": "${subtestLabel}",
     "topic": "${topic}",
     "difficulty": "${difficulty}"
