@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { getMySetsByTimeRange, getPublicSetsByTimeRange, saveQuestionSetWithId } from '../../services/firebase/firebase';
 import { generateEnhancedBattleQuestions } from '../ambisBattle/enhancedQuestionGenerator';
 import { SUBTESTS } from '../../constants/subtestHelper';
 import { Clock, Calendar, Users, BookOpen, Filter, Plus, Trash2, Edit } from 'lucide-react';
 
-const QuestionPackageManager = () => {
-  const { user } = useAuth();
+const QuestionPackageManager = ({ user }) => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
