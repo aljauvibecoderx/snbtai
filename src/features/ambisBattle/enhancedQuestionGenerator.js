@@ -304,9 +304,17 @@ function validateAndEnhanceQuestion(question, subtest, level, topic) {
     enhanced.stimulus = `Perhatikan pertanyaan berikut dengan seksama.`;
   }
 
-  // Validate required fields
-  if (!enhanced.text || !enhanced.options || enhanced.correctIndex === undefined) {
-    throw new Error('Question missing required fields (text, options, or correctIndex)');
+  // Validate required fields - also check for empty options array
+  if (!enhanced.text || !enhanced.options || !Array.isArray(enhanced.options) || enhanced.options.length === 0 || enhanced.correctIndex === undefined) {
+    console.error('Question validation failed:', {
+      hasText: !!enhanced.text,
+      hasOptions: !!enhanced.options,
+      isOptionsArray: Array.isArray(enhanced.options),
+      optionsLength: enhanced.options?.length,
+      hasCorrectIndex: enhanced.correctIndex !== undefined,
+      question: enhanced
+    });
+    throw new Error(`Question missing required fields: ${!enhanced.text ? 'text' : ''} ${!enhanced.options || enhanced.options.length === 0 ? 'options (empty or missing)' : ''} ${enhanced.correctIndex === undefined ? 'correctIndex' : ''}`);
   }
 
   // Fix LaTeX formatting in all text fields
@@ -317,8 +325,8 @@ function validateAndEnhanceQuestion(question, subtest, level, topic) {
   // Fix LaTeX in options
   enhanced.options = enhanced.options.map(option => fixLatexFormatting(option));
 
-  // Ensure options are properly formatted
-  if (!enhanced.options[0].match(/^[A-E]\.\s/)) {
+  // Ensure options are properly formatted (only if options exist and have content)
+  if (enhanced.options.length > 0 && enhanced.options[0] && !enhanced.options[0].match(/^[A-E]\.\s/)) {
     enhanced.options = enhanced.options.map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`);
   }
 

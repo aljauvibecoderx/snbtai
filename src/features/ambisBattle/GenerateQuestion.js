@@ -403,7 +403,13 @@ const GenerateQuestion = ({ user }) => {
             const matchesLevel = bankSoalConfig.level === 'all' || 
               q.level === parseInt(bankSoalConfig.level) ||
               q.difficulty === parseInt(bankSoalConfig.level);
-            return matchesSubtest && matchesLevel;
+            
+            // Validate question has valid options
+            const hasValidOptions = q.options && 
+                                   Array.isArray(q.options) && 
+                                   q.options.length > 0;
+            
+            return matchesSubtest && matchesLevel && hasValidOptions;
           });
           count += matching.length;
         }
@@ -441,7 +447,17 @@ const GenerateQuestion = ({ user }) => {
               const matchesLevel = bankSoalConfig.level === 'all' || 
                 q.level === parseInt(bankSoalConfig.level) ||
                 q.difficulty === parseInt(bankSoalConfig.level);
-              return matchesSubtest && matchesLevel;
+              
+              // Validate question has valid options
+              const hasValidOptions = q.options && 
+                                     Array.isArray(q.options) && 
+                                     q.options.length > 0;
+              
+              if (matchesSubtest && matchesLevel && !hasValidOptions) {
+                console.warn(`Question skipped in public set: missing or empty options. Set: "${set.title}"`, q);
+              }
+              
+              return matchesSubtest && matchesLevel && hasValidOptions;
             });
             allQuestions.push(...matching.map(q => ({...q, setId: set.id, setTitle: set.title})));
           }
@@ -461,7 +477,17 @@ const GenerateQuestion = ({ user }) => {
               const matchesLevel = bankSoalConfig.level === 'all' || 
                 q.level === parseInt(bankSoalConfig.level) ||
                 q.difficulty === parseInt(bankSoalConfig.level);
-              return matchesSubtest && matchesLevel;
+              
+              // Validate question has valid options
+              const hasValidOptions = q.options && 
+                                     Array.isArray(q.options) && 
+                                     q.options.length > 0;
+              
+              if (matchesSubtest && matchesLevel && !hasValidOptions) {
+                console.warn(`Question skipped in private set: missing or empty options. Set: "${set.title}"`, q);
+              }
+              
+              return matchesSubtest && matchesLevel && hasValidOptions;
             });
             allQuestions.push(...matching.map(q => ({...q, setId: set.id, setTitle: set.title})));
           }

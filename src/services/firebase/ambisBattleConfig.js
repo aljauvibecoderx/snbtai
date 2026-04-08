@@ -93,12 +93,28 @@ export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubte
         // Check if set has questions array
         if (setData.questions && Array.isArray(setData.questions)) {
           // Filter questions by subtest - check multiple possible fields
+          // Also filter out questions with empty or missing options
           const matchingQuestions = setData.questions.filter(q => {
             // Check multiple ways subtest can be stored
-            return q.subtest === subtest || 
+            const matchesSubtest = q.subtest === subtest || 
                    q.category === subtest || 
                    setData.category === subtest ||
                    setData.subtest === subtest;
+            
+            // Validate question has proper options
+            const hasValidOptions = q.options && 
+                                   Array.isArray(q.options) && 
+                                   q.options.length > 0;
+            
+            // Validate required fields
+            const hasRequiredFields = q.text && 
+                                     q.correctIndex !== undefined;
+            
+            if (matchesSubtest && !hasValidOptions) {
+              console.warn(`Question skipped: missing or empty options. Set: "${setData.title}"`, q);
+            }
+            
+            return matchesSubtest && hasValidOptions && hasRequiredFields;
           });
           
           console.log(`Set "${setData.title}" has ${matchingQuestions.length} matching questions for subtest ${subtest}`);
@@ -151,13 +167,28 @@ export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubte
             
             if (setData.questions && Array.isArray(setData.questions)) {
               const matchingQuestions = setData.questions.filter(q => {
-                return q.subtest === subtest || 
+                const matchesSubtest = q.subtest === subtest || 
                        q.category === subtest || 
                        setData.category === subtest ||
                        setData.subtest === subtest;
+                
+                // Validate question has proper options
+                const hasValidOptions = q.options && 
+                                       Array.isArray(q.options) && 
+                                       q.options.length > 0;
+                
+                // Validate required fields
+                const hasRequiredFields = q.text && 
+                                         q.correctIndex !== undefined;
+                
+                if (matchesSubtest && !hasValidOptions) {
+                  console.warn(`Question skipped in user set: missing or empty options. Set: "${setData.title}"`, q);
+                }
+                
+                return matchesSubtest && hasValidOptions && hasRequiredFields;
               });
               
-              console.log(`User set "${setData.title}" has ${matchingQuestions.length} matching questions for subtest ${subtest}`);
+              console.log(`User set "${setData.title}" has ${matchingQuestions.length} valid matching questions for subtest ${subtest}`);
               
               matchingQuestions.forEach(q => {
                 subtestQuestions.push({
