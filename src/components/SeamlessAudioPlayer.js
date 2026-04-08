@@ -5,6 +5,12 @@ import { Volume2, VolumeX } from 'lucide-react';
 const globalAudio = new Audio();
 globalAudio.loop = true;
 
+// Export function to stop the global audio (used when battle ends)
+export const stopGlobalAudio = () => {
+  globalAudio.pause();
+  globalAudio.currentTime = 0;
+};
+
 const SeamlessAudioPlayer = ({ src, shouldPlay }) => {
   const [volume, setVolume] = useState(0.3);
   const [isMuted, setIsMuted] = useState(false);

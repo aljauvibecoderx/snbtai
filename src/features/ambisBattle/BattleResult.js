@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { getRoom, leaveRoom } from '../../services/firebase/ambisBattle';
 import LatexWrapper from '../../utils/latex';
+import { stopGlobalAudio } from '../../components/SeamlessAudioPlayer';
+import { playSuccessSound, playErrorSound, playCompletionSound } from '../../utils/sfx';
 
 // Helper to render question representation (table, chart, etc.)
 const QuestionRepresentation = ({ representation }) => {
@@ -135,8 +137,30 @@ const BattleResult = ({ user }) => {
     getRoom(roomId).then((data) => {
       setRoom(data);
       setLoading(false);
+      
+      // Stop background music when battle ends
+      stopGlobalAudio();
+      
+      // Play result sound effect based on outcome
+      if (data && data.players) {
+        const currentPlayer = data.players.find((p) => p.id === user?.uid);
+        const opponentPlayer = data.players.find((p) => p.id !== user?.uid);
+        const myScore = currentPlayer?.score || 0;
+        const opponentScore = opponentPlayer?.score || 0;
+        
+        if (myScore > opponentScore) {
+          // Win - play success sound with slight delay for visual sync
+          setTimeout(() => playSuccessSound(), 300);
+        } else if (myScore < opponentScore) {
+          // Lose - play error sound
+          setTimeout(() => playErrorSound(), 300);
+        } else {
+          // Draw - play completion sound
+          setTimeout(() => playCompletionSound(), 300);
+        }
+      }
     }).catch(() => setLoading(false));
-  }, [roomId]);
+  }, [roomId, user?.uid]);
 
   const handlePlayAgain = async () => {
     try {
