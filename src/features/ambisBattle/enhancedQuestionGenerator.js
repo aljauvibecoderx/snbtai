@@ -233,9 +233,57 @@ CRITICAL: Output must be a JSON ARRAY with exactly ${count} objects. Do NOT outp
 ✓ Generate exactly ${count} questions in array format
 ✓ Setiap soal memiliki stimulus yang jelas
 ✓ Format JSON valid dengan escaping benar
-✓ LaTeX menggunakan dua backslash: \\\\frac, \\\\sqrt
+✓ LaTeX menggunakan TEPAT EMPAT backslash: \\\\\\\\frac, \\\\\\\\sqrt, \\\\\\\\circ
 ✓ Tidak ada teks di luar JSON array
-✓ Array length must be exactly ${count}`;
+✓ Array length must be exactly ${count}
+
+=== CRITICAL LATEX FORMATTING ===
+- LaTeX commands MUST use exactly 4 backslashes: \\\\\\\\frac{a}{b}, \\\\\\\\sqrt{x}, \\\\\\\\circ
+- Variables MUST be wrapped in $: $x$, $y$, $P$, $Q$
+- Examples: $\\\\\\\\frac{1}{2}$, $\\\\\\\\sqrt{16}$, $\\\\\\\\approx$`;
+}
+
+/**
+ * Fix LaTeX formatting to match main App.js system
+ * Converts double backslashes to quadruple backslashes for JSON compatibility
+ */
+function fixLatexFormatting(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  // Convert LaTeX commands from double to quadruple backslashes
+  // Common LaTeX commands that need fixing
+  return text
+    .replace(/\\frac/g, '\\\\\\\\frac')
+    .replace(/\\sqrt/g, '\\\\\\\\sqrt')
+    .replace(/\\circ/g, '\\\\\\\\circ')
+    .replace(/\\approx/g, '\\\\\\\\approx')
+    .replace(/\\rightarrow/g, '\\\\\\\\rightarrow')
+    .replace(/\\leftarrow/g, '\\\\\\\\leftarrow')
+    .replace(/\\leftrightarrow/g, '\\\\\\\\leftrightarrow')
+    .replace(/\\leq/g, '\\\\\\\\leq')
+    .replace(/\\geq/g, '\\\\\\\\geq')
+    .replace(/\\neq/g, '\\\\\\\\neq')
+    .replace(/\\in/g, '\\\\\\\\in')
+    .replace(/\\subset/g, '\\\\\\\\subset')
+    .replace(/\\cup/g, '\\\\\\\\cup')
+    .replace(/\\cap/g, '\\\\\\\\cap')
+    .replace(/\\emptyset/g, '\\\\\\\\emptyset')
+    .replace(/\\infty/g, '\\\\\\\\infty')
+    .replace(/\\sum/g, '\\\\\\\\sum')
+    .replace(/\\prod/g, '\\\\\\\\prod')
+    .replace(/\\int/g, '\\\\\\\\int')
+    .replace(/\\partial/g, '\\\\\\\\partial')
+    .replace(/\\nabla/g, '\\\\\\\\nabla')
+    .replace(/\\pm/g, '\\\\\\\\pm')
+    .replace(/\\mp/g, '\\\\\\\\mp')
+    .replace(/\\times/g, '\\\\\\\\times')
+    .replace(/\\div/g, '\\\\\\\\div')
+    .replace(/\\cdot/g, '\\\\\\\\cdot')
+    .replace(/\\not</g, '\\\\\\\\not<')
+    .replace(/\\not>/g, '\\\\\\\\not>')
+    .replace(/\\not=/g, '\\\\\\\\not=')
+    .replace(/\\not\\in/g, '\\\\\\\\not\\in')
+    .replace(/\\not\\subset/g, '\\\\\\\\not\\subset');
 }
 
 /**
@@ -259,6 +307,14 @@ function validateAndEnhanceQuestion(question, subtest, difficulty, topic) {
   if (!enhanced.text || !enhanced.options || enhanced.correctIndex === undefined) {
     throw new Error('Question missing required fields (text, options, or correctIndex)');
   }
+
+  // Fix LaTeX formatting in all text fields
+  enhanced.stimulus = fixLatexFormatting(enhanced.stimulus);
+  enhanced.text = fixLatexFormatting(enhanced.text);
+  enhanced.explanation = fixLatexFormatting(enhanced.explanation);
+  
+  // Fix LaTeX in options
+  enhanced.options = enhanced.options.map(option => fixLatexFormatting(option));
 
   // Ensure options are properly formatted
   if (!enhanced.options[0].match(/^[A-E]\.\s/)) {
