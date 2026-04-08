@@ -11,12 +11,12 @@ import { selectTemplate, getAllPatterns } from '../../utils/questionTemplates';
 import { generateEnhancedBattleQuestions } from './enhancedQuestionGenerator';
 
 const SUBTESTS = [
-  { id: 'pu', label: 'Penalaran Umum' },
-  { id: 'pbu', label: 'Pemahaman Bacaan' },
-  { id: 'ppkn', label: 'Pengetahuan & Pemahaman Umum' },
-  { id: 'pk', label: 'Pengetahuan Kuantitatif' },
-  { id: 'lbind', label: 'Literasi Bahasa Indonesia' },
-  { id: 'lbing', label: 'Literasi Bahasa Inggris' },
+  { id: 'tps_pu', label: 'TPS - Penalaran Umum' },
+  { id: 'tps_ppu', label: 'TPS - Pengetahuan & Pemahaman Umum' },
+  { id: 'tps_pbm', label: 'TPS - Pemahaman Bacaan & Menulis' },
+  { id: 'tps_pk', label: 'TPS - Pengetahuan Kuantitatif' },
+  { id: 'lit_ind', label: 'Literasi Bahasa Indonesia' },
+  { id: 'lit_ing', label: 'Literasi Bahasa Inggris' },
   { id: 'pm', label: 'Penalaran Matematika' },
 ];
 
@@ -43,7 +43,7 @@ const generateQuestionWithAI = async (subtest, topic, difficulty, count, context
   try {
     // Use the enhanced question generator with full stimulus support
     const questions = await generateEnhancedBattleQuestions(
-      subtest,
+      subtest, // Pass the subtest ID directly (e.g., 'tps_pu')
       topic,
       difficulty,
       count,
@@ -342,7 +342,7 @@ const GenerateQuestion = ({ user }) => {
       const { subtest, topic, difficulty, count, context } = aiConfig;
 
       const newQuestions = await generateQuestionWithAI(
-        SUBTESTS.find((s) => s.id === subtest)?.label || subtest,
+        subtest, // Pass subtest ID directly (e.g., 'tps_pu')
         topic,
         difficulty,
         count,

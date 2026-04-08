@@ -47,14 +47,15 @@ export const generateEnhancedBattleQuestions = async (
   if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
 
   // Map subtest to full label for compatibility with App.js system
+  // Using exact same IDs as main system to ensure pattern consistency
   const subtestLabels = {
-    pu: 'Penalaran Umum',
-    ppu: 'Pengetahuan & Pemahaman Umum',
-    pbm: 'Pemahaman Bacaan & Menulis',
-    pk: 'Pengetahuan Kuantitatif',
-    lbind: 'Literasi Bahasa Indonesia',
-    lbing: 'Literasi Bahasa Inggris',
-    pm: 'Penalaran Matematika'
+    'tps_pu': 'TPS - Penalaran Umum',
+    'tps_ppu': 'TPS - Pengetahuan & Pemahaman Umum', 
+    'tps_pbm': 'TPS - Pemahaman Bacaan & Menulis',
+    'tps_pk': 'TPS - Pengetahuan Kuantitatif',
+    'lit_ind': 'Literasi Bahasa Indonesia',
+    'lit_ing': 'Literasi Bahasa Inggris',
+    'pm': 'Penalaran Matematika'
   };
 
   const subtestLabel = subtestLabels[subtest] || 'Penalaran Umum';

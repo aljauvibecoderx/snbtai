@@ -159,9 +159,24 @@ const LiveBattle = ({ user }) => {
                 </span>
               )}
             </div>
-            <p className="text-slate-800 text-sm leading-relaxed font-medium">
-               <LatexWrapper text={currentQuestion.text || ''} />
-            </p>
+            
+            {/* Stimulus Section */}
+            {currentQuestion.stimulus && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs font-semibold text-amber-800 mb-2">📄 Stimulus:</p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  <LatexWrapper text={currentQuestion.stimulus} />
+                </p>
+              </div>
+            )}
+            
+            {/* Question Text */}
+            <div className="mb-2">
+              <p className="text-xs font-semibold text-slate-600 mb-2">Pertanyaan:</p>
+              <p className="text-slate-800 text-sm leading-relaxed font-medium">
+                 <LatexWrapper text={currentQuestion.text || ''} />
+              </p>
+            </div>
           </div>
         )}
 
