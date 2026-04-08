@@ -86,6 +86,7 @@ const BattleResult = lazy(() => import('./features/ambisBattle/BattleResult'));
 const IRTSimulationPage = lazy(() => import('./pages/IRTSimulationPage'));
 // IRT Simulation Router — handles /irt-simulation/{section}/{sessionCode} paths
 const IRTSimulationRouter = lazy(() => import('./features/irtSimulation/IRTSimulationRouter'));
+const QuestionPackageManager = lazy(() => import('./features/questionPackages/QuestionPackageManager'));
 
 // Toast system replaced by NotificationSystem
 
@@ -3752,6 +3753,9 @@ function AppContent() {
       } else if (path.startsWith('/ambis-battle/result/')) {
         setView('AMBIS_BATTLE_RESULT');
         return;
+      } else if (path === '/question-packages' || path === '/paket-soal') {
+        setView('QUESTION_PACKAGES');
+        return;
       }
 
       // Check for tryout slug route: /tryout/:slug
@@ -4692,6 +4696,9 @@ function AppContent() {
         )}
         {view === 'AMBIS_BATTLE_RESULT' && (
           <BattleResult user={user} />
+        )}
+        {view === 'QUESTION_PACKAGES' && (
+          <QuestionPackageManager user={user} />
         )}
         {view === 'HOME' && <HomeView
           formData={formData}

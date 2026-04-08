@@ -228,6 +228,168 @@ export const getMySets = async (userId) => {
   }
 };
 
+// Time-based filtering functions for question sets
+export const getMySetsByTimeRange = async (userId, timeRange) => {
+  try {
+    const now = new Date();
+    let startDate;
+
+    switch (timeRange) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'yesterday':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        break;
+      case 'last_3_days':
+        startDate = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_week':
+        startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_2_weeks':
+        startDate = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_month':
+        startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_3_months':
+        startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_6_months':
+        startDate = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_year':
+        startDate = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+        break;
+      default:
+        // If no time range specified, return all sets
+        return await getMySets(userId);
+    }
+
+    const qNew = query(
+      collection(db, 'question_sets'),
+      where('userId', '==', userId),
+      where('createdAt', '>=', startDate),
+      orderBy('createdAt', 'desc')
+    );
+    const newSnapshot = await getDocs(qNew);
+    const newSets = newSnapshot.docs.map(doc => {
+      const data = doc.data();
+      // Use stored questionCount first (static field), fallback to computed from questions array
+      const totalQuestions = data.questionCount || data.questions?.length || 0;
+      const subtestSummary = {};
+      if (data.questions) {
+        data.questions.forEach(q => {
+          const subtest = q.subtest || data.category;
+          subtestSummary[subtest] = (subtestSummary[subtest] || 0) + 1;
+        });
+      }
+      return { 
+        id: doc.id, 
+        ...data,
+        totalQuestions,
+        subtestSummary: Object.keys(subtestSummary).length > 0 ? subtestSummary : data.subtestSummary,
+        complexity: data.difficulty || data.complexity || 3,
+        title: data.source === 'AI Lens' ? `AI Lens - ${data.category}` : `Latihan ${data.category}`
+      };
+    });
+    
+    const q = query(
+      collection(db, 'question_sets'),
+      where('createdBy', '==', userId),
+      where('createdAt', '>=', startDate),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const oldSets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    const allSets = [...newSets, ...oldSets];
+    const uniqueSets = allSets.filter((set, index, self) => 
+      index === self.findIndex(s => s.id === set.id)
+    );
+    
+    return uniqueSets;
+  } catch (error) {
+    console.error('Error getting sets by time range:', error);
+    return [];
+  }
+};
+
+export const getPublicSetsByTimeRange = async (timeRange, subtestFilter = null) => {
+  try {
+    const now = new Date();
+    let startDate;
+
+    switch (timeRange) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'yesterday':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        break;
+      case 'last_3_days':
+        startDate = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_week':
+        startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_2_weeks':
+        startDate = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_month':
+        startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_3_months':
+        startDate = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_6_months':
+        startDate = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
+        break;
+      case 'last_year':
+        startDate = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+        break;
+      default:
+        // If no time range specified, return all public sets
+        return await getPublicSets(subtestFilter);
+    }
+
+    let q = query(
+      collection(db, 'question_sets'),
+      where('visibility', '==', 'public'),
+      where('createdAt', '>=', startDate),
+      orderBy('createdAt', 'desc')
+    );
+
+    const snapshot = await getDocs(q);
+    const sets = snapshot.docs.map(doc => {
+      const data = doc.data();
+      // Use stored questionCount first (static field), fallback to computed from questions array
+      const totalQuestions = data.questionCount || data.questions?.length || 0;
+      const subtestSummary = {};
+      if (data.questions) {
+        data.questions.forEach(q => {
+          const subtest = q.subtest || data.category;
+          subtestSummary[subtest] = (subtestSummary[subtest] || 0) + 1;
+        });
+      }
+      return { 
+        id: doc.id, 
+        ...data,
+        totalQuestions,
+        subtestSummary: Object.keys(subtestSummary).length > 0 ? subtestSummary : data.subtestSummary,
+        complexity: data.difficulty || data.complexity || 3,
+        title: data.title || `Latihan ${data.category || 'SNBT'}`
+      };
+    });
+    
+    return sets;
+  } catch (error) {
+    console.error('Error getting public sets by time range:', error);
+    return [];
+  }
+};
+
 export const getQuestionsBySetId = async (setId) => {
   try {
     const setDoc = await getDoc(doc(db, 'question_sets', setId));
