@@ -27,9 +27,9 @@ const switchGeminiKey = () => {
 
 /**
  * Generate questions with full stimulus support using the App.js system
- * @param {string} subtest - Subtest ID (pu, ppu, pbm, pk, lbind, lbing, pm)
+ * @param {string} subtest - Subtest ID (tps_pu, tps_ppu, tps_pbm, tps_pk, lit_ind, lit_ing, pm)
  * @param {string} topic - Topic description
- * @param {string} difficulty - Difficulty level (Mudah, Sedang, Sulit)
+ * @param {number} level - Difficulty level (1-5, where 1=Easiest, 5=Hardest)
  * @param {number} count - Number of questions to generate
  * @param {string} context - Optional context/reference material
  * @param {string} specificInstructions - Optional specific instructions
@@ -38,7 +38,7 @@ const switchGeminiKey = () => {
 export const generateEnhancedBattleQuestions = async (
   subtest,
   topic,
-  difficulty,
+  level,
   count,
   context = '',
   specificInstructions = ''
@@ -59,7 +59,7 @@ export const generateEnhancedBattleQuestions = async (
   };
 
   const subtestLabel = subtestLabels[subtest] || 'Penalaran Umum';
-  const levelParam = difficulty === 'Mudah' ? 1 : difficulty === 'Sedang' ? 3 : 5;
+  const levelParam = level; // Use level directly (1-5)
 
   // Use the enhanced prompt system from App.js
   const { prompt, systemPrompt, selectedPattern } = generateEnhancedPrompt(
@@ -74,7 +74,7 @@ export const generateEnhancedBattleQuestions = async (
   const completePrompt = buildAmbisBattlePrompt(
     prompt,
     subtestLabel,
-    difficulty,
+    level,
     topic,
     count,
     context,
@@ -134,12 +134,12 @@ export const generateEnhancedBattleQuestions = async (
           }
           
           // Validate and enhance questions
-          const validatedQuestions = finalQuestions.map(q => validateAndEnhanceQuestion(q, subtest, difficulty, topic));
+          const validatedQuestions = finalQuestions.map(q => validateAndEnhanceQuestion(q, subtest, level, topic));
           return validatedQuestions;
         }
 
         // Validate and enhance questions
-        const validatedQuestions = parsed.map(q => validateAndEnhanceQuestion(q, subtest, difficulty, topic));
+        const validatedQuestions = parsed.map(q => validateAndEnhanceQuestion(q, subtest, level, topic));
         return validatedQuestions;
 
       } catch (parseError) {
@@ -172,7 +172,7 @@ export const generateEnhancedBattleQuestions = async (
 function buildAmbisBattlePrompt(
   basePrompt,
   subtestLabel,
-  difficulty,
+  level,
   topic,
   count,
   context,
@@ -192,7 +192,7 @@ IMPORTANT: Ignore previous single-question format. Generate EXACTLY ${count} que
 1. Generate EXACTLY ${count} questions for real-time battle
 2. Each question MUST include a proper stimulus field
 3. Questions should be engaging and suitable for competitive environment
-4. Difficulty: ${difficulty}
+4. Level: ${level} (1=Easiest, 5=Hardest)
 5. Topic: ${topic}${contextPrompt}
 
 ${specificInstructions ? `\n=== USER SPECIFIC INSTRUCTIONS ===\n${specificInstructions}\n` : ''}
@@ -224,7 +224,7 @@ Generate a JSON ARRAY with EXACTLY ${count} question objects. Each object must h
   "explanation": "Jawaban A benar karena [alasan singkat]. Langkah penyelesaian: [proses singkat]. Konsep yang digunakan adalah [konsep dasar].",
   "subtest": "${subtestLabel}",
   "topic": "${topic}",
-  "difficulty": "${difficulty}"
+  "level": ${level}
 }
 
 CRITICAL: Output must be a JSON ARRAY with exactly ${count} objects. Do NOT output a single object.
@@ -289,12 +289,13 @@ function fixLatexFormatting(text) {
 /**
  * Validate and enhance question with required fields
  */
-function validateAndEnhanceQuestion(question, subtest, difficulty, topic) {
+function validateAndEnhanceQuestion(question, subtest, level, topic) {
   const enhanced = {
     ...question,
     subtest: question.subtest || subtest,
     topic: question.topic || topic,
-    difficulty: question.difficulty || difficulty,
+    level: question.level || level,
+    difficulty: question.difficulty || level, // Keep for backward compatibility
     representation: question.representation || { type: 'text', data: null }
   };
 

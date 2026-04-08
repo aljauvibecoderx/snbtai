@@ -39,13 +39,18 @@ const switchGeminiKey = () => {
   return GEMINI_KEYS[nextIndex];
 };
 
-const generateQuestionWithAI = async (subtest, topic, difficulty, count, context = '') => {
+const generateQuestionWithAI = async (
+  subtest,
+  topic,
+  level,
+  count,
+  context
+) => {
   try {
-    // Use the enhanced question generator with full stimulus support
     const questions = await generateEnhancedBattleQuestions(
-      subtest, // Pass the subtest ID directly (e.g., 'tps_pu')
+      subtest,
       topic,
-      difficulty,
+      level,
       count,
       context,
       '' // No specific instructions for basic generation
@@ -140,7 +145,7 @@ const QuestionCard = ({ question, index, onEdit, onDelete }) => {
 const EditQuestionModal = ({ question, onSave, onClose }) => {
   const [form, setForm] = useState(question || {
     stimulus: '', text: '', options: ['', '', '', '', ''], correctIndex: 0,
-    explanation: '', subtest: 'pu', topic: '', difficulty: 'Sedang'
+    explanation: '', subtest: 'tps_pu', topic: '', level: 3
   });
 
   return (
@@ -209,13 +214,17 @@ const EditQuestionModal = ({ question, onSave, onClose }) => {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1 block">Kesulitan</label>
+              <label className="text-xs font-semibold text-slate-600 mb-1 block">Level Kesulitan</label>
               <select
-                value={form.difficulty}
-                onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
+                value={form.level || 3}
+                onChange={(e) => setForm({ ...form, level: parseInt(e.target.value) })}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-400"
               >
-                {['Mudah', 'Sedang', 'Sulit'].map((d) => <option key={d}>{d}</option>)}
+                <option value={1}>Level 1 - Sangat Mudah</option>
+                <option value={2}>Level 2 - Mudah</option>
+                <option value={3}>Level 3 - Sedang</option>
+                <option value={4}>Level 4 - Sulit</option>
+                <option value={5}>Level 5 - Sangat Sulit</option>
               </select>
             </div>
           </div>
@@ -254,7 +263,7 @@ const GenerateQuestion = ({ user }) => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
-  const [aiConfig, setAiConfig] = useState({ subtest: 'tps_pu', topic: TOPICS[0], difficulty: 'Sedang', count: 5, context: '' });
+  const [aiConfig, setAiConfig] = useState({ subtest: 'tps_pu', topic: TOPICS[0], level: 3, count: 5, context: '' });
   const [showGroupSelector, setShowGroupSelector] = useState(false);
   const [groups, setGroups] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
@@ -358,7 +367,7 @@ const GenerateQuestion = ({ user }) => {
     setAiLoading(true);
     setError('');
     try {
-      const { subtest, topic, difficulty, count, context } = aiConfig;
+      const { subtest, topic, level, count, context } = aiConfig;
 
       // Validate word count if context is provided
       if (context.trim()) {
@@ -371,7 +380,7 @@ const GenerateQuestion = ({ user }) => {
       const newQuestions = await generateQuestionWithAI(
         subtest, // Pass subtest ID directly (e.g., 'tps_pu')
         topic,
-        difficulty,
+        level,
         count,
         context
       );
@@ -480,15 +489,17 @@ const GenerateQuestion = ({ user }) => {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Kesulitan</label>
+              <label className="text-xs font-medium text-slate-500 mb-1 block">Level Kesulitan</label>
               <select
-                value={aiConfig.difficulty}
-                onChange={(e) => setAiConfig({ ...aiConfig, difficulty: e.target.value })}
+                value={aiConfig.level}
+                onChange={(e) => setAiConfig({ ...aiConfig, level: parseInt(e.target.value) })}
                 className="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-violet-400"
               >
-                <option>Mudah</option>
-                <option>Sedang</option>
-                <option>Sulit</option>
+                <option value={1}>Level 1 - Sangat Mudah</option>
+                <option value={2}>Level 2 - Mudah</option>
+                <option value={3}>Level 3 - Sedang</option>
+                <option value={4}>Level 4 - Sulit</option>
+                <option value={5}>Level 5 - Sangat Sulit</option>
               </select>
             </div>
             <div>
