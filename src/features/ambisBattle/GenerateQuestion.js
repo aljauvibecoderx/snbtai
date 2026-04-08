@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Edit3, CheckCircle2, BookOpen,
-  Sparkles, Loader2, AlertCircle, Check, ChevronDown, ChevronUp, Swords, Shuffle
+  Sparkles, Loader2, AlertCircle, Check, ChevronDown, ChevronUp, Swords, Shuffle, Filter
 } from 'lucide-react';
 import { saveQuestionsToRoom, listenToRoom, startBattle } from '../../services/firebase/ambisBattle';
 import { getSubtestGroups, getRandomQuestionsFromSubtests } from '../../services/firebase/ambisBattleConfig';
@@ -267,6 +267,15 @@ const GenerateQuestion = ({ user }) => {
   const [showGroupSelector, setShowGroupSelector] = useState(false);
   const [groups, setGroups] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
+  const [showBankSoalFilter, setShowBankSoalFilter] = useState(false);
+  const [bankSoalConfig, setBankSoalConfig] = useState({
+    subtests: ['tps_pu'],
+    questionCount: 5,
+    level: 'all', // 'all' or 1-5
+    timeRange: 'all', // 'all', 'today', 'week', 'month'
+    source: 'all' // 'all', 'public', 'private'
+  });
+  const [availableQuestions, setAvailableQuestions] = useState(0);
   const unsubRef = useRef(null);
 
   useEffect(() => {
@@ -354,6 +363,144 @@ const GenerateQuestion = ({ user }) => {
       setAiLoading(false);
     }
   };
+
+  // Calculate available questions based on bank soal filter
+  const calculateAvailableQuestions = async () => {
+    const { getMySetsByTimeRange, getPublicSetsByTimeRange } = await import('../../services/firebase/firebase');
+    
+    try {
+      let sets = [];
+      
+      // Get sets based on source filter
+      if (bankSoalConfig.source === 'all' || bankSoalConfig.source === 'public') {
+        if (bankSoalConfig.timeRange === 'all') {
+          const publicSets = await getPublicSetsByTimeRange('all');
+          sets.push(...publicSets);
+        } else {
+          const publicSets = await getPublicSetsByTimeRange(bankSoalConfig.timeRange);
+          sets.push(...publicSets);
+        }
+      }
+      
+      if ((bankSoalConfig.source === 'all' || bankSoalConfig.source === 'private') && user?.uid) {
+        if (bankSoalConfig.timeRange === 'all') {
+          const privateSets = await getMySetsByTimeRange(user.uid, 'all');
+          sets.push(...privateSets);
+        } else {
+          const privateSets = await getMySetsByTimeRange(user.uid, bankSoalConfig.timeRange);
+          sets.push(...privateSets);
+        }
+      }
+      
+      // Count matching questions
+      let count = 0;
+      sets.forEach(set => {
+        if (set.questions && Array.isArray(set.questions)) {
+          const matching = set.questions.filter(q => {
+            const matchesSubtest = bankSoalConfig.subtests.some(st => 
+              q.subtest === st || q.category === st || set.category === st
+            );
+            const matchesLevel = bankSoalConfig.level === 'all' || 
+              q.level === parseInt(bankSoalConfig.level) ||
+              q.difficulty === parseInt(bankSoalConfig.level);
+            return matchesSubtest && matchesLevel;
+          });
+          count += matching.length;
+        }
+      });
+      
+      setAvailableQuestions(count);
+      return count;
+    } catch (error) {
+      console.error('Error calculating available questions:', error);
+      return 0;
+    }
+  };
+
+  // Handle generate from bank soal with custom filters
+  const handleGenerateFromBankSoal = async () => {
+    setAiLoading(true);
+    setError('');
+    
+    try {
+      const { getMySetsByTimeRange, getPublicSetsByTimeRange } = await import('../../services/firebase/firebase');
+      
+      let allQuestions = [];
+      
+      // Get sets based on source filter
+      if (bankSoalConfig.source === 'all' || bankSoalConfig.source === 'public') {
+        const timeRange = bankSoalConfig.timeRange === 'all' ? 'all' : bankSoalConfig.timeRange;
+        const publicSets = await getPublicSetsByTimeRange(timeRange);
+        
+        publicSets.forEach(set => {
+          if (set.questions && Array.isArray(set.questions)) {
+            const matching = set.questions.filter(q => {
+              const matchesSubtest = bankSoalConfig.subtests.some(st => 
+                q.subtest === st || q.category === st || set.category === st
+              );
+              const matchesLevel = bankSoalConfig.level === 'all' || 
+                q.level === parseInt(bankSoalConfig.level) ||
+                q.difficulty === parseInt(bankSoalConfig.level);
+              return matchesSubtest && matchesLevel;
+            });
+            allQuestions.push(...matching.map(q => ({...q, setId: set.id, setTitle: set.title})));
+          }
+        });
+      }
+      
+      if ((bankSoalConfig.source === 'all' || bankSoalConfig.source === 'private') && user?.uid) {
+        const timeRange = bankSoalConfig.timeRange === 'all' ? 'all' : bankSoalConfig.timeRange;
+        const privateSets = await getMySetsByTimeRange(user.uid, timeRange);
+        
+        privateSets.forEach(set => {
+          if (set.questions && Array.isArray(set.questions)) {
+            const matching = set.questions.filter(q => {
+              const matchesSubtest = bankSoalConfig.subtests.some(st => 
+                q.subtest === st || q.category === st || set.category === st
+              );
+              const matchesLevel = bankSoalConfig.level === 'all' || 
+                q.level === parseInt(bankSoalConfig.level) ||
+                q.difficulty === parseInt(bankSoalConfig.level);
+              return matchesSubtest && matchesLevel;
+            });
+            allQuestions.push(...matching.map(q => ({...q, setId: set.id, setTitle: set.title})));
+          }
+        });
+      }
+      
+      // Shuffle and select
+      const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, Math.min(bankSoalConfig.questionCount, allQuestions.length));
+      
+      if (selected.length === 0) {
+        throw new Error(
+          `Tidak ada soal yang cocok dengan filter yang dipilih.\n\n` +
+          `Filter aktif:\n` +
+          `- Subtes: ${bankSoalConfig.subtests.map(s => SUBTESTS.find(st => st.id === s)?.label).join(', ')}\n` +
+          `- Level: ${bankSoalConfig.level === 'all' ? 'Semua Level' : 'Level ' + bankSoalConfig.level}\n` +
+          `- Rentang Waktu: ${bankSoalConfig.timeRange === 'all' ? 'Semua Waktu' : bankSoalConfig.timeRange}\n` +
+          `- Sumber: ${bankSoalConfig.source === 'all' ? 'Semua Sumber' : bankSoalConfig.source}\n\n` +
+          `Tips: Cobalah filter yang berbeda atau buat soal baru terlebih dahulu.`
+        );
+      }
+      
+      setQuestions(selected);
+      alert(`✅ Berhasil memuat ${selected.length} soal dari Bank Soal`);
+      setShowBankSoalFilter(false);
+    } catch (e) {
+      console.error('Bank soal generation error:', e);
+      setError(e.message || 'Gagal mengambil soal dari bank soal.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Update available count when filter changes
+  useEffect(() => {
+    if (showBankSoalFilter) {
+      calculateAvailableQuestions();
+    }
+  }, [bankSoalConfig, showBankSoalFilter]);
 
   // Word count validation constants
   const MIN_WORDS = 10;
@@ -603,7 +750,7 @@ const GenerateQuestion = ({ user }) => {
             </div>
             <span className="font-bold text-slate-900 text-sm">Ambil dari Bank Soal</span>
           </div>
-          <p className="text-xs text-slate-500 mb-3">Pilih grup subtest untuk mengambil soal random dari bank soal</p>
+          <p className="text-xs text-slate-500 mb-3">Pilih grup subtest atau gunakan filter kustom untuk mengambil soal</p>
           
           {/* Info Box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
@@ -613,17 +760,38 @@ const GenerateQuestion = ({ user }) => {
             </p>
           </div>
           
-          {!showGroupSelector ? (
+          {/* Two options: Quick Select or Advanced Filter */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
             <button
               onClick={() => setShowGroupSelector(true)}
               disabled={loadingGroups}
-              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl text-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
+              className="py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl text-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
             >
               <Shuffle size={14} />
-              Pilih Grup Subtest
+              Grup Cepat
             </button>
-          ) : (
+            <button
+              onClick={() => setShowBankSoalFilter(true)}
+              disabled={loadingGroups}
+              className="py-3 bg-white border-2 border-indigo-600 text-indigo-700 font-bold rounded-xl text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+            >
+              <Filter size={14} />
+              Filter Lanjutan
+            </button>
+          </div>
+          
+          {/* Quick Group Selector */}
+          {showGroupSelector && (
             <div className="space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-700">Pilih Grup:</span>
+                <button 
+                  onClick={() => setShowGroupSelector(false)}
+                  className="text-xs text-slate-500 hover:text-slate-700"
+                >
+                  Tutup
+                </button>
+              </div>
               {groups.map(group => (
                 <button
                   key={group.id}
@@ -655,6 +823,173 @@ const GenerateQuestion = ({ user }) => {
               >
                 Batal
               </button>
+            </div>
+          )}
+
+          {/* Advanced Bank Soal Filter Modal */}
+          {showBankSoalFilter && (
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                      <Filter size={16} className="text-indigo-600" />
+                    </div>
+                    <h3 className="font-bold text-slate-900">Filter Bank Soal</h3>
+                  </div>
+                  <button 
+                    onClick={() => setShowBankSoalFilter(false)}
+                    className="p-2 hover:bg-slate-100 rounded-lg"
+                  >
+                    <span className="text-slate-500 text-lg">×</span>
+                  </button>
+                </div>
+                
+                <div className="p-4 space-y-4">
+                  {/* Subtest Selection */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">
+                      Pilih Subtes (Bisa Lebih dari Satu)
+                    </label>
+                    <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                      {SUBTESTS.map(subtest => (
+                        <label key={subtest.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={bankSoalConfig.subtests.includes(subtest.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setBankSoalConfig(prev => ({...prev, subtests: [...prev.subtests, subtest.id]}));
+                              } else {
+                                setBankSoalConfig(prev => ({...prev, subtests: prev.subtests.filter(s => s !== subtest.id)}));
+                              }
+                            }}
+                            className="w-4 h-4 text-indigo-600 rounded"
+                          />
+                          <span className="text-sm text-slate-700">{subtest.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Level Selection */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Level Kesulitan</label>
+                    <select
+                      value={bankSoalConfig.level}
+                      onChange={(e) => setBankSoalConfig(prev => ({...prev, level: e.target.value}))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                    >
+                      <option value="all">Semua Level</option>
+                      <option value={1}>Level 1 - Sangat Mudah</option>
+                      <option value={2}>Level 2 - Mudah</option>
+                      <option value={3}>Level 3 - Sedang</option>
+                      <option value={4}>Level 4 - Sulit</option>
+                      <option value={5}>Level 5 - Sangat Sulit</option>
+                    </select>
+                  </div>
+
+                  {/* Time Range */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Rentang Waktu</label>
+                    <select
+                      value={bankSoalConfig.timeRange}
+                      onChange={(e) => setBankSoalConfig(prev => ({...prev, timeRange: e.target.value}))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                    >
+                      <option value="all">Semua Waktu</option>
+                      <option value="today">Hari Ini</option>
+                      <option value="yesterday">Kemarin</option>
+                      <option value="last_3_days">3 Hari Terakhir</option>
+                      <option value="last_week">Minggu Ini</option>
+                      <option value="last_2_weeks">2 Minggu Terakhir</option>
+                      <option value="last_month">Bulan Ini</option>
+                      <option value="last_3_months">3 Bulan Terakhir</option>
+                      <option value="last_6_months">6 Bulan Terakhir</option>
+                      <option value="last_year">Tahun Ini</option>
+                    </select>
+                  </div>
+
+                  {/* Source Selection */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Sumber Soal</label>
+                    <select
+                      value={bankSoalConfig.source}
+                      onChange={(e) => setBankSoalConfig(prev => ({...prev, source: e.target.value}))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                    >
+                      <option value="all">Semua Sumber (Publik & Pribadi)</option>
+                      <option value="public">Bank Soal Publik</option>
+                      <option value="private">Soal Saya (Pribadi)</option>
+                    </select>
+                  </div>
+
+                  {/* Question Count */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">
+                      Jumlah Soal: {bankSoalConfig.questionCount}
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="50"
+                      value={bankSoalConfig.questionCount}
+                      onChange={(e) => setBankSoalConfig(prev => ({...prev, questionCount: parseInt(e.target.value)}))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-slate-400 mt-1">
+                      <span>1</span>
+                      <span>25</span>
+                      <span>50</span>
+                    </div>
+                  </div>
+
+                  {/* Available Count */}
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+                    <p className="text-sm text-indigo-800">
+                      <span className="font-semibold">{availableQuestions}</span> soal tersedia dengan filter ini
+                    </p>
+                    <p className="text-xs text-indigo-600 mt-1">
+                      Klik "Cek Ketersediaan" untuk memperbarui
+                    </p>
+                  </div>
+
+                  {/* Error */}
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+                      <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+                      <p className="text-xs text-red-700">{error}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-slate-100 space-y-2">
+                  <button
+                    onClick={handleGenerateFromBankSoal}
+                    disabled={aiLoading || bankSoalConfig.subtests.length === 0}
+                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {aiLoading ? (
+                      <><Loader2 size={16} className="animate-spin" /> Mengambil Soal...</>
+                    ) : (
+                      <><Shuffle size={16} /> Ambil {bankSoalConfig.questionCount} Soal</>
+                    )}
+                  </button>
+                  <button
+                    onClick={calculateAvailableQuestions}
+                    disabled={aiLoading}
+                    className="w-full py-2 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-all text-sm"
+                  >
+                    🔄 Cek Ketersediaan
+                  </button>
+                  <button
+                    onClick={() => setShowBankSoalFilter(false)}
+                    className="w-full py-2 text-slate-600 font-medium text-sm hover:text-slate-900"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
