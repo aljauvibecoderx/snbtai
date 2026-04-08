@@ -244,9 +244,9 @@ const BattleResult = ({ user }) => {
                       <div className="border-t border-slate-200 p-4 space-y-4 bg-white">
                         {/* Stimulus Section */}
                         {q.stimulus && (
-                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <p className="text-xs font-semibold text-amber-800 mb-2">📄 Stimulus:</p>
-                            <p className="text-xs text-amber-700 leading-relaxed">
+                          <div className="p-3 bg-purple-100 border border-purple-300 rounded-lg">
+                            <p className="text-xs font-semibold text-black mb-2">📄 Stimulus:</p>
+                            <p className="text-xs text-black leading-relaxed">
                               <LatexWrapper text={q.stimulus} />
                             </p>
                           </div>
