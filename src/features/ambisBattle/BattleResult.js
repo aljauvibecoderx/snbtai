@@ -3,10 +3,98 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Trophy, Swords, Home, RotateCcw, Crown, CheckCircle2,
   XCircle, Clock, Target, Zap, Loader2, Star, ChevronDown,
-  ChevronUp, BookOpen, AlertCircle
+  ChevronUp, BookOpen, AlertCircle, Table, BarChart3, FileText, HelpCircle
 } from 'lucide-react';
 import { getRoom, leaveRoom } from '../../services/firebase/ambisBattle';
 import LatexWrapper from '../../utils/latex';
+
+// Helper to render question representation (table, chart, etc.)
+const QuestionRepresentation = ({ representation }) => {
+  if (!representation || representation.type === 'text' || !representation.data) {
+    return null;
+  }
+
+  // Render table representation
+  if (representation.type === 'table') {
+    return (
+      <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto">
+        <div className="flex items-center gap-2 mb-2">
+          <Table size={16} className="text-indigo-600" />
+          <span className="text-xs font-semibold text-slate-700">Data Tabel:</span>
+        </div>
+        <div className="text-xs font-mono whitespace-pre-wrap text-slate-800">
+          {typeof representation.data === 'string' 
+            ? representation.data 
+            : JSON.stringify(representation.data, null, 2)}
+        </div>
+      </div>
+    );
+  }
+
+  // Render chart representation
+  if (representation.type === 'chart') {
+    return (
+      <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <BarChart3 size={16} className="text-emerald-600" />
+          <span className="text-xs font-semibold text-slate-700">Data Grafik:</span>
+        </div>
+        <div className="text-xs font-mono whitespace-pre-wrap text-slate-800">
+          {typeof representation.data === 'string' 
+            ? representation.data 
+            : JSON.stringify(representation.data, null, 2)}
+        </div>
+      </div>
+    );
+  }
+
+  // Render statement/list representation
+  if (representation.type === 'statement' || representation.type === 'list') {
+    return (
+      <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <FileText size={16} className="text-amber-600" />
+          <span className="text-xs font-semibold text-amber-800">Pernyataan:</span>
+        </div>
+        <div className="text-xs text-amber-900 whitespace-pre-wrap leading-relaxed">
+          {typeof representation.data === 'string' 
+            ? representation.data 
+            : JSON.stringify(representation.data, null, 2)}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+// Helper to detect question type
+const getQuestionType = (question) => {
+  if (!question) return 'unknown';
+  
+  // Check representation type
+  if (question.representation?.type && question.representation.type !== 'text') {
+    return question.representation.type;
+  }
+  
+  // Check if boolean question (only 2 options)
+  if (question.options?.length === 2) {
+    const opts = question.options.map(o => o.toLowerCase());
+    const hasTrue = opts.some(o => o.includes('benar') || o.includes('true'));
+    const hasFalse = opts.some(o => o.includes('salah') || o.includes('false'));
+    if (hasTrue && hasFalse) {
+      return 'boolean';
+    }
+  }
+  
+  // Check if statement question
+  if (question.text?.toLowerCase().includes('pernyataan') || 
+      question.stimulus?.toLowerCase().includes('pernyataan')) {
+    return 'statement';
+  }
+  
+  return 'text';
+};
 
 const BattleResult = ({ user }) => {
   const params = useParams();
@@ -203,6 +291,31 @@ const BattleResult = ({ user }) => {
                         <p className="text-sm font-medium text-slate-800 line-clamp-2">{q.text}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-slate-500">{q.subtest || 'SNBT'}</span>
+                          {/* Question Type Badge */}
+                          {(() => {
+                            const qType = getQuestionType(q);
+                            if (qType === 'table') return (
+                              <span className="text-xs font-medium text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <Table size={10} /> Tabel
+                              </span>
+                            );
+                            if (qType === 'chart') return (
+                              <span className="text-xs font-medium text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <BarChart3 size={10} /> Grafik
+                              </span>
+                            );
+                            if (qType === 'boolean') return (
+                              <span className="text-xs font-medium text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <HelpCircle size={10} /> Benar/Salah
+                              </span>
+                            );
+                            if (qType === 'statement') return (
+                              <span className="text-xs font-medium text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <FileText size={10} /> Pernyataan
+                              </span>
+                            );
+                            return null;
+                          })()}
                           {q.difficulty && (
                             <>
                               <span className="w-1 h-1 rounded-full bg-slate-300" />
@@ -251,6 +364,9 @@ const BattleResult = ({ user }) => {
                             </p>
                           </div>
                         )}
+
+                        {/* Representation Section (Table, Chart, Statement) */}
+                        <QuestionRepresentation representation={q.representation} />
 
                         {/* Question Text */}
                         <div className="p-3 bg-slate-50 rounded-lg">
