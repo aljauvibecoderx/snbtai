@@ -311,17 +311,28 @@ const GenerateQuestion = ({ user }) => {
       
       const randomQuestions = await getRandomQuestionsFromSubtests(
         group.subtests,
-        group.questionsPerSubtest
+        group.questionsPerSubtest,
+        user?.uid
       );
       
       console.log('Questions fetched:', randomQuestions.length);
       
       if (!randomQuestions || randomQuestions.length === 0) {
+        console.error('No questions found. Debug info:');
+        console.error('- User ID:', user?.uid);
+        console.error('- Group:', group);
+        console.error('- This might be because:');
+        console.error('  1. No public question sets exist');
+        console.error('  2. No user private question sets exist');
+        console.error('  3. Question sets exist but with different subtest IDs');
+        console.error('  4. Question sets have no questions array');
+        
         throw new Error(
           `Tidak ada soal tersedia untuk grup "${group.name}".\n\n` +
           `Subtests yang dicari: ${group.subtests.join(', ')}\n\n` +
           `Pastikan ada soal di Bank Soal dengan subtest yang sesuai.\n` +
-          `Atau gunakan AI Generator untuk membuat soal baru.`
+          `Atau gunakan AI Generator untuk membuat soal baru.\n\n` +
+          `Tips: Buat soal terlebih dahulu di fitur "Buat Soal" atau "Question Package Manager".`
         );
       }
       

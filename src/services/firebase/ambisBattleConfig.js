@@ -68,7 +68,7 @@ export const getSubtestGroups = async (userId = null) => {
 };
 
 // Get random questions from subtests
-export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubtest) => {
+export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubtest, userId = null) => {
   const allQuestions = [];
   
   try {
@@ -78,6 +78,9 @@ export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubte
       where('visibility', '==', 'public')
     );
     const snapshot = await getDocs(q);
+    
+    console.log('Found public question sets:', snapshot.docs.length);
+    console.log('Looking for subtests:', subtests);
     
     // Process each subtest
     for (const subtest of subtests) {
@@ -89,11 +92,16 @@ export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubte
         
         // Check if set has questions array
         if (setData.questions && Array.isArray(setData.questions)) {
-          // Filter questions by subtest
+          // Filter questions by subtest - check multiple possible fields
           const matchingQuestions = setData.questions.filter(q => {
-            // Check both subtest field and category field
-            return q.subtest === subtest || setData.category === subtest;
+            // Check multiple ways subtest can be stored
+            return q.subtest === subtest || 
+                   q.category === subtest || 
+                   setData.category === subtest ||
+                   setData.subtest === subtest;
           });
+          
+          console.log(`Set "${setData.title}" has ${matchingQuestions.length} matching questions for subtest ${subtest}`);
           
           // Add to collection with set metadata
           matchingQuestions.forEach(q => {
@@ -106,11 +114,72 @@ export const getRandomQuestionsFromSubtests = async (subtests, questionsPerSubte
         }
       }
       
+      console.log(`Total questions for subtest ${subtest}: ${subtestQuestions.length}`);
+      
       // Shuffle and pick random questions
       if (subtestQuestions.length > 0) {
         const shuffled = subtestQuestions.sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, Math.min(questionsPerSubtest, subtestQuestions.length));
         allQuestions.push(...selected);
+        console.log(`Selected ${selected.length} questions for subtest ${subtest}`);
+      } else {
+        console.warn(`No questions found for subtest ${subtest}`);
+      }
+    }
+    
+    console.log(`Total questions collected: ${allQuestions.length}`);
+    
+    // If no questions found and userId provided, try user's private sets
+    if (allQuestions.length === 0 && userId) {
+      console.log('No public questions found, trying user private sets...');
+      
+      try {
+        const userQ = query(
+          collection(db, 'question_sets'),
+          where('createdBy', '==', userId)
+        );
+        const userSnapshot = await getDocs(userQ);
+        
+        console.log('Found user question sets:', userSnapshot.docs.length);
+        
+        // Process each subtest again with user sets
+        for (const subtest of subtests) {
+          const subtestQuestions = [];
+          
+          for (const docSnap of userSnapshot.docs) {
+            const setData = docSnap.data();
+            
+            if (setData.questions && Array.isArray(setData.questions)) {
+              const matchingQuestions = setData.questions.filter(q => {
+                return q.subtest === subtest || 
+                       q.category === subtest || 
+                       setData.category === subtest ||
+                       setData.subtest === subtest;
+              });
+              
+              console.log(`User set "${setData.title}" has ${matchingQuestions.length} matching questions for subtest ${subtest}`);
+              
+              matchingQuestions.forEach(q => {
+                subtestQuestions.push({
+                  ...q,
+                  setId: docSnap.id,
+                  setTitle: setData.title || 'Untitled'
+                });
+              });
+            }
+          }
+          
+          if (subtestQuestions.length > 0) {
+            const shuffled = subtestQuestions.sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, Math.min(questionsPerSubtest, subtestQuestions.length));
+            allQuestions.push(...selected);
+            console.log(`Selected ${selected.length} user questions for subtest ${subtest}`);
+          }
+        }
+        
+        console.log(`Total questions after fallback: ${allQuestions.length}`);
+      } catch (fallbackError) {
+        console.error('Error in fallback to user sets:', fallbackError);
       }
     }
     
