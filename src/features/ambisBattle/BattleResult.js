@@ -65,6 +65,26 @@ const QuestionRepresentation = ({ representation }) => {
     );
   }
 
+  // Render grid_boolean representation (multiple statements to evaluate)
+  if (representation.type === 'grid_boolean') {
+    return (
+      <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <FileText size={16} className="text-orange-600" />
+          <span className="text-xs font-semibold text-orange-800">📋 Pernyataan yang perlu dievaluasi:</span>
+        </div>
+        <div className="text-xs text-orange-900 whitespace-pre-wrap leading-relaxed mb-3">
+          {typeof representation.data === 'string' 
+            ? representation.data 
+            : JSON.stringify(representation.data, null, 2)}
+        </div>
+        <p className="text-xs font-semibold text-orange-800">
+          Pertanyaan: Berapa banyak pernyataan di atas yang benar?
+        </p>
+      </div>
+    );
+  }
+
   return null;
 };
 
@@ -72,7 +92,7 @@ const QuestionRepresentation = ({ representation }) => {
 const getQuestionType = (question) => {
   if (!question) return 'unknown';
   
-  // Check representation type
+  // Check representation type first
   if (question.representation?.type && question.representation.type !== 'text') {
     return question.representation.type;
   }
@@ -85,6 +105,12 @@ const getQuestionType = (question) => {
     if (hasTrue && hasFalse) {
       return 'boolean';
     }
+  }
+  
+  // Check if grid_boolean type (multiple statements to evaluate)
+  if (question.representation?.type === 'grid_boolean' || 
+      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5)) {
+    return 'grid_boolean';
   }
   
   // Check if statement question
@@ -307,6 +333,11 @@ const BattleResult = ({ user }) => {
                             if (qType === 'boolean') return (
                               <span className="text-xs font-medium text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1">
                                 <HelpCircle size={10} /> Benar/Salah
+                              </span>
+                            );
+                            if (qType === 'grid_boolean') return (
+                              <span className="text-xs font-medium text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <FileText size={10} /> Hitung Benar
                               </span>
                             );
                             if (qType === 'statement') return (

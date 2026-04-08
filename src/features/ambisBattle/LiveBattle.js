@@ -72,7 +72,7 @@ const QuestionRepresentation = ({ representation }) => {
 const getQuestionType = (question) => {
   if (!question) return 'unknown';
   
-  // Check representation type
+  // Check representation type first
   if (question.representation?.type && question.representation.type !== 'text') {
     return question.representation.type;
   }
@@ -80,11 +80,17 @@ const getQuestionType = (question) => {
   // Check if boolean question (only 2 options, typically Benar/Salah or True/False)
   if (question.options?.length === 2) {
     const opts = question.options.map(o => o.toLowerCase());
-    const hasTrue = opts.some(o => o.includes('benar') || o.includes('true') || o === 'a. benar' || o === 'b. salah');
+    const hasTrue = opts.some(o => o.includes('benar') || o.includes('true'));
     const hasFalse = opts.some(o => o.includes('salah') || o.includes('false'));
     if (hasTrue && hasFalse) {
       return 'boolean';
     }
+  }
+  
+  // Check if grid_boolean type (multiple statements to evaluate)
+  if (question.representation?.type === 'grid_boolean' || 
+      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5)) {
+    return 'grid_boolean';
   }
   
   // Check if statement question (text mentions "pernyataan")
@@ -261,6 +267,11 @@ const LiveBattle = ({ user }) => {
                       <HelpCircle size={10} /> Benar/Salah
                     </span>
                   );
+                  if (qType === 'grid_boolean') return (
+                    <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <FileText size={10} /> Hitung Benar
+                    </span>
+                  );
                   if (qType === 'statement') return (
                     <span className="text-xs font-medium text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <FileText size={10} /> Pernyataan
@@ -302,39 +313,81 @@ const LiveBattle = ({ user }) => {
         {/* -- UI: Interactive Options (With LaTeX) -- */}
         {currentQuestion && (
           <div className="space-y-2 mb-4">
-            {currentQuestion.options?.map((option, i) => {
-              const isSelected = myAnswerIndex === i;
-              const isActuallyCorrect = i === currentQuestion.correctIndex;
-              const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
-              // Wait for answer explicitly to reveal the truth
-              const revealStatus = hasMyAnswer; 
+            {/* Debug info for developers - remove in production */}
+            {(!currentQuestion.options || currentQuestion.options.length === 0) && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-sm text-red-700 font-semibold mb-2">⚠️ Opsi jawaban tidak tersedia</p>
+                <p className="text-xs text-red-600">Tipe soal: {getQuestionType(currentQuestion)}</p>
+                <p className="text-xs text-red-600">ID Soal: {currentQuestion.id || 'N/A'}</p>
+                <p className="text-xs text-red-600">Subtes: {currentQuestion.subtest || 'N/A'}</p>
+              </div>
+            )}
 
-              let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
-              if (revealStatus) {
-                if (isActuallyCorrect) {
-                  btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800';
-                } else if (isSelected && !isActuallyCorrect) {
-                  btnClass = 'bg-red-50 border-red-500 text-red-800';
-                } else {
-                  btnClass = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
+            {/* Handle grid_boolean type with special UI */}
+            {getQuestionType(currentQuestion) === 'grid_boolean' && currentQuestion.representation?.data && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs font-semibold text-amber-800 mb-2">📋 Pernyataan yang perlu dievaluasi:</p>
+                <div className="text-xs text-amber-900 whitespace-pre-wrap leading-relaxed mb-3">
+                  {typeof currentQuestion.representation.data === 'string' 
+                    ? currentQuestion.representation.data 
+                    : JSON.stringify(currentQuestion.representation.data, null, 2)}
+                </div>
+                <p className="text-xs font-semibold text-amber-800 mb-2">
+                  Berapa banyak pernyataan yang benar?
+                </p>
+              </div>
+            )}
+
+            {/* Standard options rendering */}
+            {currentQuestion.options && currentQuestion.options.length > 0 ? (
+              currentQuestion.options.map((option, i) => {
+                const isSelected = myAnswerIndex === i;
+                const isActuallyCorrect = i === currentQuestion.correctIndex;
+                const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
+                // Wait for answer explicitly to reveal the truth
+                const revealStatus = hasMyAnswer; 
+
+                let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
+                if (revealStatus) {
+                  if (isActuallyCorrect) {
+                    btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800';
+                  } else if (isSelected && !isActuallyCorrect) {
+                    btnClass = 'bg-red-50 border-red-500 text-red-800';
+                  } else {
+                    btnClass = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
+                  }
                 }
-              }
 
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleAnswerSubmit(i)}
-                  disabled={hasMyAnswer || phase !== 'playing'}
-                  className={`w-full text-left border rounded-xl p-3.5 transition-all flex items-center gap-3 ${btnClass} disabled:cursor-default`}
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleAnswerSubmit(i)}
+                    disabled={hasMyAnswer || phase !== 'playing'}
+                    className={`w-full text-left border rounded-xl p-3.5 transition-all flex items-center gap-3 ${btnClass} disabled:cursor-default`}
+                  >
+                    <div className="flex-1 text-sm leading-snug">
+                       <LatexWrapper text={option || ''} />
+                    </div>
+                    {revealStatus && isActuallyCorrect && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
+                    {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={16} className="text-red-500 shrink-0" />}
+                  </button>
+                );
+              })
+            ) : (
+              /* Fallback for missing options */
+              <div className="p-4 bg-slate-100 border border-slate-300 rounded-xl text-center">
+                <p className="text-sm text-slate-600 mb-2">Tidak ada opsi jawaban untuk soal ini.</p>
+                <button 
+                  onClick={() => {
+                    console.error('Question with missing options:', currentQuestion);
+                    alert('Error: Opsi jawaban tidak ditemukan. Lihat console untuk detail.');
+                  }}
+                  className="text-xs text-indigo-600 underline"
                 >
-                  <div className="flex-1 text-sm leading-snug">
-                     <LatexWrapper text={option || ''} />
-                  </div>
-                  {revealStatus && isActuallyCorrect && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
-                  {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={16} className="text-red-500 shrink-0" />}
+                  Lihat Detail Error
                 </button>
-              );
-            })}
+              </div>
+            )}
           </div>
         )}
 
