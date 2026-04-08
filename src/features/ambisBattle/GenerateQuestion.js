@@ -8,6 +8,7 @@ import { saveQuestionsToRoom, listenToRoom, startBattle } from '../../services/f
 import { getSubtestGroups, getRandomQuestionsFromSubtests } from '../../services/firebase/ambisBattleConfig';
 import { GEMINI_KEYS } from '../../config/config';
 import { selectTemplate, getAllPatterns } from '../../utils/questionTemplates';
+import { generateEnhancedBattleQuestions } from './enhancedQuestionGenerator';
 
 const SUBTESTS = [
   { id: 'pu', label: 'Penalaran Umum' },
@@ -39,155 +40,22 @@ const switchGeminiKey = () => {
 };
 
 const generateQuestionWithAI = async (subtest, topic, difficulty, count, context = '') => {
-  const apiKey = getGeminiKey();
-  if (!apiKey) throw new Error('API key tidak tersedia. Silakan cek pengaturan API Key.');
-
-  // Pilih template yang sesuai
-  const subtestId = SUBTESTS.find((s) => s.label === subtest || s.id === subtest)?.id || 'pu';
-  const levelParam = difficulty === 'Mudah' ? 1 : difficulty === 'Sedang' ? 3 : 5;
-  const allPatterns = getAllPatterns(subtestId);
-
-  // Generate list pola untuk prompt
-  const patternList = allPatterns
-    .filter(p => p.level.includes(levelParam))
-    .map(p => `- "${p.pattern}" (Tipe: ${p.type})`)
-    .join('\\n');
-
-  const contextPrompt = context.trim()
-    ? `\\n\\n=== KONTEKS MATERI ACUAN (WAJIB DIGUNAKAN) ===\\n"${context}"\\nBuatlah soal yang relevan, menantang, dan terhubung ERAT dengan konteks di atas!`
-    : '';
-
-  // === PROMPT LENGKAP DENGAN SEMUA PROTOKOL ===
-  const prompt = `SYSTEM: GENERATOR SOAL UTBK-SNBT DENGAN POLA RESMI
-
-Kamu adalah AI profesional pembuat soal quiz pilihan ganda realtime.
-Buatkan ${count} soal pilihan ganda SNBT untuk subtes ${subtest}, topik ${topic}, tingkat kesulitan ${difficulty}.${contextPrompt}
-
-=== PROTOKOL ESCAPING KARAKTER (CRITICAL) ===
-SETIAP output JSON WAJIB mengikuti aturan ini:
-1. Tanda petik ganda di dalam string: WAJIB escape dengan \\" (SATU backslash + quote)
-   - SALAH: \\\\" (double backslash)
-   - SALAH: " (tanpa escape)
-   - BENAR: \\" (single backslash)
-2. Backslash untuk LaTeX: WAJIB TEPAT DUA backslash \\\\ (contoh: \\\\frac, \\\\circ)
-   - SALAH: \\frac (satu backslash), \\\\\\frac (tiga backslash)
-   - BENAR: \\\\frac, \\\\circ, \\\\sqrt (dua backslash)
-3. Newline: Gunakan \\n, JANGAN baris baru fisik
-4. DILARANG ada teks di luar JSON
-5. DILARANG markdown code blocks
-6. DILARANG karakter kontrol (form feed, tab manual)
-7. Markdown Bold: Gunakan **kata** untuk kata yang perlu ditebalkan
-8. Kutipan/Dialog: Gunakan \\" untuk dialog atau kutipan dalam teks
-
-=== ATURAN WAJIB: HIRARKI SIMBOL (The Layering Rule) ===
-Saat menggabungkan format bold (**) dengan tanda petik ganda (\\"):
-1. PRIORITAS TANDA PETIK: Setiap tanda petik ganda yang merupakan bagian dari kalimat WAJIB di-escape dengan tepat satu backslash
-   - SALAH: "kata **"tebal"**"
-   - BENAR: "kata **\\"tebal\\"**"
-2. Format: **\\"Kalimat tebal dan dikutip\\"**
-
-=== PROTOKOL LATEX (CRITICAL) ===
-SETIAP ekspresi matematika WAJIB dibungkus dengan $:
-1. Inline math: $x$, $f(x)$, $\\\\frac{1}{2}$
-2. Display math: $$f(x) = 2x + 1$$
-3. Variabel tunggal: $x$, $y$, $P$, $Q$ (WAJIB dibungkus $)
-4. Angka dalam konteks math: $\\\\frac{1}{9}$, $x^2$
-5. WAJIB kurung kurawal: $\\\\\\\\frac{1}{9}$ BUKAN $\\\\\\\\frac19$
-6. Operator: $\\\\times$, $\\\\div$, $\\\\circ$
-7. Perbandingan: $P > Q$, $P < Q$, $P = Q$ (dibungkus $)
-8. Kurung untuk pecahan/pangkat: Gunakan $\\\\left($ dan $\\\\right)$
-
-=== POLA TERSEDIA ===
-${patternList}
-
-=== FORMAT OUTPUT (JSON ARRAY) ===
-[
-  {
-    "text": "Teks pertanyaan utama...",
-    "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
-    "correctIndex": 0,
-    "explanation": "Pembahasan rinci...",
-    "subtest": "${subtest}",
-    "topic": "${topic}",
-    "difficulty": "${difficulty}"
+  try {
+    // Use the enhanced question generator with full stimulus support
+    const questions = await generateEnhancedBattleQuestions(
+      subtest,
+      topic,
+      difficulty,
+      count,
+      context,
+      '' // No specific instructions for basic generation
+    );
+    
+    return questions;
+  } catch (error) {
+    console.error('Enhanced generation failed:', error);
+    throw error;
   }
-]
-
-=== VALIDASI SEBELUM OUTPUT ===
-✓ Semua LaTeX command menggunakan TEPAT DUA backslash (\\\\frac, \\\\circ)
-✓ Semua tanda petik di dalam string di-escape (\\")
-✓ Tidak ada teks di luar JSON. KEMBALIKAN HANYA ARRAY JSON MURNI.`;
-
-  // === RETRY MECHANISM DENGAN API KEY ROTATION ===
-  let attempts = 0;
-  const maxAttempts = GEMINI_KEYS.length;
-
-  while (attempts < maxAttempts) {
-    try {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-
-      const currentKey = getGeminiKey();
-      const genAI = new GoogleGenerativeAI(currentKey.key);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192,
-        }
-      });
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let text = response.text().trim();
-
-      // === MULTI-LAYER CLEANING ===
-      // Layer 1: Remove markdown code blocks
-      text = text.replace(/```(?:json)?\s*/gi, '').replace(/```\s*/g, '');
-
-      // Layer 2: Remove control characters
-      text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-
-      // Layer 3: Fix over-escaped quotes if they occur
-      text = text.replace(/\\\\\\"/g, '\\"');
-
-      // Layer 4: Remove trailing commas
-      text = text.replace(/,\s*([\]}])/g, '$1').trim();
-
-      // Layer 5: Extract JSON array if wrapped in text
-      const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (match) {
-        text = match[0];
-      }
-
-      // === PARSE JSON ===
-      try {
-        const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          throw new Error('JSON array kosong atau tidak valid');
-        }
-        return parsed;
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError.message);
-        console.error('Raw text:', text);
-        throw new Error('AI gagal mengikuti format JSON. Silakan diregenerate.');
-      }
-
-    } catch (error) {
-      // Check for quota/limit errors
-      if (error.message?.includes('quota') || error.message?.includes('limit') || error.message?.includes('429')) {
-        switchGeminiKey();
-        attempts++;
-        if (attempts >= maxAttempts) {
-          throw new Error('Semua API key exhausted (limit habis). Silakan coba lagi nanti.');
-        }
-        await new Promise(resolve => setTimeout(resolve, 3000)); // 3s delay
-      } else {
-        throw error;
-      }
-    }
-  }
-
-  throw new Error('Gagal generate soal setelah multi-retries.');
 };
 
 const QuestionCard = ({ question, index, onEdit, onDelete }) => {
@@ -203,6 +71,9 @@ const QuestionCard = ({ question, index, onEdit, onDelete }) => {
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
+          {question.stimulus && (
+            <p className="text-xs text-amber-600 line-clamp-1 mb-1 font-medium">📄 {question.stimulus}</p>
+          )}
           <p className="text-sm font-medium text-slate-800 line-clamp-2">{question.text}</p>
           <div className="flex items-center gap-2 mt-1.5">
             <span className="text-xs text-slate-400">{question.subtest}</span>
@@ -222,21 +93,41 @@ const QuestionCard = ({ question, index, onEdit, onDelete }) => {
       </div>
 
       {expanded && (
-        <div className="border-t border-slate-100 p-4 space-y-2">
-          {question.options?.map((opt, i) => (
-            <div
-              key={i}
-              className={`flex items-start gap-2 text-xs p-2 rounded-lg ${i === question.correctIndex ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50'
-                }`}
-            >
-              {i === question.correctIndex && <CheckCircle2 size={12} className="text-emerald-600 mt-0.5 flex-shrink-0" />}
-              <span className={i === question.correctIndex ? 'text-emerald-800 font-medium' : 'text-slate-600'}>
-                {opt}
-              </span>
+        <div className="border-t border-slate-100 p-4 space-y-3">
+          {/* Stimulus Section */}
+          {question.stimulus && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-xs font-semibold text-amber-800 mb-1">Stimulus:</p>
+              <p className="text-xs text-amber-700 leading-relaxed">{question.stimulus}</p>
             </div>
-          ))}
+          )}
+          
+          {/* Question */}
+          <div className="p-3 bg-slate-50 rounded-lg">
+            <p className="text-xs font-semibold text-slate-800 mb-1">Pertanyaan:</p>
+            <p className="text-xs text-slate-700 leading-relaxed">{question.text}</p>
+          </div>
+
+          {/* Options */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-600">Pilihan Jawaban:</p>
+            {question.options?.map((opt, i) => (
+              <div
+                key={i}
+                className={`flex items-start gap-2 text-xs p-2 rounded-lg ${i === question.correctIndex ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50'
+                  }`}
+              >
+                {i === question.correctIndex && <CheckCircle2 size={12} className="text-emerald-600 mt-0.5 flex-shrink-0" />}
+                <span className={i === question.correctIndex ? 'text-emerald-800 font-medium' : 'text-slate-600'}>
+                  {opt}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Explanation */}
           {question.explanation && (
-            <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
+            <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
               <p className="text-xs text-blue-700"><span className="font-semibold">Pembahasan:</span> {question.explanation}</p>
             </div>
           )}
@@ -248,7 +139,7 @@ const QuestionCard = ({ question, index, onEdit, onDelete }) => {
 
 const EditQuestionModal = ({ question, onSave, onClose }) => {
   const [form, setForm] = useState(question || {
-    text: '', options: ['', '', '', '', ''], correctIndex: 0,
+    stimulus: '', text: '', options: ['', '', '', '', ''], correctIndex: 0,
     explanation: '', subtest: 'pu', topic: '', difficulty: 'Sedang'
   });
 
@@ -260,6 +151,16 @@ const EditQuestionModal = ({ question, onSave, onClose }) => {
           <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg"><span className="text-slate-500 text-lg leading-none">×</span></button>
         </div>
         <div className="p-4 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-600 mb-1 block">Stimulus (Teks Pendukung) *</label>
+            <textarea
+              value={form.stimulus}
+              onChange={(e) => setForm({ ...form, stimulus: e.target.value })}
+              rows={3}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 resize-none"
+              placeholder="Masukkan teks stimulus, bacaan pendek, atau konteks pendukung..."
+            />
+          </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 mb-1 block">Teks Soal *</label>
             <textarea
@@ -330,7 +231,7 @@ const EditQuestionModal = ({ question, onSave, onClose }) => {
           </div>
           <button
             onClick={() => onSave(form)}
-            disabled={!form.text || form.options.some((o) => !o)}
+            disabled={!form.stimulus || !form.text || form.options.some((o) => !o)}
             className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-xl disabled:opacity-40 transition-all hover:shadow-md"
           >
             Simpan Soal
