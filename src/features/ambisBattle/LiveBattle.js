@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Clock, CheckCircle2, XCircle, Zap, Loader2,
   AlertCircle, Swords, BookOpen, ChevronDown, ChevronUp,
-  Table, BarChart3, FileText, HelpCircle, Volume2
+  Table, BarChart3, FileText, HelpCircle
 } from 'lucide-react';
 import { useBattleEngine, QUESTION_DURATION } from '../../services/battleEngine';
 import LatexWrapper from '../../utils/latex';
-import AudioPlayer from '../../components/AudioPlayer';
+import SeamlessAudioPlayer from '../../components/SeamlessAudioPlayer';
 
 // Helper to render question representation (table, chart, etc.)
 const QuestionRepresentation = ({ representation }) => {
@@ -107,9 +107,6 @@ const LiveBattle = ({ user }) => {
   const params = useParams();
   const navigate = useNavigate();
   const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
-  
-  // --- Soundtrack State ---
-  const [showSoundtrack, setShowSoundtrack] = useState(false);
 
   // --- 1. Engine Injection (Centralized Server Logic) ---
   const {
@@ -177,33 +174,21 @@ const LiveBattle = ({ user }) => {
   const timerPercent = (timeLeft / QUESTION_DURATION) * 100;
   const timerColor = timeLeft > 15 ? 'bg-emerald-500' : timeLeft > 7 ? 'bg-amber-400' : 'bg-red-500';
 
+  // --- Shared Audio Player - Seamless Across Phases ---
+  const audioPlayer = (
+    <div className="fixed top-4 right-4 z-50">
+      <SeamlessAudioPlayer 
+        src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
+        shouldPlay={phase === 'countdown' || phase === 'playing'}
+      />
+    </div>
+  );
+
   // --- Countdown View Phase ---
   if (phase === 'countdown') {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center relative">
-        {/* Soundtrack Toggle */}
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={() => setShowSoundtrack(!showSoundtrack)}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
-          >
-            <Volume2 size={16} className="text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">
-              {showSoundtrack ? 'Musik: ON' : 'Musik: OFF'}
-            </span>
-          </button>
-        </div>
-
-        {/* Soundtrack Player */}
-        {showSoundtrack && (
-          <div className="absolute top-16 right-4 w-64">
-            <AudioPlayer 
-              src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
-              autoPlay={true}
-              showControls={true}
-            />
-          </div>
-        )}
+        {audioPlayer}
 
         <div className="text-center">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-500/20">
@@ -218,35 +203,14 @@ const LiveBattle = ({ user }) => {
   // --- Battle Playing Phase ---
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
+      {audioPlayer}
+
       {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-violet-600/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-6">
-        {/* -- UI: Soundtrack Toggle -- */}
-        <div className="flex justify-end mb-3">
-          <button
-            onClick={() => setShowSoundtrack(!showSoundtrack)}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
-          >
-            <Volume2 size={16} className="text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">
-              {showSoundtrack ? 'Musik: ON' : 'Musik: OFF'}
-            </span>
-          </button>
-        </div>
-
-        {/* -- UI: Soundtrack Player -- */}
-        {showSoundtrack && (
-          <div className="mb-4">
-            <AudioPlayer 
-              src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
-              autoPlay={phase === 'playing' || phase === 'countdown'}
-              showControls={true}
-            />
-          </div>
-        )}
+      <div className="relative z-10 flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-14 pb-6">
 
         {/* -- UI: Scores Board -- */}
         <div className="flex items-center gap-2 mb-3">
