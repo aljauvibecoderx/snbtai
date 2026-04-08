@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Clock, CheckCircle2, XCircle, Zap, Loader2,
   AlertCircle, Swords, BookOpen, ChevronDown, ChevronUp,
-  Table, BarChart3, FileText, HelpCircle
+  Table, BarChart3, FileText, HelpCircle, Volume2
 } from 'lucide-react';
 import { useBattleEngine, QUESTION_DURATION } from '../../services/battleEngine';
 import LatexWrapper from '../../utils/latex';
+import AudioPlayer from '../../components/AudioPlayer';
 
 // Helper to render question representation (table, chart, etc.)
 const QuestionRepresentation = ({ representation }) => {
@@ -106,6 +107,9 @@ const LiveBattle = ({ user }) => {
   const params = useParams();
   const navigate = useNavigate();
   const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
+  
+  // --- Soundtrack State ---
+  const [showSoundtrack, setShowSoundtrack] = useState(false);
 
   // --- 1. Engine Injection (Centralized Server Logic) ---
   const {
@@ -196,6 +200,30 @@ const LiveBattle = ({ user }) => {
       </div>
 
       <div className="relative z-10 flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-4 pb-6">
+        {/* -- UI: Soundtrack Toggle -- */}
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={() => setShowSoundtrack(!showSoundtrack)}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            <Volume2 size={16} className="text-slate-600" />
+            <span className="text-sm font-medium text-slate-700">
+              {showSoundtrack ? 'Musik: ON' : 'Musik: OFF'}
+            </span>
+          </button>
+        </div>
+
+        {/* -- UI: Soundtrack Player -- */}
+        {showSoundtrack && (
+          <div className="mb-4">
+            <AudioPlayer 
+              src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
+              autoPlay={phase === 'playing'}
+              showControls={true}
+            />
+          </div>
+        )}
+
         {/* -- UI: Scores Board -- */}
         <div className="flex items-center gap-2 mb-3">
           {/* P1 */}
