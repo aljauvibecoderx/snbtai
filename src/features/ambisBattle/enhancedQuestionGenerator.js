@@ -123,6 +123,21 @@ export const generateEnhancedBattleQuestions = async (
           throw new Error('JSON array kosong atau tidak valid');
         }
 
+        // Validate correct number of questions
+        if (parsed.length !== count) {
+          console.warn(`Expected ${count} questions, got ${parsed.length}`);
+          // If we got fewer questions, still return what we have but log the issue
+          // If we got more questions, take only the requested amount
+          const finalQuestions = parsed.slice(0, count);
+          if (finalQuestions.length < count) {
+            console.warn(`Only ${finalQuestions.length} questions generated out of ${count} requested`);
+          }
+          
+          // Validate and enhance questions
+          const validatedQuestions = finalQuestions.map(q => validateAndEnhanceQuestion(q, subtest, difficulty, topic));
+          return validatedQuestions;
+        }
+
         // Validate and enhance questions
         const validatedQuestions = parsed.map(q => validateAndEnhanceQuestion(q, subtest, difficulty, topic));
         return validatedQuestions;
@@ -170,8 +185,11 @@ function buildAmbisBattlePrompt(
 
   return `${basePrompt}
 
+=== AMBISBATTLE OVERRIDE: MULTI-QUESTION GENERATION ===
+IMPORTANT: Ignore previous single-question format. Generate EXACTLY ${count} questions.
+
 === AMBISBATTLE REQUIREMENTS ===
-1. Generate ${count} questions for real-time battle
+1. Generate EXACTLY ${count} questions for real-time battle
 2. Each question MUST include a proper stimulus field
 3. Questions should be engaging and suitable for competitive environment
 4. Difficulty: ${difficulty}
@@ -195,26 +213,29 @@ Setiap explanation harus:
 3. Berikan langkah penyelesaian singkat
 4. 2-4 kalimat yang padat dan jelas
 
-=== FORMAT OUTPUT (JSON ARRAY) ===
-[
-  {
-    "stimulus": "Teks stimulus pendukung yang membuat soal lengkap dan dapat dimengerti...",
-    "representation": {"type": "text", "data": null},
-    "text": "Pertanyaan utama berdasarkan stimulus...",
-    "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
-    "correctIndex": 0,
-    "explanation": "Jawaban A benar karena [alasan singkat]. Langkah penyelesaian: [proses singkat]. Konsep yang digunakan adalah [konsep dasar].",
-    "subtest": "${subtestLabel}",
-    "topic": "${topic}",
-    "difficulty": "${difficulty}"
-  }
-]
+=== FINAL OUTPUT FORMAT (JSON ARRAY - EXACTLY ${count} QUESTIONS) ===
+Generate a JSON ARRAY with EXACTLY ${count} question objects. Each object must have:
+{
+  "stimulus": "Teks stimulus pendukung yang membuat soal lengkap dan dapat dimengerti...",
+  "representation": {"type": "text", "data": null},
+  "text": "Pertanyaan utama berdasarkan stimulus...",
+  "options": ["A. Opsi pertama", "B. Opsi kedua", "C. Opsi ketiga", "D. Opsi keempat", "E. Opsi kelima"],
+  "correctIndex": 0,
+  "explanation": "Jawaban A benar karena [alasan singkat]. Langkah penyelesaian: [proses singkat]. Konsep yang digunakan adalah [konsep dasar].",
+  "subtest": "${subtestLabel}",
+  "topic": "${topic}",
+  "difficulty": "${difficulty}"
+}
+
+CRITICAL: Output must be a JSON ARRAY with exactly ${count} objects. Do NOT output a single object.
 
 === VALIDATION ===
+✓ Generate exactly ${count} questions in array format
 ✓ Setiap soal memiliki stimulus yang jelas
 ✓ Format JSON valid dengan escaping benar
 ✓ LaTeX menggunakan dua backslash: \\\\frac, \\\\sqrt
-✓ Tidak ada teks di luar JSON`;
+✓ Tidak ada teks di luar JSON array
+✓ Array length must be exactly ${count}`;
 }
 
 /**
