@@ -210,7 +210,47 @@ const LiveBattle = ({ user }) => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-violet-600/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-14 pb-6">
+      {/* Desktop: Full-width Header */}
+      <div className="hidden lg:flex lg:items-center lg:justify-between lg:px-8 lg:py-4 lg:bg-white lg:border-b lg:border-slate-200 lg:sticky lg:top-0 lg:z-50">
+        {/* Timer */}
+        <div className="flex items-center gap-3">
+          <Clock size={20} className={timeLeft <= 7 ? 'text-red-500' : 'text-slate-500'} />
+          <span className={`text-lg font-bold ${timeLeft <= 7 ? 'text-red-500' : 'text-slate-700'}`}>
+            {timeLeft}s
+          </span>
+        </div>
+        
+        {/* Score Board */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-sm font-bold text-violet-700">
+              {myPlayer?.name?.[0]?.toUpperCase() || 'M'}
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">{myPlayer?.name || 'Kamu'}</p>
+              <p className="text-xl font-black text-slate-800">{myScore}</p>
+            </div>
+          </div>
+          <Swords size={24} className="text-slate-300" />
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-xs text-slate-500 text-right">{opponent?.name || 'Lawan'}</p>
+              <p className="text-xl font-black text-slate-800">{opponentScore}</p>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-700">
+              {opponent?.name?.[0]?.toUpperCase() || '?'}
+            </div>
+          </div>
+        </div>
+
+        {/* Question Counter */}
+        <span className="text-sm font-medium text-slate-500">
+          {currentIndex + 1}/{questions.length}
+        </span>
+      </div>
+
+      {/* Mobile: Original Layout */}
+      <div className="lg:hidden relative z-10 flex flex-col flex-1 max-w-md mx-auto w-full px-4 pt-14 pb-6">
 
         {/* -- UI: Scores Board -- */}
         <div className="flex items-center gap-2 mb-3">
@@ -227,8 +267,8 @@ const LiveBattle = ({ user }) => {
           </div>
 
           <div className="flex flex-col items-center flex-shrink-0 px-2">
-            <Swords size={18} className="text-slate-300" />
-            <span className="text-[10px] font-bold text-slate-400 mt-1">VS</span>
+            <Swords size={24} className="text-slate-300" />
+            <span className="text-xs font-bold text-slate-400 mt-1">VS</span>
           </div>
 
           {/* P2 */}
@@ -265,7 +305,7 @@ const LiveBattle = ({ user }) => {
 
         {/* -- UI: Question Context & Text (With LaTeX) -- */}
         {currentQuestion && (
-          <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-4 mb-4 flex-1 overflow-y-auto min-h-32">
+          <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-4 mb-4 flex-1 overflow-y-auto min-h-32 lg:hidden">
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-violet-700 bg-violet-100 px-2.5 py-1 rounded-full border border-violet-200">
@@ -334,7 +374,7 @@ const LiveBattle = ({ user }) => {
 
         {/* -- UI: Interactive Options (With LaTeX) -- */}
         {currentQuestion && (
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-4 lg:hidden">
             {/* Debug info for developers - remove in production */}
             {(!currentQuestion.options || currentQuestion.options.length === 0) && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -415,7 +455,7 @@ const LiveBattle = ({ user }) => {
 
         {/* -- UI: Post-Answer Feedback Block -- */}
         {hasMyAnswer && currentQuestion && (
-          <div className="space-y-2 mt-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-2 mt-auto animate-in fade-in slide-in-from-bottom-2 duration-300 lg:hidden">
             <div className={`rounded-xl p-3 border shadow-sm ${
               isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
             }`}>
@@ -458,6 +498,207 @@ const LiveBattle = ({ user }) => {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Desktop: Split Screen Layout */}
+      <div className="hidden lg:flex lg:h-screen lg:overflow-hidden">
+        {/* Left Panel: Stimulus (60%) */}
+        <div className="lg:w-3/5 lg:h-full lg:overflow-y-auto lg:p-8 lg:border-r lg:border-slate-200 lg:bg-white">
+          {currentQuestion && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm lg:text-base font-semibold text-violet-700 bg-violet-100 px-3 py-1.5 rounded-full border border-violet-200">
+                    {currentQuestion.subtest || 'SNBT'}
+                  </span>
+                  {/* Question Type Badge */}
+                  {(() => {
+                    const qType = getQuestionType(currentQuestion);
+                    if (qType === 'table') return (
+                      <span className="text-sm lg:text-base font-medium text-indigo-700 bg-indigo-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <Table size={16} /> Tabel
+                      </span>
+                    );
+                    if (qType === 'chart') return (
+                      <span className="text-sm lg:text-base font-medium text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <BarChart3 size={16} /> Grafik
+                      </span>
+                    );
+                    if (qType === 'boolean') return (
+                      <span className="text-sm lg:text-base font-medium text-amber-700 bg-amber-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <HelpCircle size={16} /> Benar/Salah
+                      </span>
+                    );
+                    if (qType === 'grid_boolean') return (
+                      <span className="text-sm lg:text-base font-medium text-orange-700 bg-orange-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <FileText size={16} /> Hitung Benar
+                      </span>
+                    );
+                    if (qType === 'statement') return (
+                      <span className="text-sm lg:text-base font-medium text-rose-700 bg-rose-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <FileText size={16} /> Pernyataan
+                      </span>
+                    );
+                    return null;
+                  })()}
+                </div>
+                {currentQuestion.difficulty && (
+                  <span className="text-sm lg:text-base text-slate-500 border border-slate-200 px-3 py-1.5 rounded-full">
+                    Level: {currentQuestion.difficulty}
+                  </span>
+                )}
+              </div>
+              
+              {/* Stimulus Section */}
+              {currentQuestion.stimulus && (
+                <div className="mb-6 p-4 lg:p-6 bg-purple-100 border border-purple-300 rounded-lg">
+                  <p className="text-sm lg:text-base font-semibold text-black mb-3">📄 Stimulus:</p>
+                  <p className="text-sm lg:text-base text-black leading-relaxed">
+                    <LatexWrapper text={currentQuestion.stimulus} />
+                  </p>
+                </div>
+              )}
+
+              {/* Representation Section (Table, Chart, Statement) */}
+              <QuestionRepresentation representation={currentQuestion.representation} />
+              
+              {/* Question Text */}
+              <div className="mb-4">
+                <p className="text-sm lg:text-base font-semibold text-slate-600 mb-3">Pertanyaan:</p>
+                <p className="text-slate-800 text-base lg:text-lg leading-relaxed font-medium">
+                   <LatexWrapper text={currentQuestion.text || ''} />
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Right Panel: Answers (40%) */}
+        <div className="lg:w-2/5 lg:h-full lg:overflow-y-auto lg:p-8 lg:bg-slate-50">
+          {currentQuestion && (
+            <div className="space-y-4">
+              {/* Debug info for developers - remove in production */}
+              {(!currentQuestion.options || currentQuestion.options.length === 0) && (
+                <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-base text-red-700 font-semibold mb-3">⚠️ Opsi jawaban tidak tersedia</p>
+                  <p className="text-sm text-red-600">Tipe soal: {getQuestionType(currentQuestion)}</p>
+                  <p className="text-sm text-red-600">ID Soal: {currentQuestion.id || 'N/A'}</p>
+                  <p className="text-sm text-red-600">Subtes: {currentQuestion.subtest || 'N/A'}</p>
+                </div>
+              )}
+
+              {/* Handle grid_boolean type with special UI */}
+              {getQuestionType(currentQuestion) === 'grid_boolean' && currentQuestion.representation?.data && (
+                <div className="mb-6 p-4 lg:p-6 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm lg:text-base font-semibold text-amber-800 mb-3">📋 Pernyataan yang perlu dievaluasi:</p>
+                  <div className="text-sm lg:text-base text-amber-900 whitespace-pre-wrap leading-relaxed mb-4">
+                    {typeof currentQuestion.representation.data === 'string' 
+                      ? currentQuestion.representation.data 
+                      : JSON.stringify(currentQuestion.representation.data, null, 2)}
+                  </div>
+                  <p className="text-sm lg:text-base font-semibold text-amber-800 mb-3">
+                    Berapa banyak pernyataan yang benar?
+                  </p>
+                </div>
+              )}
+
+              {/* Standard options rendering */}
+              {currentQuestion.options && currentQuestion.options.length > 0 ? (
+                currentQuestion.options.map((option, i) => {
+                  const isSelected = myAnswerIndex === i;
+                  const isActuallyCorrect = i === currentQuestion.correctIndex;
+                  const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
+                  const revealStatus = hasMyAnswer; 
+
+                  let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
+                  if (revealStatus) {
+                    if (isActuallyCorrect) {
+                      btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800';
+                    } else if (isSelected && !isActuallyCorrect) {
+                      btnClass = 'bg-red-50 border-red-500 text-red-800';
+                    } else {
+                      btnClass = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleAnswerSubmit(i)}
+                      disabled={hasMyAnswer || phase !== 'playing'}
+                      className={`w-full text-left border rounded-xl p-4 lg:p-6 min-h-[60px] transition-all flex items-center gap-3 lg:gap-4 text-sm lg:text-base ${btnClass} disabled:cursor-default`}
+                    >
+                      <div className="flex-1 leading-snug">
+                         <LatexWrapper text={option || ''} />
+                      </div>
+                      {revealStatus && isActuallyCorrect && <CheckCircle2 size={18} lg:size={20} className="text-emerald-500 shrink-0" />}
+                      {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={18} lg:size={20} className="text-red-500 shrink-0" />}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="p-6 bg-slate-100 border border-slate-300 rounded-xl text-center">
+                  <p className="text-base text-slate-600 mb-3">Tidak ada opsi jawaban untuk soal ini.</p>
+                  <button 
+                    onClick={() => {
+                      console.error('Question with missing options:', currentQuestion);
+                      alert('Error: Opsi jawaban tidak ditemukan. Lihat console untuk detail.');
+                    }}
+                    className="text-sm text-indigo-600 underline"
+                  >
+                    Lihat Detail Error
+                  </button>
+                </div>
+              )}
+
+              {/* Post-Answer Feedback Block */}
+              {hasMyAnswer && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className={`rounded-xl p-4 lg:p-6 border shadow-sm ${
+                    isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 lg:gap-3">
+                        {isCorrect ? (
+                          <><Zap size={18} lg:size={20} className="text-emerald-600" />
+                          <span className="text-sm lg:text-base font-bold text-emerald-700">Tepat Sekali!</span></>
+                        ) : myAnswerIndex === -1 ? (
+                          <><Clock size={18} lg:size={20} className="text-red-500" />
+                          <span className="text-sm lg:text-base font-bold text-red-700">Waktu Habis!</span></>
+                        ) : (
+                          <><XCircle size={18} lg:size={20} className="text-red-500" />
+                          <span className="text-sm lg:text-base font-bold text-red-700">Salah Jawaban!</span></>
+                        )}
+                      </div>
+                      
+                      {/* View Explanation Button */}
+                      {currentQuestion.explanation && (
+                        <button 
+                          onClick={() => setShowExplanation(!showExplanation)}
+                          className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm lg:text-base font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
+                        >
+                          <BookOpen size={14} lg:size={16} />
+                          {showExplanation ? 'Tutup Pembahasan' : 'Lihat Pembahasan'}
+                        </button>
+                      )}
+                    </div>
+
+                    {showExplanation && currentQuestion.explanation && (
+                      <div className="mt-4 pt-4 border-t border-slate-200/60 transition-all">
+                        <p className="text-sm lg:text-base text-slate-700 leading-relaxed font-medium">
+                          <LatexWrapper text={currentQuestion.explanation} />
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm lg:text-base font-medium text-slate-400 text-center animate-pulse">
+                    Mensinkronisasi untuk memuat soal berikutnya...
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
