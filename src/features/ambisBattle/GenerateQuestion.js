@@ -405,6 +405,12 @@ const GenerateQuestion = ({ user }) => {
               q.difficulty === parseInt(bankSoalConfig.level);
             
             // Validate question has valid options
+            // For grid_boolean type, auto-generate numeric options (0, 1, 2, 3, ...) based on grid_data length
+            if (q.type === 'grid_boolean' && q.grid_data && Array.isArray(q.grid_data)) {
+              q.options = Array.from({ length: q.grid_data.length + 1 }, (_, i) => i.toString());
+              if (q.correctIndex === -1) q.correctIndex = 0;
+            }
+            
             const hasValidOptions = q.options && 
                                    Array.isArray(q.options) && 
                                    q.options.length > 0;
@@ -449,6 +455,12 @@ const GenerateQuestion = ({ user }) => {
                 q.difficulty === parseInt(bankSoalConfig.level);
               
               // Validate question has valid options
+              // For grid_boolean type, auto-generate numeric options (0, 1, 2, 3, ...) based on grid_data length
+              if (q.type === 'grid_boolean' && q.grid_data && Array.isArray(q.grid_data)) {
+                q.options = Array.from({ length: q.grid_data.length + 1 }, (_, i) => i.toString());
+                if (q.correctIndex === -1) q.correctIndex = 0;
+              }
+              
               const hasValidOptions = q.options && 
                                      Array.isArray(q.options) && 
                                      q.options.length > 0;
@@ -479,6 +491,16 @@ const GenerateQuestion = ({ user }) => {
                 q.difficulty === parseInt(bankSoalConfig.level);
               
               // Validate question has valid options
+              // For grid_boolean type, auto-generate numeric options (0, 1, 2, 3, ...) based on grid_data length
+              if (q.type === 'grid_boolean' && q.grid_data && Array.isArray(q.grid_data)) {
+                // Generate options: 0, 1, 2, 3, ... up to grid_data.length
+                q.options = Array.from({ length: q.grid_data.length + 1 }, (_, i) => i.toString());
+                if (q.correctIndex === -1) {
+                  // If correctIndex not set, default to a reasonable value (should be set in data)
+                  q.correctIndex = 0;
+                }
+              }
+              
               const hasValidOptions = q.options && 
                                      Array.isArray(q.options) && 
                                      q.options.length > 0;
