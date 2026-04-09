@@ -624,9 +624,8 @@ export const getQuestionSetById = async (questionSetId) => {
 
 export const saveResultWithId = async (resultData, userId) => {
   try {
-    const resultRef = await addDoc(collection(db, 'results'), {
+    const resultRef = await addDoc(collection(db, 'users', userId, 'results'), {
       ...resultData,
-      userId,
       completedAt: serverTimestamp()
     });
     return resultRef.id;
@@ -636,9 +635,9 @@ export const saveResultWithId = async (resultData, userId) => {
   }
 };
 
-export const getResultById = async (resultId) => {
+export const getResultById = async (resultId, userId) => {
   try {
-    const docRef = doc(db, 'results', resultId);
+    const docRef = doc(db, 'users', userId, 'results', resultId);
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) return null;
     return { id: docSnap.id, ...docSnap.data() };
