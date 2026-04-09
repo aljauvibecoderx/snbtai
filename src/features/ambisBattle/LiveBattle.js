@@ -17,50 +17,274 @@ const QuestionRepresentation = ({ representation }) => {
 
   // Render table representation
   if (representation.type === 'table') {
+    const tableData = representation.data;
+    let headers = [];
+    let rows = [];
+
+    if (typeof tableData === 'string') {
+      // Parse string table format
+      const lines = tableData.trim().split('\n');
+      if (lines.length > 0) {
+        headers = lines[0].split('|').map(h => h.trim()).filter(h => h);
+        rows = lines.slice(1).map(line => line.split('|').map(c => c.trim()).filter(c => c));
+      }
+    } else if (Array.isArray(tableData)) {
+      // Handle array format
+      if (tableData.length > 0) {
+        if (Array.isArray(tableData[0])) {
+          headers = tableData[0];
+          rows = tableData.slice(1);
+        } else if (tableData[0].headers && tableData[0].rows) {
+          headers = tableData[0].headers;
+          rows = tableData[0].rows;
+        }
+      }
+    } else if (tableData.headers && Array.isArray(tableData.rows)) {
+      // Handle object format
+      headers = tableData.headers;
+      rows = tableData.rows;
+    }
+
     return (
-      <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mb-4 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto">
+        <div className="flex items-center gap-2 mb-3">
           <Table size={16} className="text-indigo-600" />
-          <span className="text-xs font-semibold text-slate-700">Data Tabel:</span>
+          <span className="text-xs lg:text-sm font-semibold text-slate-700">Data Tabel:</span>
         </div>
-        <div className="text-xs font-mono whitespace-pre-wrap text-slate-800">
-          {typeof representation.data === 'string' 
-            ? representation.data 
-            : JSON.stringify(representation.data, null, 2)}
-        </div>
+        <table className="w-full text-xs lg:text-sm border-collapse">
+          <thead>
+            {headers.length > 0 && (
+              <tr className="border-b-2 border-slate-300">
+                {headers.map((header, i) => (
+                  <th key={i} className="px-3 py-2 text-left font-semibold text-slate-800 bg-slate-100">
+                    <LatexWrapper text={header} />
+                  </th>
+                ))}
+              </tr>
+            )}
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={rowIndex} className="border-b border-slate-200 last:border-b-0">
+                {Array.isArray(row) && row.map((cell, cellIndex) => (
+                  <td key={cellIndex} className="px-3 py-2 text-slate-700">
+                    <LatexWrapper text={cell} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
 
   // Render chart representation
   if (representation.type === 'chart') {
+    const chartData = representation.data;
+    let chartType = 'bar';
+    let labels = [];
+    let values = [];
+    let title = 'Data Grafik';
+
+    if (typeof chartData === 'string') {
+      // Parse string chart format
+      const lines = chartData.trim().split('\n');
+      title = lines[0] || title;
+      labels = lines[1]?.split(',').map(l => l.trim()) || [];
+      values = lines[2]?.split(',').map(v => parseFloat(v.trim())) || [];
+    } else if (Array.isArray(chartData)) {
+      // Handle array format
+      if (chartData.length > 0) {
+        title = chartData[0]?.title || title;
+        labels = chartData[0]?.labels || chartData[0]?.x || [];
+        values = chartData[0]?.values || chartData[0]?.y || [];
+        chartType = chartData[0]?.type || chartType;
+      }
+    } else if (chartData.labels && chartData.values) {
+      // Handle object format
+      title = chartData.title || title;
+      labels = chartData.labels;
+      values = chartData.values;
+      chartType = chartData.type || chartType;
+    }
+
+    const maxValue = Math.max(...values, 1);
+
     return (
-      <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mb-4 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
           <BarChart3 size={16} className="text-emerald-600" />
-          <span className="text-xs font-semibold text-slate-700">Data Grafik:</span>
+          <span className="text-xs lg:text-sm font-semibold text-slate-700">{title}:</span>
         </div>
-        <div className="text-xs font-mono whitespace-pre-wrap text-slate-800">
-          {typeof representation.data === 'string' 
-            ? representation.data 
-            : JSON.stringify(representation.data, null, 2)}
+        <div className="space-y-2">
+          {labels.map((label, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-24 lg:w-32 text-xs lg:text-sm text-slate-600 text-right flex-shrink-0">
+                <LatexWrapper text={label} />
+              </div>
+              <div className="flex-1 bg-slate-200 rounded-full h-4 lg:h-5 overflow-hidden">
+                <div 
+                  className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${(values[i] / maxValue) * 100}%` }}
+                />
+              </div>
+              <div className="w-12 lg:w-16 text-xs lg:text-sm font-semibold text-slate-700 text-right flex-shrink-0">
+                {values[i]}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // Render statement/list representation
+  // Render statement/list representation (Q and P type)
   if (representation.type === 'statement' || representation.type === 'list') {
+    const statementData = representation.data;
+    let statements = [];
+
+    if (typeof statementData === 'string') {
+      // Parse string format - each line is a statement
+      statements = statementData.trim().split('\n').filter(s => s.trim());
+    } else if (Array.isArray(statementData)) {
+      statements = statementData;
+    } else if (statementData.statements && Array.isArray(statementData.statements)) {
+      statements = statementData.statements;
+    }
+
     return (
-      <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mb-4 p-3 lg:p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
           <FileText size={16} className="text-amber-600" />
-          <span className="text-xs font-semibold text-amber-800">Pernyataan:</span>
+          <span className="text-xs lg:text-sm font-semibold text-amber-800">Pernyataan:</span>
         </div>
-        <div className="text-xs text-amber-900 whitespace-pre-wrap leading-relaxed">
-          {typeof representation.data === 'string' 
-            ? representation.data 
-            : JSON.stringify(representation.data, null, 2)}
+        <div className="space-y-2">
+          {statements.map((stmt, i) => (
+            <div key={i} className="flex items-start gap-2 p-2 lg:p-3 bg-white rounded-lg border border-amber-100">
+              <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-amber-100 text-amber-700 text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                {String.fromCharCode(65 + i)}
+              </span>
+              <p className="text-xs lg:text-sm text-amber-900 leading-relaxed flex-1">
+                <LatexWrapper text={typeof stmt === 'string' ? stmt : JSON.stringify(stmt)} />
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Render grid_boolean (Hitung Benar) representation
+  if (representation.type === 'grid_boolean') {
+    const gridData = representation.data;
+    let statements = [];
+
+    if (typeof gridData === 'string') {
+      statements = gridData.trim().split('\n').filter(s => s.trim());
+    } else if (Array.isArray(gridData)) {
+      statements = gridData;
+    } else if (gridData.statements && Array.isArray(gridData.statements)) {
+      statements = gridData.statements;
+    }
+
+    return (
+      <div className="mb-4 p-3 lg:p-4 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <FileText size={16} className="text-orange-600" />
+          <span className="text-xs lg:text-sm font-semibold text-orange-800">Pernyataan yang perlu dievaluasi:</span>
+        </div>
+        <div className="space-y-2">
+          {statements.map((stmt, i) => (
+            <div key={i} className="flex items-start gap-2 p-2 lg:p-3 bg-white rounded-lg border border-orange-100">
+              <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-orange-100 text-orange-700 text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                {i + 1}
+              </span>
+              <p className="text-xs lg:text-sm text-orange-900 leading-relaxed flex-1">
+                <LatexWrapper text={typeof stmt === 'string' ? stmt : JSON.stringify(stmt)} />
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs lg:text-sm font-semibold text-orange-800 mt-3 pt-3 border-t border-orange-200">
+          Berapa banyak pernyataan yang benar?
+        </p>
+      </div>
+    );
+  }
+
+  // Render image/diagram representation
+  if (representation.type === 'image' || representation.type === 'diagram') {
+    const imageData = representation.data;
+    let imageUrl = '';
+    let altText = 'Gambar/Diagram';
+
+    if (typeof imageData === 'string') {
+      imageUrl = imageData;
+    } else if (imageData.url) {
+      imageUrl = imageData.url;
+      altText = imageData.alt || altText;
+    }
+
+    return (
+      <div className="mb-4 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <FileText size={16} className="text-indigo-600" />
+          <span className="text-xs lg:text-sm font-semibold text-slate-700">Gambar/Diagram:</span>
+        </div>
+        {imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={altText}
+            className="w-full h-auto rounded-lg border border-slate-300"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'block';
+            }}
+          />
+        ) : null}
+        <p className="text-xs text-slate-500 text-center hidden">Gambar tidak dapat dimuat</p>
+      </div>
+    );
+  }
+
+  // Render thread/relasi pernyataan representation
+  if (representation.type === 'thread' || representation.type === 'relation') {
+    const threadData = representation.data;
+    let nodes = [];
+
+    if (typeof threadData === 'string') {
+      nodes = threadData.trim().split('\n').filter(s => s.trim());
+    } else if (Array.isArray(threadData)) {
+      nodes = threadData;
+    } else if (threadData.nodes && Array.isArray(threadData.nodes)) {
+      nodes = threadData.nodes;
+    }
+
+    return (
+      <div className="mb-4 p-3 lg:p-4 bg-purple-50 border border-purple-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <FileText size={16} className="text-purple-600" />
+          <span className="text-xs lg:text-sm font-semibold text-purple-800">Relasi Pernyataan:</span>
+        </div>
+        <div className="space-y-3">
+          {nodes.map((node, i) => (
+            <div key={i} className="relative">
+              <div className="flex items-start gap-3 p-2 lg:p-3 bg-white rounded-lg border border-purple-100">
+                <span className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-purple-100 text-purple-700 text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {i + 1}
+                </span>
+                <p className="text-xs lg:text-sm text-purple-900 leading-relaxed flex-1">
+                  <LatexWrapper text={typeof node === 'string' ? node : node.text || JSON.stringify(node)} />
+                </p>
+              </div>
+              {i < nodes.length - 1 && (
+                <div className="flex justify-center my-1">
+                  <div className="w-0.5 h-4 bg-purple-300" />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -382,21 +606,6 @@ const LiveBattle = ({ user }) => {
                 <p className="text-xs text-red-600">Tipe soal: {getQuestionType(currentQuestion)}</p>
                 <p className="text-xs text-red-600">ID Soal: {currentQuestion.id || 'N/A'}</p>
                 <p className="text-xs text-red-600">Subtes: {currentQuestion.subtest || 'N/A'}</p>
-              </div>
-            )}
-
-            {/* Handle grid_boolean type with special UI */}
-            {getQuestionType(currentQuestion) === 'grid_boolean' && currentQuestion.representation?.data && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-xs font-semibold text-amber-800 mb-2">📋 Pernyataan yang perlu dievaluasi:</p>
-                <div className="text-xs text-amber-900 whitespace-pre-wrap leading-relaxed mb-3">
-                  {typeof currentQuestion.representation.data === 'string' 
-                    ? currentQuestion.representation.data 
-                    : JSON.stringify(currentQuestion.representation.data, null, 2)}
-                </div>
-                <p className="text-xs font-semibold text-amber-800 mb-2">
-                  Berapa banyak pernyataan yang benar?
-                </p>
               </div>
             )}
 
