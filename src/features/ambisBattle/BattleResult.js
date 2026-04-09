@@ -241,11 +241,11 @@ const BattleResult = ({ user }) => {
                 ? 'bg-gradient-to-br from-slate-200 to-slate-300'
                 : 'bg-gradient-to-br from-slate-200 to-slate-300'
             }`}>
-              {iWin ? <Trophy size={36} lg:size={48} className="text-white" /> : isDraw ? <Swords size={36} lg:size={48} className="text-white" /> : <Swords size={36} lg:size={48} className="text-slate-500" />}
+              {iWin ? <Trophy size={48} className="text-white" /> : isDraw ? <Swords size={48} className="text-white" /> : <Swords size={48} className="text-slate-500" />}
             </div>
             {iWin && (
               <div className="absolute -top-2 -right-2 lg:-top-3 lg:-right-3 w-8 h-8 lg:w-10 lg:h-10 bg-amber-400 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-50">
-                <Star size={16} lg:size={20} className="text-white fill-white" />
+                <Star size={20} className="text-white fill-white" />
               </div>
             )}
           </div>
@@ -268,13 +268,13 @@ const BattleResult = ({ user }) => {
               <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl mx-auto mb-2 lg:mb-3 flex items-center justify-center text-sm lg:text-base font-bold text-white ${iWin ? 'bg-amber-500' : 'bg-violet-600'}`}>
                 {me?.name?.[0]?.toUpperCase() || 'M'}
               </div>
-              <p className="text-xs lg:text-sm text-slate-500 font-medium truncate mb-1">{me?.name || 'Kamu'} {iWin && <Crown size={10} lg:size={12} className="inline text-amber-500" />}</p>
+              <p className="text-xs lg:text-sm text-slate-500 font-medium truncate mb-1">{me?.name || 'Kamu'} {iWin && <Crown size={12} className="inline text-amber-500" />}</p>
               <p className={`text-3xl lg:text-4xl font-black ${iWin ? 'text-amber-500' : 'text-slate-800'}`}>{myScore}</p>
             </div>
 
             {/* Center */}
             <div className="px-3 lg:px-4 flex flex-col items-center">
-              <Swords size={20} lg:size={28} className="text-slate-400 mb-1 lg:mb-2" />
+              <Swords size={28} className="text-slate-400 mb-1 lg:mb-2" />
               <p className="text-xs lg:text-sm text-slate-400 font-bold">VS</p>
             </div>
 
@@ -283,7 +283,7 @@ const BattleResult = ({ user }) => {
               <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl mx-auto mb-2 lg:mb-3 flex items-center justify-center text-sm lg:text-base font-bold text-white ${!iWin && !isDraw ? 'bg-indigo-500' : 'bg-slate-400'}`}>
                 {opponent?.name?.[0]?.toUpperCase() || '?'}
               </div>
-              <p className="text-xs lg:text-sm text-slate-500 font-medium truncate mb-1">{opponent?.name || 'Lawan'} {!iWin && !isDraw && <Crown size={10} lg:size={12} className="inline text-amber-500" />}</p>
+              <p className="text-xs lg:text-sm text-slate-500 font-medium truncate mb-1">{opponent?.name || 'Lawan'} {!iWin && !isDraw && <Crown size={12} className="inline text-amber-500" />}</p>
               <p className={`text-3xl lg:text-4xl font-black ${!iWin && !isDraw ? 'text-indigo-600' : 'text-slate-800'}`}>{opponentScore}</p>
             </div>
           </div>
@@ -294,9 +294,9 @@ const BattleResult = ({ user }) => {
           <p className="text-xs lg:text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3 lg:mb-4">Statistik Kamu</p>
           <div className="grid grid-cols-3 lg:gap-6 gap-3">
             {[
-              { icon: <Target size={16} lg:size={20} className="text-emerald-500" />, label: 'Akurasi', value: `${accuracy}%`, color: 'text-emerald-600' },
-              { icon: <CheckCircle2 size={16} lg:size={20} className="text-blue-500" />, label: 'Benar', value: `${correctCount}/${questions.length}`, color: 'text-blue-600' },
-              { icon: <Clock size={16} lg:size={20} className="text-amber-500" />, label: 'Rata Waktu', value: `${avgTime}s`, color: 'text-amber-600' },
+              { icon: <Target size={20} className="text-emerald-500" />, label: 'Akurasi', value: `${accuracy}%`, color: 'text-emerald-600' },
+              { icon: <CheckCircle2 size={20} className="text-blue-500" />, label: 'Benar', value: `${correctCount}/${questions.length}`, color: 'text-blue-600' },
+              { icon: <Clock size={20} className="text-amber-500" />, label: 'Rata Waktu', value: `${avgTime}s`, color: 'text-amber-600' },
             ].map((stat, i) => (
               <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl p-3 lg:p-4 text-center">
                 <div className="flex justify-center mb-2 lg:mb-3">{stat.icon}</div>
@@ -313,7 +313,7 @@ const BattleResult = ({ user }) => {
             <div className="flex items-center justify-between mb-3 lg:mb-4">
               <p className="text-xs lg:text-sm font-semibold text-slate-400 uppercase tracking-wide">Evaluasi & Pembahasan Lengkap</p>
               <div className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm text-amber-600">
-                <BookOpen size={12} lg:size={14} />
+                <BookOpen size={14} />
                 <span>Klik untuk detail</span>
               </div>
             </div>
@@ -502,13 +502,13 @@ const BattleResult = ({ user }) => {
             onClick={handlePlayAgain}
             className="w-full py-3.5 lg:py-4 text-sm lg:text-base bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 lg:gap-3 shadow-lg shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
-            <RotateCcw size={18} lg:size={20} /> Main Lagi
+            <RotateCcw size={20} /> Main Lagi
           </button>
           <button
             onClick={handleHome}
             className="w-full py-3 lg:py-3.5 text-sm lg:text-base text-slate-500 font-semibold hover:bg-slate-100 hover:text-slate-800 rounded-xl transition-all flex items-center justify-center gap-2 lg:gap-3"
           >
-            <Home size={16} lg:size={18} /> Kembali ke Beranda
+            <Home size={18} /> Kembali ke Beranda
           </button>
         </div>
       </div>

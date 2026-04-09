@@ -81,7 +81,7 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
         {/* Header */}
         <div className="text-center mb-8 lg:mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-200 mb-4 lg:mb-6">
-            <Swords size={28} lg:size={36} className="text-white" />
+            <Swords size={36} className="text-white" />
           </div>
           <h1 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tight">Ambis Battle</h1>
           <p className="text-sm lg:text-base text-slate-500 mt-1 lg:mt-2">Duel soal SNBT 1v1 secara real-time</p>
@@ -100,7 +100,7 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
         {!user && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 lg:p-5 mb-5 lg:mb-6 flex items-center gap-3 lg:gap-4">
             <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <Wifi size={16} lg:size={20} className="text-amber-600" />
+              <Wifi size={20} className="text-amber-600" />
             </div>
             <div>
               <p className="text-xs lg:text-sm font-semibold text-amber-800">Login diperlukan</p>
@@ -126,13 +126,13 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Plus size={22} lg:size={26} className="text-white" />
+                  <Plus size={26} className="text-white" />
                 </div>
                 <div className="flex-1">
                   <div className="font-bold text-slate-900 text-base lg:text-lg">Buat Room</div>
                   <div className="text-xs lg:text-sm text-slate-500 mt-0.5 lg:mt-1">Jadilah host, buat soal, tantang teman</div>
                 </div>
-                <ChevronRight size={18} lg:size={20} className="text-slate-400 group-hover:text-violet-500 transition-colors" />
+                <ChevronRight size={20} className="text-slate-400 group-hover:text-violet-500 transition-colors" />
               </div>
             </button>
 
@@ -142,13 +142,13 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <LogIn size={22} lg:size={26} className="text-white" />
+                  <LogIn size={26} className="text-white" />
                 </div>
                 <div className="flex-1">
                   <div className="font-bold text-slate-900 text-base lg:text-lg">Masuk Room</div>
                   <div className="text-xs lg:text-sm text-slate-500 mt-0.5 lg:mt-1">Masukkan kode 6 digit dari teman</div>
                 </div>
-                <ChevronRight size={18} lg:size={20} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                <ChevronRight size={20} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
               </div>
             </button>
 
@@ -186,15 +186,14 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
               ))}
             </div>
           </div>
-          </div>
         ) : mode === 'create' ? (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm lg:max-w-2xl lg:mx-auto">
             <button onClick={() => { setMode(null); setError(''); }} className="flex items-center gap-1 text-xs lg:text-sm text-slate-500 hover:text-slate-700 mb-5 lg:mb-6 transition-colors">
-              <ArrowLeft size={14} lg:size={16} /> Pilihan lain
+              <ArrowLeft size={16} /> Pilihan lain
             </button>
             <div className="text-center mb-6 lg:mb-8">
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-violet-100 flex items-center justify-center mx-auto mb-3 lg:mb-4">
-                <Plus size={24} lg:size={28} className="text-violet-600" />
+                <Plus size={28} className="text-violet-600" />
               </div>
               <h2 className="font-bold text-slate-900 text-lg lg:text-xl">Buat Room Baru</h2>
               <p className="text-xs lg:text-sm text-slate-500 mt-1 lg:mt-2">Kamu akan menjadi host dan bisa membuat soal</p>
@@ -214,18 +213,18 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
               {loading ? (
                 <><span className="w-4 h-4 lg:w-5 lg:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Membuat room...</>
               ) : (
-                <><Plus size={18} lg:size={20} /> Buat Room Sekarang</>
+                <><Plus size={20} /> Buat Room Sekarang</>
               )}
             </button>
           </div>
         ) : (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm lg:max-w-2xl lg:mx-auto">
             <button onClick={() => { setMode(null); setError(''); setRoomCode(''); }} className="flex items-center gap-1 text-xs lg:text-sm text-slate-500 hover:text-slate-700 mb-5 lg:mb-6 transition-colors">
-              <ArrowLeft size={14} lg:size={16} /> Pilihan lain
+              <ArrowLeft size={16} /> Pilihan lain
             </button>
             <div className="text-center mb-6 lg:mb-8">
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3 lg:mb-4">
-                <LogIn size={24} lg:size={28} className="text-indigo-600" />
+                <LogIn size={28} className="text-indigo-600" />
               </div>
               <h2 className="font-bold text-slate-900 text-lg lg:text-xl">Masuk Room</h2>
               <p className="text-xs lg:text-sm text-slate-500 mt-1 lg:mt-2">Minta kode 6 digit dari host room</p>
@@ -254,7 +253,7 @@ const AmbisBattleLobby = ({ user, onLogin }) => {
               {loading ? (
                 <><span className="w-4 h-4 lg:w-5 lg:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Bergabung...</>
               ) : (
-                <><Users size={18} lg:size={20} /> Masuk ke Room</>
+                <><Users size={20} /> Masuk ke Room</>
               )}
             </button>
           </div>

@@ -631,8 +631,8 @@ const LiveBattle = ({ user }) => {
                       <div className="flex-1 leading-snug">
                          <LatexWrapper text={option || ''} />
                       </div>
-                      {revealStatus && isActuallyCorrect && <CheckCircle2 size={18} lg:size={20} className="text-emerald-500 shrink-0" />}
-                      {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={18} lg:size={20} className="text-red-500 shrink-0" />}
+                      {revealStatus && isActuallyCorrect && <CheckCircle2 size={20} className="text-emerald-500 shrink-0" />}
+                      {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={20} className="text-red-500 shrink-0" />}
                     </button>
                   );
                 })
@@ -660,13 +660,13 @@ const LiveBattle = ({ user }) => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 lg:gap-3">
                         {isCorrect ? (
-                          <><Zap size={18} lg:size={20} className="text-emerald-600" />
+                          <><Zap size={20} className="text-emerald-600" />
                           <span className="text-sm lg:text-base font-bold text-emerald-700">Tepat Sekali!</span></>
                         ) : myAnswerIndex === -1 ? (
-                          <><Clock size={18} lg:size={20} className="text-red-500" />
+                          <><Clock size={20} className="text-red-500" />
                           <span className="text-sm lg:text-base font-bold text-red-700">Waktu Habis!</span></>
                         ) : (
-                          <><XCircle size={18} lg:size={20} className="text-red-500" />
+                          <><XCircle size={20} className="text-red-500" />
                           <span className="text-sm lg:text-base font-bold text-red-700">Salah Jawaban!</span></>
                         )}
                       </div>
@@ -677,7 +677,7 @@ const LiveBattle = ({ user }) => {
                           onClick={() => setShowExplanation(!showExplanation)}
                           className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm lg:text-base font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
                         >
-                          <BookOpen size={14} lg:size={16} />
+                          <BookOpen size={16} />
                           {showExplanation ? 'Tutup Pembahasan' : 'Lihat Pembahasan'}
                         </button>
                       )}
