@@ -624,13 +624,22 @@ export const getQuestionSetById = async (questionSetId) => {
 
 export const saveResultWithId = async (resultData, userId) => {
   try {
+    console.log('Attempting to save result for userId:', userId);
+    console.log('Auth state:', auth.currentUser ? 'Authenticated' : 'Not authenticated');
+    if (auth.currentUser) {
+      console.log('Auth UID:', auth.currentUser.uid);
+    }
+    
     const resultRef = await addDoc(collection(db, 'users', userId, 'results'), {
       ...resultData,
       completedAt: serverTimestamp()
     });
+    console.log('Result saved successfully with ID:', resultRef.id);
     return resultRef.id;
   } catch (error) {
     console.error('Error saving result:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
     throw error;
   }
 };
