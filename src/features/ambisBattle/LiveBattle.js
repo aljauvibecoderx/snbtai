@@ -609,9 +609,11 @@ const LiveBattle = ({ user }) => {
                   <p className="text-sm font-bold text-purple-800 uppercase tracking-wider">Stimulus</p>
                 </div>
                 <div className="pl-8 border-l-3 border-purple-200 space-y-4">
-                  <p className="text-base text-slate-700 leading-loose font-medium">
-                    <LatexWrapper text={currentQuestion.stimulus} />
-                  </p>
+                  {currentQuestion.stimulus.split('\n\n').map((paragraph, index) => (
+                    <p key={index} className="text-base text-slate-700 leading-loose font-medium">
+                      <LatexWrapper text={paragraph.trim()} />
+                    </p>
+                  ))}
                 </div>
               </div>
             )}
