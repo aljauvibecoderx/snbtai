@@ -1053,17 +1053,48 @@ const LiveBattle = ({ user }) => {
                     const isActuallyCorrect = i === currentQuestion.correctIndex;
                     const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
                     const revealStatus = hasMyAnswer; 
-                  <p className="text-base text-slate-600 mb-3">Tidak ada opsi jawaban untuk soal ini.</p>
-                  <button 
-                    onClick={() => {
-                      console.error('Question with missing options:', currentQuestion);
-                      alert('Error: Opsi jawaban tidak ditemukan. Lihat console untuk detail.');
-                    }}
-                    className="text-sm text-indigo-600 underline"
-                  >
-                    Lihat Detail Error
-                  </button>
-                </div>
+
+                    let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
+                    if (revealStatus) {
+                      if (isActuallyCorrect) {
+                        btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800';
+                      } else if (isSelected && !isActuallyCorrect) {
+                        btnClass = 'bg-red-50 border-red-500 text-red-800';
+                      } else {
+                        btnClass = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleAnswerSubmit(i)}
+                        disabled={hasMyAnswer || phase !== 'playing'}
+                        className={`w-full text-left border rounded-xl p-4 lg:p-6 min-h-[60px] transition-all flex items-center gap-3 lg:gap-4 text-sm lg:text-base ${btnClass} disabled:cursor-default`}
+                      >
+                        <div className="flex-1 leading-snug">
+                           <LatexWrapper text={option || ''} />
+                        </div>
+                        {revealStatus && isActuallyCorrect && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
+                        {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={16} className="text-red-500 shrink-0" />}
+                      </button>
+                    );
+                  })
+                ) : (
+                  /* Fallback for missing options */
+                  <div className="p-4 bg-slate-100 border border-slate-300 rounded-xl text-center">
+                    <p className="text-base text-slate-600 mb-3">Tidak ada opsi jawaban untuk soal ini.</p>
+                    <button 
+                      onClick={() => {
+                        console.error('Question with missing options:', currentQuestion);
+                        alert('Error: Opsi jawaban tidak ditemukan. Lihat console untuk detail.');
+                      }}
+                      className="text-sm text-indigo-600 underline"
+                    >
+                      Lihat Detail Error
+                    </button>
+                  </div>
+                )
               )}
 
               {/* Post-Answer Feedback Block */}
