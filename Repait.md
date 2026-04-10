@@ -1,29 +1,19 @@
-🐛 Bug Report — AmbisBattle Live (Tambahan)
-Isu 3: Relasi Pernyataan Kosong (Blank)
-Konteks:
-Soal tipe Relasi Pernyataan di subtes LBE — tampilan desktop (gambar baru).
+🐛 Bug Report — Relasi Pernyataan (Lanjutan Isu 3)
+Isu 3a: Metadata Post (Author & Date) Tidak Tampil
 Masalah:
-Bagian "RELASI PERNYATAAN" tampil sebagai kotak kosong — konten/teks pernyataannya tidak muncul sama sekali.
+Di bagian Relasi Pernyataan, setiap post hanya menampilkan konten teksnya saja — tanpa keterangan:
+
+Nama author (contoh: Dr. Anya Sharma (Geneticist))
+Tanggal & waktu post (contoh: January 15, 2024, 10:30 AM GMT)
+
 Yang seharusnya:
-Kotak Relasi Pernyataan harus menampilkan daftar pernyataan-pernyataan yang perlu dievaluasi oleh user.
+Setiap post card di Relasi Pernyataan harus menampilkan header berisi author + date, sama seperti yang tertulis di Stimulus.
+
+Isu 3b: Jumlah Post di Relasi Pernyataan Tidak Lengkap
+Masalah:
+Post yang ditampilkan di Relasi Pernyataan lebih sedikit dari yang ada di Stimulus. Contoh: Stimulus punya 5 post thread, tapi Relasi Pernyataan hanya render 4.
 Kemungkinan root cause:
 
-Data pernyataan gagal di-fetch / tidak ter-render ke komponen
-Komponen Relasi Pernyataan tidak membaca field yang benar dari response soal
-Bisa juga konten soal memang kosong di database (data issue)
-
-
-Isu 4: Soal Boolean — Tabel Ya/Tidak Tidak Muncul, Teks Pernyataan Hilang
-Konteks:
-Soal tipe boolean/hitung benar di AmbisBattle Live (konfirmasi dari isu 1 sebelumnya).
-Masalah yang terkonfirmasi ada 2 lapis:
-
-Teks pernyataan tidak muncul — list pernyataan (1), (2), (3), dst. tidak ter-render
-Format tabel Ya/Tidak tidak muncul — UI tetap menampilkan pilihan ganda 0–4 alih-alih tabel evaluasi per pernyataan
-
-Soal jenis Literasi bahasa inggris timernya belum 1 menit
-
-Yang seharusnya:
-
-Teks setiap pernyataan harus tampil
-Format jawaban harus berupa tabel Benar/Salah per pernyataan, bukan opsi angka
+Ada off-by-one error saat mapping array post ke komponen
+Post terakhir terpotong karena limit hardcoded
+Kondisi render yang salah (misal filter yang tidak sengaja exclude satu item)
