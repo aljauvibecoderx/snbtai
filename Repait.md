@@ -21,6 +21,8 @@ Masalah yang terkonfirmasi ada 2 lapis:
 Teks pernyataan tidak muncul — list pernyataan (1), (2), (3), dst. tidak ter-render
 Format tabel Ya/Tidak tidak muncul — UI tetap menampilkan pilihan ganda 0–4 alih-alih tabel evaluasi per pernyataan
 
+Soal jenis Literasi bahasa inggris timernya belum 1 menit
+
 Yang seharusnya:
 
 Teks setiap pernyataan harus tampil
