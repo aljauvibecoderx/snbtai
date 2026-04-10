@@ -332,7 +332,10 @@ const QuestionRepresentation = ({ representation }) => {
     } else {
       console.log('Thread/Relation: Could not parse data, checking alternative fields');
       // Try alternative data structures
-      if (threadData.statements && Array.isArray(threadData.statements)) {
+      if (threadData.posts && Array.isArray(threadData.posts)) {
+        nodes = threadData.posts;
+        console.log('Thread/Relation: Parsed from data.posts', nodes);
+      } else if (threadData.statements && Array.isArray(threadData.statements)) {
         nodes = threadData.statements;
         console.log('Thread/Relation: Parsed from data.statements', nodes);
       } else if (threadData.items && Array.isArray(threadData.items)) {
@@ -359,7 +362,15 @@ const QuestionRepresentation = ({ representation }) => {
                   {i + 1}
                 </span>
                 <p className="text-xs lg:text-sm text-purple-900 leading-relaxed flex-1 font-medium">
-                  <LatexWrapper text={typeof node === 'string' ? node : node.text || JSON.stringify(node)} />
+                  <LatexWrapper text={
+                    typeof node === 'string' ? node : 
+                    node.text || 
+                    node.content || 
+                    node.body || 
+                    node.message || 
+                    node.description ||
+                    JSON.stringify(node)
+                  } />
                 </p>
               </div>
               {i < nodes.length - 1 && (
