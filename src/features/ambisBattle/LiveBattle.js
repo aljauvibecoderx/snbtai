@@ -802,11 +802,20 @@ const LiveBattle = ({ user }) => {
               
               {/* Stimulus Section */}
               {currentQuestion.stimulus && (
-                <div className="mb-6 p-4 lg:p-6 bg-purple-100 border border-purple-300 rounded-lg">
-                  <p className="text-sm lg:text-base font-semibold text-black mb-3">📄 Stimulus:</p>
-                  <p className="text-sm lg:text-base text-black leading-relaxed">
-                    <LatexWrapper text={currentQuestion.stimulus} />
-                  </p>
+                <div className="mb-8 p-5 lg:p-7 bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-6 h-6 bg-purple-200 rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-sm font-bold text-purple-700">📄</span>
+                    </div>
+                    <p className="text-sm lg:text-base font-bold text-purple-800 uppercase tracking-wider">Stimulus</p>
+                  </div>
+                  <div className="pl-8 border-l-3 border-purple-200 space-y-4">
+                    {currentQuestion.stimulus.split('\n\n').map((paragraph, index) => (
+                      <p key={index} className="text-base lg:text-lg text-slate-700 leading-loose font-medium">
+                        <LatexWrapper text={paragraph.trim()} />
+                      </p>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -814,11 +823,18 @@ const LiveBattle = ({ user }) => {
               <QuestionRepresentation representation={currentQuestion.representation} />
               
               {/* Question Text */}
-              <div className="mb-4">
-                <p className="text-sm lg:text-base font-semibold text-slate-600 mb-3">Pertanyaan:</p>
-                <p className="text-slate-800 text-base lg:text-lg leading-relaxed font-medium">
-                   <LatexWrapper text={currentQuestion.text || ''} />
-                </p>
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-violet-200 rounded-full flex items-center justify-center shadow-sm">
+                    <span className="text-sm font-bold text-violet-700">❓</span>
+                  </div>
+                  <p className="text-sm lg:text-base font-bold text-violet-800 uppercase tracking-wider">Pertanyaan</p>
+                </div>
+                <div className="pl-8 border-l-3 border-violet-200">
+                  <p className="text-base lg:text-lg text-slate-800 leading-loose font-semibold">
+                     <LatexWrapper text={currentQuestion.text || ''} />
+                  </p>
+                </div>
               </div>
             </div>
           )}
