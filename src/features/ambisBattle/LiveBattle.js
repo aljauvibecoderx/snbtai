@@ -5,7 +5,7 @@ import {
   AlertCircle, Swords, BookOpen, ChevronDown, ChevronUp,
   Table, BarChart3, FileText, HelpCircle
 } from 'lucide-react';
-import { useBattleEngine, QUESTION_DURATION } from '../../services/battleEngine';
+import { useBattleEngine, QUESTION_DURATION, getQuestionDuration } from '../../services/battleEngine';
 import LatexWrapper from '../../utils/latex';
 import SeamlessAudioPlayer from '../../components/SeamlessAudioPlayer';
 
@@ -394,6 +394,128 @@ const getQuestionType = (question) => {
   return 'text';
 };
 
+// ─── Grid Boolean Evaluator Component ───────────────────────────────────────
+const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, handleAnswerSubmit, phase }) => {
+  const [answers, setAnswers] = React.useState({});
+  
+  // Parse statements from representation data
+  const getStatements = () => {
+    const data = currentQuestion.representation?.data;
+    if (!data) return [];
+    
+    if (typeof data === 'string') {
+      return data.trim().split('\n').filter(s => s.trim());
+    } else if (Array.isArray(data)) {
+      return data;
+    } else if (data.statements && Array.isArray(data.statements)) {
+      return data.statements;
+    }
+    return [];
+  };
+
+  const statements = getStatements();
+
+  const handleStatementAnswer = (statementIndex, isTrue) => {
+    if (hasMyAnswer || phase !== 'playing') return;
+    
+    const newAnswers = { ...answers, [statementIndex]: isTrue };
+    setAnswers(newAnswers);
+    
+    // Convert to single answer format for compatibility
+    const trueCount = Object.values(newAnswers).filter(Boolean).length;
+    handleAnswerSubmit(trueCount);
+  };
+
+  const getStatementStatus = (index) => {
+    if (!hasMyAnswer) return 'unanswered';
+    
+    const userAnswer = answers[index];
+    const isCorrect = userAnswer === true; // Assume all statements should be evaluated individually
+    
+    if (userAnswer === undefined) return 'unanswered';
+    return isCorrect ? 'correct' : 'incorrect';
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-200">
+              <th className="text-left py-2 px-3 text-sm font-semibold text-slate-700">Pernyataan</th>
+              <th className="text-center py-2 px-3 text-sm font-semibold text-slate-700 w-20">Benar</th>
+              <th className="text-center py-2 px-3 text-sm font-semibold text-slate-700 w-20">Salah</th>
+            </tr>
+          </thead>
+          <tbody>
+            {statements.map((statement, index) => {
+              const status = getStatementStatus(index);
+              const isSelected = answers[index] === true;
+              const isFalseSelected = answers[index] === false;
+              
+              return (
+                <tr key={index} className="border-b border-slate-100 last:border-b-0">
+                  <td className="py-3 px-3 text-sm text-slate-700">
+                    <span className="font-medium">{index + 1}.</span> {statement}
+                  </td>
+                  <td className="py-3 px-3 text-center">
+                    <button
+                      onClick={() => handleStatementAnswer(index, true)}
+                      disabled={hasMyAnswer || phase !== 'playing'}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        isSelected && status === 'correct'
+                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                          : isSelected && status === 'incorrect'
+                          ? 'bg-red-500 border-red-500 text-white'
+                          : isSelected
+                          ? 'bg-slate-200 border-slate-300 text-slate-600'
+                          : 'bg-white border-slate-300 text-slate-400 hover:border-emerald-400 hover:text-emerald-600'
+                      } disabled:cursor-default disabled:opacity-50`}
+                    >
+                      ✓
+                    </button>
+                  </td>
+                  <td className="py-3 px-3 text-center">
+                    <button
+                      onClick={() => handleStatementAnswer(index, false)}
+                      disabled={hasMyAnswer || phase !== 'playing'}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        isFalseSelected && status === 'correct'
+                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                          : isFalseSelected && status === 'incorrect'
+                          ? 'bg-red-500 border-red-500 text-white'
+                          : isFalseSelected
+                          ? 'bg-slate-200 border-slate-300 text-slate-600'
+                          : 'bg-white border-slate-300 text-slate-400 hover:border-red-400 hover:text-red-600'
+                      } disabled:cursor-default disabled:opacity-50`}
+                    >
+                      ✗
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      
+      {!hasMyAnswer && Object.keys(answers).length === 0 && (
+        <p className="text-xs text-slate-500 text-center">
+          Evaluasi setiap pernyataan dengan memilih Benar atau Salah
+        </p>
+      )}
+      
+      {hasMyAnswer && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+          <p className="text-sm text-slate-600 text-center">
+            Jawaban Anda: <span className="font-semibold">{Object.values(answers).filter(Boolean).length}</span> pernyataan benar
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const LiveBattle = ({ user }) => {
   const params = useParams();
   const navigate = useNavigate();
@@ -465,7 +587,8 @@ const LiveBattle = ({ user }) => {
   const myScore = myPlayer?.score || 0;
   const opponentScore = opponent?.score || 0;
   
-  const timerPercent = (timeLeft / QUESTION_DURATION) * 100;
+  const currentQuestionDuration = getQuestionDuration(currentQuestion);
+  const timerPercent = (timeLeft / currentQuestionDuration) * 100;
   const timerColor = timeLeft > 15 ? 'bg-emerald-500' : timeLeft > 7 ? 'bg-amber-400' : 'bg-red-500';
 
   // --- Shared Audio Player - Seamless Across Phases ---
@@ -913,42 +1036,23 @@ const LiveBattle = ({ user }) => {
                 </div>
               )}
 
-              {/* Standard options rendering */}
-              {currentQuestion.options && currentQuestion.options.length > 0 ? (
-                currentQuestion.options.map((option, i) => {
-                  const isSelected = myAnswerIndex === i;
-                  const isActuallyCorrect = i === currentQuestion.correctIndex;
-                  const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
-                  const revealStatus = hasMyAnswer; 
-
-                  let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
-                  if (revealStatus) {
-                    if (isActuallyCorrect) {
-                      btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-800';
-                    } else if (isSelected && !isActuallyCorrect) {
-                      btnClass = 'bg-red-50 border-red-500 text-red-800';
-                    } else {
-                      btnClass = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
-                    }
-                  }
-
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswerSubmit(i)}
-                      disabled={hasMyAnswer || phase !== 'playing'}
-                      className={`w-full text-left border rounded-xl p-4 lg:p-6 min-h-[60px] transition-all flex items-center gap-3 lg:gap-4 text-sm lg:text-base ${btnClass} disabled:cursor-default`}
-                    >
-                      <div className="flex-1 leading-snug">
-                         <LatexWrapper text={option || ''} />
-                      </div>
-                      {revealStatus && isActuallyCorrect && <CheckCircle2 size={20} className="text-emerald-500 shrink-0" />}
-                      {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={20} className="text-red-500 shrink-0" />}
-                    </button>
-                  );
-                })
+              {/* Custom grid_boolean evaluation interface */}
+              {getQuestionType(currentQuestion) === 'grid_boolean' ? (
+                <GridBooleanEvaluator 
+                  currentQuestion={currentQuestion}
+                  myAnswerIndex={myAnswerIndex}
+                  hasMyAnswer={hasMyAnswer}
+                  handleAnswerSubmit={handleAnswerSubmit}
+                  phase={phase}
+                />
               ) : (
-                <div className="p-6 bg-slate-100 border border-slate-300 rounded-xl text-center">
+                /* Standard options rendering for other question types */
+                currentQuestion.options && currentQuestion.options.length > 0 ? (
+                  currentQuestion.options.map((option, i) => {
+                    const isSelected = myAnswerIndex === i;
+                    const isActuallyCorrect = i === currentQuestion.correctIndex;
+                    const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
+                    const revealStatus = hasMyAnswer; 
                   <p className="text-base text-slate-600 mb-3">Tidak ada opsi jawaban untuk soal ini.</p>
                   <button 
                     onClick={() => {

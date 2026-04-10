@@ -1,7 +1,39 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { listenToRoom, submitAnswer, advanceQuestion } from './firebase/ambisBattle';
 
-export const QUESTION_DURATION = 30; // 30 seconds per question
+export const QUESTION_DURATION = 30; // 30 seconds per question (default)
+
+/**
+ * Get question duration based on type and subtest
+ * @param {Object} question - The question object
+ * @returns {number} Duration in seconds
+ */
+export const getQuestionDuration = (question) => {
+  if (!question) return QUESTION_DURATION;
+  
+  const { subtest, type, representation } = question;
+  const questionType = type || representation?.type;
+  
+  // Boolean/Hitung Benar questions -> 60 seconds
+  if (questionType === 'boolean' || questionType === 'grid_boolean') {
+    return 60;
+  }
+  
+  // LBI (Literasi Bahasa Indonesia) -> 60 seconds
+  if (subtest?.toLowerCase().includes('lbi') || 
+      subtest?.toLowerCase().includes('literasi bahasa indonesia')) {
+    return 60;
+  }
+  
+  // LBE (Literasi Bahasa Inggris) -> 60 seconds
+  if (subtest?.toLowerCase().includes('lbe') || 
+      subtest?.toLowerCase().includes('literasi bahasa inggris')) {
+    return 60;
+  }
+  
+  // Default duration
+  return QUESTION_DURATION;
+};
 
 /**
  * useBattleEngine - Centralized battle logic hook
@@ -117,7 +149,9 @@ export const useBattleEngine = (roomId, user) => {
       }
 
       // B. Playing phase
-      const timeRemaining = Math.max(0, QUESTION_DURATION - Math.floor(msSinceStart / 1000));
+      const currentQuestion = questions[currentIndexRef.current];
+      const questionDuration = getQuestionDuration(currentQuestion);
+      const timeRemaining = Math.max(0, questionDuration - Math.floor(msSinceStart / 1000));
       setPhase('playing');
       setTimeLeft(timeRemaining);
 
@@ -130,7 +164,7 @@ export const useBattleEngine = (roomId, user) => {
 
         if (myAnswers?.[qIdx] === undefined) {
           // Auto-submit empty answer
-          submitAnswer(roomId, user.uid, qIdx, -1, QUESTION_DURATION)
+          submitAnswer(roomId, user.uid, qIdx, -1, questionDuration)
             .then(() => triggerAdvance(qIdx))   // ← advance AFTER submit resolves
             .catch(console.error);
         } else {
@@ -148,7 +182,9 @@ export const useBattleEngine = (roomId, user) => {
     if (phase !== 'playing' || hasMyAnswer) return;
 
     const qIdx = currentIndexRef.current;
-    const timeTaken = Math.max(1, QUESTION_DURATION - timeLeft);
+    const currentQuestion = questions[currentIndexRef.current];
+    const questionDuration = getQuestionDuration(currentQuestion);
+    const timeTaken = Math.max(1, questionDuration - timeLeft);
 
     try {
       await submitAnswer(roomId, user.uid, qIdx, optionIndex, timeTaken);
@@ -164,7 +200,7 @@ export const useBattleEngine = (roomId, user) => {
         }
       }, 1500);
     }
-  }, [phase, hasMyAnswer, roomId, user, timeLeft, triggerAdvance]);
+  }, [phase, hasMyAnswer, roomId, user, timeLeft, triggerAdvance, questions]);
 
   return {
     room,
