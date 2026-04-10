@@ -318,13 +318,30 @@ const QuestionRepresentation = ({ representation }) => {
     const threadData = representation.data;
     let nodes = [];
 
+    console.log('Thread/Relation: Raw data', threadData);
+
     if (typeof threadData === 'string') {
       nodes = threadData.trim().split('\n').filter(s => s.trim());
+      console.log('Thread/Relation: Parsed from string', nodes);
     } else if (Array.isArray(threadData)) {
       nodes = threadData;
+      console.log('Thread/Relation: Parsed from array', nodes);
     } else if (threadData.nodes && Array.isArray(threadData.nodes)) {
       nodes = threadData.nodes;
+      console.log('Thread/Relation: Parsed from data.nodes', nodes);
+    } else {
+      console.log('Thread/Relation: Could not parse data, checking alternative fields');
+      // Try alternative data structures
+      if (threadData.statements && Array.isArray(threadData.statements)) {
+        nodes = threadData.statements;
+        console.log('Thread/Relation: Parsed from data.statements', nodes);
+      } else if (threadData.items && Array.isArray(threadData.items)) {
+        nodes = threadData.items;
+        console.log('Thread/Relation: Parsed from data.items', nodes);
+      }
     }
+
+    console.log('Thread/Relation: Final nodes', nodes);
 
     return (
       <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl shadow-sm">
@@ -369,20 +386,21 @@ const getQuestionType = (question) => {
     return question.representation.type;
   }
   
+  // Check if grid_boolean type (multiple statements to evaluate) - check this first
+  if (question.representation?.type === 'grid_boolean' || 
+      question.text?.toLowerCase().includes('berapa banyak pernyataan yang benar') ||
+      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5)) {
+    return 'grid_boolean';
+  }
+  
   // Check if boolean question (only 2 options, typically Benar/Salah or True/False)
   if (question.options?.length === 2) {
     const opts = question.options.map(o => o.toLowerCase());
-    const hasTrue = opts.some(o => o.includes('benar') || o.includes('true'));
-    const hasFalse = opts.some(o => o.includes('salah') || o.includes('false'));
+    const hasTrue = opts.some(o => o.includes('benar') || o.includes('true') || o.includes('ya'));
+    const hasFalse = opts.some(o => o.includes('salah') || o.includes('false') || o.includes('tidak'));
     if (hasTrue && hasFalse) {
       return 'boolean';
     }
-  }
-  
-  // Check if grid_boolean type (multiple statements to evaluate)
-  if (question.representation?.type === 'grid_boolean' || 
-      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5)) {
-    return 'grid_boolean';
   }
   
   // Check if statement question (text mentions "pernyataan")
@@ -401,15 +419,26 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
   // Parse statements from representation data
   const getStatements = () => {
     const data = currentQuestion.representation?.data;
-    if (!data) return [];
+    if (!data) {
+      console.log('GridBoolean: No data found', currentQuestion.representation);
+      return [];
+    }
+    
+    console.log('GridBoolean: Raw data', data);
     
     if (typeof data === 'string') {
-      return data.trim().split('\n').filter(s => s.trim());
+      const statements = data.trim().split('\n').filter(s => s.trim());
+      console.log('GridBoolean: Parsed statements from string', statements);
+      return statements;
     } else if (Array.isArray(data)) {
+      console.log('GridBoolean: Parsed statements from array', data);
       return data;
     } else if (data.statements && Array.isArray(data.statements)) {
+      console.log('GridBoolean: Parsed statements from data.statements', data.statements);
       return data.statements;
     }
+    
+    console.log('GridBoolean: Could not parse statements, returning empty array');
     return [];
   };
 
@@ -509,6 +538,74 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
           <p className="text-sm text-slate-600 text-center">
             Jawaban Anda: <span className="font-semibold">{Object.values(answers).filter(Boolean).length}</span> pernyataan benar
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Boolean Evaluator Component ───────────────────────────────────────────
+const BooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, handleAnswerSubmit, phase }) => {
+  const [selectedAnswer, setSelectedAnswer] = React.useState(null);
+  
+  const handleBooleanAnswer = (isTrue) => {
+    if (hasMyAnswer || phase !== 'playing') return;
+    
+    setSelectedAnswer(isTrue);
+    // Convert to option index (0 for Benar/True, 1 for Salah/False)
+    const optionIndex = isTrue ? 0 : 1;
+    handleAnswerSubmit(optionIndex);
+  };
+
+  const getButtonClass = (isTrue) => {
+    const isSelected = selectedAnswer === isTrue;
+    const isCorrect = myAnswerIndex === currentQuestion.correctIndex;
+    const actuallyCorrect = isTrue ? (currentQuestion.correctIndex === 0) : (currentQuestion.correctIndex === 1);
+    
+    if (!hasMyAnswer) {
+      return `w-full py-3 px-4 rounded-xl border-2 transition-all font-semibold ${
+        isSelected 
+          ? 'bg-violet-100 border-violet-500 text-violet-700' 
+          : 'bg-white border-slate-300 text-slate-700 hover:border-violet-300 hover:bg-violet-50'
+      }`;
+    }
+    
+    if (actuallyCorrect) {
+      return 'w-full py-3 px-4 rounded-xl border-2 bg-emerald-100 border-emerald-500 text-emerald-700 font-semibold';
+    } else if (isSelected && !actuallyCorrect) {
+      return 'w-full py-3 px-4 rounded-xl border-2 bg-red-100 border-red-500 text-red-700 font-semibold';
+    } else {
+      return 'w-full py-3 px-4 rounded-xl border-2 bg-slate-50 border-slate-200 text-slate-400 font-semibold opacity-60';
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <p className="text-sm text-slate-600 mb-4 text-center">Pilih jawaban yang benar:</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => handleBooleanAnswer(true)}
+            disabled={hasMyAnswer || phase !== 'playing'}
+            className={getButtonClass(true)}
+          >
+            ✓ Benar
+          </button>
+          <button
+            onClick={() => handleBooleanAnswer(false)}
+            disabled={hasMyAnswer || phase !== 'playing'}
+            className={getButtonClass(false)}
+          >
+            ✗ Salah
+          </button>
+        </div>
+      </div>
+      
+      {hasMyAnswer && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+          <p className="text-sm text-slate-600 text-center">
+            Jawaban Anda: <span className="font-semibold">{selectedAnswer ? 'Benar' : 'Salah'}</span>
           </p>
         </div>
       )}
@@ -1036,9 +1133,17 @@ const LiveBattle = ({ user }) => {
                 </div>
               )}
 
-              {/* Custom grid_boolean evaluation interface */}
+              {/* Custom boolean evaluation interfaces */}
               {getQuestionType(currentQuestion) === 'grid_boolean' ? (
                 <GridBooleanEvaluator 
+                  currentQuestion={currentQuestion}
+                  myAnswerIndex={myAnswerIndex}
+                  hasMyAnswer={hasMyAnswer}
+                  handleAnswerSubmit={handleAnswerSubmit}
+                  phase={phase}
+                />
+              ) : getQuestionType(currentQuestion) === 'boolean' ? (
+                <BooleanEvaluator 
                   currentQuestion={currentQuestion}
                   myAnswerIndex={myAnswerIndex}
                   hasMyAnswer={hasMyAnswer}
