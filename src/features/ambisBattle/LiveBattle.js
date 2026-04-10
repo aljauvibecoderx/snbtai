@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Clock, CheckCircle2, XCircle, Zap, Loader2,
@@ -9,7 +9,48 @@ import { useBattleEngine, QUESTION_DURATION } from '../../services/battleEngine'
 import LatexWrapper from '../../utils/latex';
 import SeamlessAudioPlayer from '../../components/SeamlessAudioPlayer';
 
-// Helper to render question representation (table, chart, etc.)
+// ─── ResizeObserver Error Handler ─────────────────────────────────────────────
+const useResizeObserverErrorHandler = () => {
+  const timeoutRef = useRef(null);
+  
+  const handleError = useCallback((event) => {
+    // Debounce the error to prevent console spam
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      console.warn('ResizeObserver loop detected - this is a harmless warning');
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    // Override the default error handler for ResizeObserver
+    const originalError = window.onerror;
+    
+    window.onerror = (message, source, lineno, colno, error) => {
+      if (message && message.includes('ResizeObserver loop completed with undelivered notifications')) {
+        handleError(error);
+        return true; // Prevent the error from showing in console
+      }
+      
+      if (originalError) {
+        return originalError(message, source, lineno, colno, error);
+      }
+      
+      return false;
+    };
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      window.onerror = originalError;
+    };
+  }, [handleError]);
+};
+
+// ─── Interactive Demo Strip ──────────────────────────────────────────────────
 const QuestionRepresentation = ({ representation }) => {
   if (!representation || representation.type === 'text' || !representation.data) {
     return null;
@@ -357,6 +398,9 @@ const LiveBattle = ({ user }) => {
   const params = useParams();
   const navigate = useNavigate();
   const roomId = params.roomId || window.location.pathname.split('/').pop() || sessionStorage.getItem('battle_room');
+
+  // Handle ResizeObserver errors
+  useResizeObserverErrorHandler();
 
   // --- 1. Engine Injection (Centralized Server Logic) ---
   const {
