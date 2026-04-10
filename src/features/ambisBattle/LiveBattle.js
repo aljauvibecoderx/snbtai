@@ -46,35 +46,39 @@ const QuestionRepresentation = ({ representation }) => {
     }
 
     return (
-      <div className="mb-4 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto">
-        <div className="flex items-center gap-2 mb-3">
-          <Table size={16} className="text-indigo-600" />
-          <span className="text-xs lg:text-sm font-semibold text-slate-700">Data Tabel:</span>
+      <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-slate-50 to-blue-50 border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-indigo-200 rounded-full flex items-center justify-center">
+            <Table size={12} className="text-indigo-700" />
+          </div>
+          <span className="text-xs lg:text-sm font-bold text-indigo-800 uppercase tracking-wide">Data Tabel</span>
         </div>
-        <table className="w-full text-xs lg:text-sm border-collapse">
-          <thead>
-            {headers.length > 0 && (
-              <tr className="border-b-2 border-slate-300">
-                {headers.map((header, i) => (
-                  <th key={i} className="px-3 py-2 text-left font-semibold text-slate-800 bg-slate-100">
-                    <LatexWrapper text={header} />
-                  </th>
-                ))}
-              </tr>
-            )}
-          </thead>
-          <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="border-b border-slate-200 last:border-b-0">
-                {Array.isArray(row) && row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="px-3 py-2 text-slate-700">
-                    <LatexWrapper text={cell} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="pl-7 border-l-2 border-indigo-200">
+          <table className="w-full text-xs lg:text-sm border-collapse">
+            <thead>
+              {headers.length > 0 && (
+                <tr className="border-b-2 border-indigo-300">
+                  {headers.map((header, i) => (
+                    <th key={i} className="px-4 py-3 text-left font-bold text-indigo-900 bg-indigo-50">
+                      <LatexWrapper text={header} />
+                    </th>
+                  ))}
+                </tr>
+              )}
+            </thead>
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="border-b border-indigo-100 last:border-b-0 hover:bg-indigo-50 transition-colors">
+                  {Array.isArray(row) && row.map((cell, cellIndex) => (
+                    <td key={cellIndex} className="px-4 py-3 text-slate-700 font-medium">
+                      <LatexWrapper text={cell} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -112,24 +116,26 @@ const QuestionRepresentation = ({ representation }) => {
     const maxValue = Math.max(...values, 1);
 
     return (
-      <div className="mb-4 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <BarChart3 size={16} className="text-emerald-600" />
-          <span className="text-xs lg:text-sm font-semibold text-slate-700">{title}:</span>
+      <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-emerald-200 rounded-full flex items-center justify-center">
+            <BarChart3 size={12} className="text-emerald-700" />
+          </div>
+          <span className="text-xs lg:text-sm font-bold text-emerald-800 uppercase tracking-wide">{title}</span>
         </div>
-        <div className="space-y-2">
+        <div className="pl-7 border-l-2 border-emerald-200 space-y-3">
           {labels.map((label, i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-24 lg:w-32 text-xs lg:text-sm text-slate-600 text-right flex-shrink-0">
+              <div className="w-28 lg:w-32 text-xs lg:text-sm text-slate-600 text-right flex-shrink-0 font-medium">
                 <LatexWrapper text={label} />
               </div>
-              <div className="flex-1 bg-slate-200 rounded-full h-4 lg:h-5 overflow-hidden">
+              <div className="flex-1 bg-emerald-100 rounded-full h-5 lg:h-6 overflow-hidden shadow-inner">
                 <div 
-                  className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-emerald-500 to-green-500 h-full rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${(values[i] / maxValue) * 100}%` }}
                 />
               </div>
-              <div className="w-12 lg:w-16 text-xs lg:text-sm font-semibold text-slate-700 text-right flex-shrink-0">
+              <div className="w-12 lg:w-16 text-xs lg:text-sm font-bold text-emerald-800 text-right flex-shrink-0">
                 {values[i]}
               </div>
             </div>
@@ -154,18 +160,20 @@ const QuestionRepresentation = ({ representation }) => {
     }
 
     return (
-      <div className="mb-4 p-3 lg:p-4 bg-amber-50 border border-amber-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-amber-600" />
-          <span className="text-xs lg:text-sm font-semibold text-amber-800">Pernyataan:</span>
+      <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-amber-200 rounded-full flex items-center justify-center">
+            <FileText size={12} className="text-amber-700" />
+          </div>
+          <span className="text-xs lg:text-sm font-bold text-amber-800 uppercase tracking-wide">Pernyataan</span>
         </div>
-        <div className="space-y-2">
+        <div className="pl-7 border-l-2 border-amber-200 space-y-3">
           {statements.map((stmt, i) => (
-            <div key={i} className="flex items-start gap-2 p-2 lg:p-3 bg-white rounded-lg border border-amber-100">
-              <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-amber-100 text-amber-700 text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div key={i} className="flex items-start gap-3 p-3 lg:p-4 bg-white rounded-lg border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
+              <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 text-white text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                 {String.fromCharCode(65 + i)}
               </span>
-              <p className="text-xs lg:text-sm text-amber-900 leading-relaxed flex-1">
+              <p className="text-xs lg:text-sm text-amber-900 leading-relaxed flex-1 font-medium">
                 <LatexWrapper text={typeof stmt === 'string' ? stmt : JSON.stringify(stmt)} />
               </p>
             </div>
@@ -189,26 +197,30 @@ const QuestionRepresentation = ({ representation }) => {
     }
 
     return (
-      <div className="mb-4 p-3 lg:p-4 bg-orange-50 border border-orange-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-orange-600" />
-          <span className="text-xs lg:text-sm font-semibold text-orange-800">Pernyataan yang perlu dievaluasi:</span>
+      <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-orange-200 rounded-full flex items-center justify-center">
+            <FileText size={12} className="text-orange-700" />
+          </div>
+          <span className="text-xs lg:text-sm font-bold text-orange-800 uppercase tracking-wide">Pernyataan yang perlu dievaluasi</span>
         </div>
-        <div className="space-y-2">
+        <div className="pl-7 border-l-2 border-orange-200 space-y-3">
           {statements.map((stmt, i) => (
-            <div key={i} className="flex items-start gap-2 p-2 lg:p-3 bg-white rounded-lg border border-orange-100">
-              <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-orange-100 text-orange-700 text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div key={i} className="flex items-start gap-3 p-3 lg:p-4 bg-white rounded-lg border border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+              <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-400 text-white text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                 {i + 1}
               </span>
-              <p className="text-xs lg:text-sm text-orange-900 leading-relaxed flex-1">
+              <p className="text-xs lg:text-sm text-orange-900 leading-relaxed flex-1 font-medium">
                 <LatexWrapper text={typeof stmt === 'string' ? stmt : JSON.stringify(stmt)} />
               </p>
             </div>
           ))}
         </div>
-        <p className="text-xs lg:text-sm font-semibold text-orange-800 mt-3 pt-3 border-t border-orange-200">
-          Berapa banyak pernyataan yang benar?
-        </p>
+        <div className="mt-4 pt-4 border-t-2 border-orange-200 pl-7">
+          <p className="text-xs lg:text-sm font-bold text-orange-800 bg-orange-100 px-3 py-2 rounded-lg inline-block">
+            🎯 Berapa banyak pernyataan yang benar?
+          </p>
+        </div>
       </div>
     );
   }
@@ -227,23 +239,35 @@ const QuestionRepresentation = ({ representation }) => {
     }
 
     return (
-      <div className="mb-4 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-indigo-600" />
-          <span className="text-xs lg:text-sm font-semibold text-slate-700">Gambar/Diagram:</span>
+      <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-indigo-200 rounded-full flex items-center justify-center">
+            <FileText size={12} className="text-indigo-700" />
+          </div>
+          <span className="text-xs lg:text-sm font-bold text-indigo-800 uppercase tracking-wide">Gambar/Diagram</span>
         </div>
-        {imageUrl ? (
-          <img 
-            src={imageUrl} 
-            alt={altText}
-            className="w-full h-auto rounded-lg border border-slate-300"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'block';
-            }}
-          />
-        ) : null}
-        <p className="text-xs text-slate-500 text-center hidden">Gambar tidak dapat dimuat</p>
+        <div className="pl-7 border-l-2 border-indigo-200">
+          {imageUrl ? (
+            <div className="bg-white rounded-lg border border-indigo-100 p-2 shadow-sm">
+              <img 
+                src={imageUrl} 
+                alt={altText}
+                className="w-full h-auto rounded-lg"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <div className="hidden p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <p className="text-xs text-indigo-600 font-medium">⚠️ Gambar tidak dapat dimuat</p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <p className="text-xs text-indigo-600 font-medium">⚠️ Tidak ada gambar tersedia</p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -262,25 +286,27 @@ const QuestionRepresentation = ({ representation }) => {
     }
 
     return (
-      <div className="mb-4 p-3 lg:p-4 bg-purple-50 border border-purple-200 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <FileText size={16} className="text-purple-600" />
-          <span className="text-xs lg:text-sm font-semibold text-purple-800">Relasi Pernyataan:</span>
+      <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-purple-200 rounded-full flex items-center justify-center">
+            <FileText size={12} className="text-purple-700" />
+          </div>
+          <span className="text-xs lg:text-sm font-bold text-purple-800 uppercase tracking-wide">Relasi Pernyataan</span>
         </div>
-        <div className="space-y-3">
+        <div className="pl-7 border-l-2 border-purple-200 space-y-3">
           {nodes.map((node, i) => (
             <div key={i} className="relative">
-              <div className="flex items-start gap-3 p-2 lg:p-3 bg-white rounded-lg border border-purple-100">
-                <span className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-purple-100 text-purple-700 text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="flex items-start gap-3 p-3 lg:p-4 bg-white rounded-lg border border-purple-100 shadow-sm hover:shadow-md transition-shadow">
+                <span className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                   {i + 1}
                 </span>
-                <p className="text-xs lg:text-sm text-purple-900 leading-relaxed flex-1">
+                <p className="text-xs lg:text-sm text-purple-900 leading-relaxed flex-1 font-medium">
                   <LatexWrapper text={typeof node === 'string' ? node : node.text || JSON.stringify(node)} />
                 </p>
               </div>
               {i < nodes.length - 1 && (
-                <div className="flex justify-center my-1">
-                  <div className="w-0.5 h-4 bg-purple-300" />
+                <div className="flex justify-center my-2">
+                  <div className="w-1 h-6 bg-gradient-to-b from-purple-300 to-pink-300 rounded-full" />
                 </div>
               )}
             </div>
@@ -575,11 +601,18 @@ const LiveBattle = ({ user }) => {
             
             {/* Stimulus Section */}
             {currentQuestion.stimulus && (
-              <div className="mb-4 p-3 bg-purple-100 border border-purple-300 rounded-lg">
-                <p className="text-xs font-semibold text-black mb-2">📄 Stimulus:</p>
-                <p className="text-xs text-black leading-relaxed">
-                  <LatexWrapper text={currentQuestion.stimulus} />
-                </p>
+              <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-5 h-5 bg-purple-200 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-purple-700">📄</span>
+                  </div>
+                  <p className="text-xs font-bold text-purple-800 uppercase tracking-wide">Stimulus</p>
+                </div>
+                <div className="pl-7 border-l-2 border-purple-200">
+                  <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                    <LatexWrapper text={currentQuestion.stimulus} />
+                  </p>
+                </div>
               </div>
             )}
 
@@ -587,11 +620,18 @@ const LiveBattle = ({ user }) => {
             <QuestionRepresentation representation={currentQuestion.representation} />
             
             {/* Question Text */}
-            <div className="mb-2">
-              <p className="text-xs font-semibold text-slate-600 mb-2">Pertanyaan:</p>
-              <p className="text-slate-800 text-sm leading-relaxed font-medium">
-                 <LatexWrapper text={currentQuestion.text || ''} />
-              </p>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 bg-violet-200 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-violet-700">❓</span>
+                </div>
+                <p className="text-xs font-bold text-violet-800 uppercase tracking-wide">Pertanyaan</p>
+              </div>
+              <div className="pl-7 border-l-2 border-violet-200">
+                <p className="text-sm text-slate-800 leading-relaxed font-semibold">
+                  <LatexWrapper text={currentQuestion.text || ''} />
+                </p>
+              </div>
             </div>
           </div>
         )}
