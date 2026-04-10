@@ -601,15 +601,15 @@ const LiveBattle = ({ user }) => {
             
             {/* Stimulus Section */}
             {currentQuestion.stimulus && (
-              <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-5 h-5 bg-purple-200 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-purple-700">📄</span>
+              <div className="mb-8 p-5 lg:p-6 bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-6 h-6 bg-purple-200 rounded-full flex items-center justify-center shadow-sm">
+                    <span className="text-sm font-bold text-purple-700">📄</span>
                   </div>
-                  <p className="text-xs font-bold text-purple-800 uppercase tracking-wide">Stimulus</p>
+                  <p className="text-sm font-bold text-purple-800 uppercase tracking-wider">Stimulus</p>
                 </div>
-                <div className="pl-7 border-l-2 border-purple-200">
-                  <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                <div className="pl-8 border-l-3 border-purple-200 space-y-4">
+                  <p className="text-base text-slate-700 leading-loose font-medium">
                     <LatexWrapper text={currentQuestion.stimulus} />
                   </p>
                 </div>
