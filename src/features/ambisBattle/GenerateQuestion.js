@@ -454,11 +454,31 @@ const GenerateQuestion = ({ user }) => {
                 q.level === parseInt(bankSoalConfig.level) ||
                 q.difficulty === parseInt(bankSoalConfig.level);
               
-              // Validate question has valid options
-              // For grid_boolean type, auto-generate numeric options (0, 1, 2, 3, ...) based on grid_data length
-              if (q.type === 'grid_boolean' && q.grid_data && Array.isArray(q.grid_data)) {
-                q.options = Array.from({ length: q.grid_data.length + 1 }, (_, i) => i.toString());
+              // Validate question has valid options and auto-generate if needed
+              const questionType = q.representation?.type || q.type;
+              
+              // For grid_boolean type, auto-generate numeric options based on representation data
+              if (questionType === 'grid_boolean') {
+                const statements = q.representation?.data || q.grid_data || [];
+                if (Array.isArray(statements) && statements.length > 0) {
+                  q.options = Array.from({ length: statements.length + 1 }, (_, i) => i.toString());
+                  if (q.correctIndex === -1) q.correctIndex = 0;
+                }
+              }
+              
+              // For boolean type, ensure we have Benar/Salah options
+              if (questionType === 'boolean' && (!q.options || q.options.length === 0)) {
+                q.options = ['Benar', 'Salah'];
                 if (q.correctIndex === -1) q.correctIndex = 0;
+              }
+              
+              // For statement/list type, generate lettered options if missing
+              if ((questionType === 'statement' || questionType === 'list') && (!q.options || q.options.length === 0)) {
+                const statements = q.representation?.data || [];
+                if (Array.isArray(statements) && statements.length > 0) {
+                  q.options = statements.map((_, i) => String.fromCharCode(65 + i)); // A, B, C, D, E
+                  if (q.correctIndex === -1) q.correctIndex = 0;
+                }
               }
               
               const hasValidOptions = q.options && 
@@ -467,6 +487,12 @@ const GenerateQuestion = ({ user }) => {
               
               if (matchesSubtest && matchesLevel && !hasValidOptions) {
                 console.warn(`Question skipped in public set: missing or empty options. Set: "${set.title}"`, q);
+                console.warn('Question details:', {
+                  type: questionType,
+                  representation: q.representation,
+                  originalOptions: q.options,
+                  grid_data: q.grid_data
+                });
               }
               
               return matchesSubtest && matchesLevel && hasValidOptions;
@@ -490,14 +516,30 @@ const GenerateQuestion = ({ user }) => {
                 q.level === parseInt(bankSoalConfig.level) ||
                 q.difficulty === parseInt(bankSoalConfig.level);
               
-              // Validate question has valid options
-              // For grid_boolean type, auto-generate numeric options (0, 1, 2, 3, ...) based on grid_data length
-              if (q.type === 'grid_boolean' && q.grid_data && Array.isArray(q.grid_data)) {
-                // Generate options: 0, 1, 2, 3, ... up to grid_data.length
-                q.options = Array.from({ length: q.grid_data.length + 1 }, (_, i) => i.toString());
-                if (q.correctIndex === -1) {
-                  // If correctIndex not set, default to a reasonable value (should be set in data)
-                  q.correctIndex = 0;
+              // Validate question has valid options and auto-generate if needed
+              const questionType = q.representation?.type || q.type;
+              
+              // For grid_boolean type, auto-generate numeric options based on representation data
+              if (questionType === 'grid_boolean') {
+                const statements = q.representation?.data || q.grid_data || [];
+                if (Array.isArray(statements) && statements.length > 0) {
+                  q.options = Array.from({ length: statements.length + 1 }, (_, i) => i.toString());
+                  if (q.correctIndex === -1) q.correctIndex = 0;
+                }
+              }
+              
+              // For boolean type, ensure we have Benar/Salah options
+              if (questionType === 'boolean' && (!q.options || q.options.length === 0)) {
+                q.options = ['Benar', 'Salah'];
+                if (q.correctIndex === -1) q.correctIndex = 0;
+              }
+              
+              // For statement/list type, generate lettered options if missing
+              if ((questionType === 'statement' || questionType === 'list') && (!q.options || q.options.length === 0)) {
+                const statements = q.representation?.data || [];
+                if (Array.isArray(statements) && statements.length > 0) {
+                  q.options = statements.map((_, i) => String.fromCharCode(65 + i)); // A, B, C, D, E
+                  if (q.correctIndex === -1) q.correctIndex = 0;
                 }
               }
               
