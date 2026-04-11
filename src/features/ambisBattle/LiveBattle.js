@@ -409,7 +409,8 @@ const QuestionRepresentation = ({ representation }) => {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -1145,6 +1146,18 @@ const LiveBattle = ({ user }) => {
                 </div>
                 <div className="pl-8 border-l-3 border-violet-200">
                   <p className="text-base lg:text-lg text-slate-800 leading-loose font-semibold">
+                    <LatexWrapper text={currentQuestion.text || ''} />
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Panel: Options (40%) */}
+        <div className="lg:w-2/5 lg:h-full lg:overflow-y-auto lg:p-8 lg:bg-slate-50 flex flex-col">
+          {currentQuestion && (
+            <div className="flex-1 flex flex-col space-y-4">
               {/* Debug info for developers - remove in production */}
               {(!currentQuestion.options || currentQuestion.options.length === 0) && (
                 <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
@@ -1241,7 +1254,7 @@ const LiveBattle = ({ user }) => {
 
               {/* Post-Answer Feedback Block */}
               {hasMyAnswer && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="space-y-4 pt-4 mt-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className={`rounded-xl p-4 lg:p-6 border shadow-sm ${
                     isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
                   }`}>
