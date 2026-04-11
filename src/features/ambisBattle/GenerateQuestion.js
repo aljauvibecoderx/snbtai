@@ -701,7 +701,8 @@ const GenerateQuestion = ({ user }) => {
         <div className="absolute bottom-0 right-0 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-12 pb-28">
+      {/* Mobile Layout */}
+      <div className="relative z-10 lg:hidden max-w-md mx-auto px-4 pt-12 pb-28">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => navigate(`/ambis-battle/waiting-room/${roomId}`)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
@@ -788,7 +789,6 @@ const GenerateQuestion = ({ user }) => {
                 placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
                 rows={3}
               />
-              {/* Word count indicator */}
               {aiConfig.context.trim() && (
                 <div className="absolute bottom-2 right-2 flex items-center gap-1">
                   <span className={`text-xs font-medium ${
@@ -802,7 +802,6 @@ const GenerateQuestion = ({ user }) => {
                 </div>
               )}
             </div>
-            {/* Validation message */}
             {aiConfig.context.trim() && validateWordCount(aiConfig.context) && (
               <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-xs text-red-700">{validateWordCount(aiConfig.context)}</p>
@@ -811,7 +810,6 @@ const GenerateQuestion = ({ user }) => {
                 </p>
               </div>
             )}
-            {/* Help text */}
             {!aiConfig.context.trim() && (
               <p className="text-xs text-slate-500 mt-1">
                 💡 Minimal {MIN_WORDS} kata, maksimal {MAX_WORDS} kata untuk kualitas soal yang optimal.
@@ -842,7 +840,6 @@ const GenerateQuestion = ({ user }) => {
           </div>
           <p className="text-xs text-slate-500 mb-3">Pilih grup subtest atau gunakan filter kustom untuk mengambil soal</p>
           
-          {/* Info Box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
             <p className="text-xs text-blue-800">
               <span className="font-bold">ℹ️ Info:</span> Soal diambil dari Bank Soal yang sudah ada. 
@@ -850,7 +847,6 @@ const GenerateQuestion = ({ user }) => {
             </p>
           </div>
           
-          {/* Two options: Quick Select or Advanced Filter */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             <button
               onClick={() => setShowGroupSelector(true)}
@@ -870,7 +866,6 @@ const GenerateQuestion = ({ user }) => {
             </button>
           </div>
           
-          {/* Quick Group Selector */}
           {showGroupSelector && (
             <div className="space-y-2">
               <div className="flex items-center justify-between mb-2">
@@ -913,173 +908,6 @@ const GenerateQuestion = ({ user }) => {
               >
                 Batal
               </button>
-            </div>
-          )}
-
-          {/* Advanced Bank Soal Filter Modal */}
-          {showBankSoalFilter && (
-            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                      <Filter size={16} className="text-indigo-600" />
-                    </div>
-                    <h3 className="font-bold text-slate-900">Filter Bank Soal</h3>
-                  </div>
-                  <button 
-                    onClick={() => setShowBankSoalFilter(false)}
-                    className="p-2 hover:bg-slate-100 rounded-lg"
-                  >
-                    <span className="text-slate-500 text-lg">×</span>
-                  </button>
-                </div>
-                
-                <div className="p-4 space-y-4">
-                  {/* Subtest Selection */}
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 mb-2 block">
-                      Pilih Subtes (Bisa Lebih dari Satu)
-                    </label>
-                    <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
-                      {SUBTESTS.map(subtest => (
-                        <label key={subtest.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={bankSoalConfig.subtests.includes(subtest.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setBankSoalConfig(prev => ({...prev, subtests: [...prev.subtests, subtest.id]}));
-                              } else {
-                                setBankSoalConfig(prev => ({...prev, subtests: prev.subtests.filter(s => s !== subtest.id)}));
-                              }
-                            }}
-                            className="w-4 h-4 text-indigo-600 rounded"
-                          />
-                          <span className="text-sm text-slate-700">{subtest.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Level Selection */}
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Level Kesulitan</label>
-                    <select
-                      value={bankSoalConfig.level}
-                      onChange={(e) => setBankSoalConfig(prev => ({...prev, level: e.target.value}))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
-                    >
-                      <option value="all">Semua Level</option>
-                      <option value={1}>Level 1 - Sangat Mudah</option>
-                      <option value={2}>Level 2 - Mudah</option>
-                      <option value={3}>Level 3 - Sedang</option>
-                      <option value={4}>Level 4 - Sulit</option>
-                      <option value={5}>Level 5 - Sangat Sulit</option>
-                    </select>
-                  </div>
-
-                  {/* Time Range */}
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Rentang Waktu</label>
-                    <select
-                      value={bankSoalConfig.timeRange}
-                      onChange={(e) => setBankSoalConfig(prev => ({...prev, timeRange: e.target.value}))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
-                    >
-                      <option value="all">Semua Waktu</option>
-                      <option value="today">Hari Ini</option>
-                      <option value="yesterday">Kemarin</option>
-                      <option value="last_3_days">3 Hari Terakhir</option>
-                      <option value="last_week">Minggu Ini</option>
-                      <option value="last_2_weeks">2 Minggu Terakhir</option>
-                      <option value="last_month">Bulan Ini</option>
-                      <option value="last_3_months">3 Bulan Terakhir</option>
-                      <option value="last_6_months">6 Bulan Terakhir</option>
-                      <option value="last_year">Tahun Ini</option>
-                    </select>
-                  </div>
-
-                  {/* Source Selection */}
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Sumber Soal</label>
-                    <select
-                      value={bankSoalConfig.source}
-                      onChange={(e) => setBankSoalConfig(prev => ({...prev, source: e.target.value}))}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
-                    >
-                      <option value="all">Semua Sumber (Publik & Pribadi)</option>
-                      <option value="public">Bank Soal Publik</option>
-                      <option value="private">Soal Saya (Pribadi)</option>
-                    </select>
-                  </div>
-
-                  {/* Question Count */}
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 mb-2 block">
-                      Jumlah Soal: {bankSoalConfig.questionCount}
-                    </label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="50"
-                      value={bankSoalConfig.questionCount}
-                      onChange={(e) => setBankSoalConfig(prev => ({...prev, questionCount: parseInt(e.target.value)}))}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-slate-400 mt-1">
-                      <span>1</span>
-                      <span>25</span>
-                      <span>50</span>
-                    </div>
-                  </div>
-
-                  {/* Available Count */}
-                  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
-                    <p className="text-sm text-indigo-800">
-                      <span className="font-semibold">{availableQuestions}</span> soal tersedia dengan filter ini
-                    </p>
-                    <p className="text-xs text-indigo-600 mt-1">
-                      Klik "Cek Ketersediaan" untuk memperbarui
-                    </p>
-                  </div>
-
-                  {/* Error */}
-                  {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
-                      <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-                      <p className="text-xs text-red-700">{error}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 border-t border-slate-100 space-y-2">
-                  <button
-                    onClick={handleGenerateFromBankSoal}
-                    disabled={aiLoading || bankSoalConfig.subtests.length === 0}
-                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {aiLoading ? (
-                      <><Loader2 size={16} className="animate-spin" /> Mengambil Soal...</>
-                    ) : (
-                      <><Shuffle size={16} /> Ambil {bankSoalConfig.questionCount} Soal</>
-                    )}
-                  </button>
-                  <button
-                    onClick={calculateAvailableQuestions}
-                    disabled={aiLoading}
-                    className="w-full py-2 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-all text-sm"
-                  >
-                    🔄 Cek Ketersediaan
-                  </button>
-                  <button
-                    onClick={() => setShowBankSoalFilter(false)}
-                    className="w-full py-2 text-slate-600 font-medium text-sm hover:text-slate-900"
-                  >
-                    Batal
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>
@@ -1127,9 +955,309 @@ const GenerateQuestion = ({ user }) => {
         )}
       </div>
 
-      {/* Bottom CTA — sticky */}
+      {/* Desktop Layout - 2 Column */}
+      <div className="hidden lg:flex lg:relative z-10 lg:min-h-screen lg:px-12 lg:py-8">
+        {/* Left Panel: Form (60%) */}
+        <div className="lg:w-3/5 lg:pr-8">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <button onClick={() => navigate(`/ambis-battle/waiting-room/${roomId}`)} className="p-2 hover:bg-slate-200 rounded-xl transition-colors">
+              <ArrowLeft size={20} className="text-slate-600" />
+            </button>
+            <div className="flex-1">
+              <h1 className="font-black text-slate-900 text-2xl leading-tight">Buat Soal Battle</h1>
+              <p className="text-sm text-slate-500">Room: <span className="font-mono font-bold text-violet-600">{roomId}</span></p>
+            </div>
+          </div>
+
+          {/* AI Generator */}
+          <div className="bg-white border border-violet-200 rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
+                <Sparkles size={18} className="text-white" />
+              </div>
+              <span className="font-bold text-slate-900 text-lg">Generate Soal dengan AI</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm font-semibold text-slate-600 mb-2 block">Subtes</label>
+                <select
+                  value={aiConfig.subtest}
+                  onChange={(e) => setAiConfig({ ...aiConfig, subtest: e.target.value })}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-400"
+                >
+                  {SUBTESTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-600 mb-2 block">Level Kesulitan</label>
+                <select
+                  value={aiConfig.level}
+                  onChange={(e) => setAiConfig({ ...aiConfig, level: parseInt(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-400"
+                >
+                  <option value={1}>Level 1 - Sangat Mudah</option>
+                  <option value={2}>Level 2 - Mudah</option>
+                  <option value={3}>Level 3 - Sedang</option>
+                  <option value={4}>Level 4 - Sulit</option>
+                  <option value={5}>Level 5 - Sangat Sulit</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-600 mb-2 block">Topik</label>
+                <select
+                  value={aiConfig.topic}
+                  onChange={(e) => setAiConfig({ ...aiConfig, topic: e.target.value })}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-400"
+                >
+                  {TOPICS.map((t) => <option key={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-600 mb-2 block">Jumlah Soal</label>
+                <select
+                  value={aiConfig.count}
+                  onChange={(e) => setAiConfig({ ...aiConfig, count: parseInt(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-400 bg-white shadow-sm"
+                >
+                  {[1, 3, 5, 10].map((n) => <option key={n} value={n}>{n} soal</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-sm font-semibold text-slate-600 mb-2 block flex items-center gap-2">
+                Konteks / Referensi Acuan <span className="text-slate-400 font-normal">(Opsional)</span>
+              </label>
+              <div className="relative">
+                <textarea
+                  value={aiConfig.context}
+                  onChange={(e) => setAiConfig({ ...aiConfig, context: e.target.value })}
+                  className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none resize-none ${
+                    aiConfig.context.trim() && validateWordCount(aiConfig.context)
+                      ? 'border-red-300 focus:border-red-400 bg-red-50'
+                      : 'border-slate-200 focus:border-violet-400'
+                  } shadow-sm`}
+                  placeholder="Masukkan wacana bacaan pendek, konsep spesifik, atau informasi tabel yang ingin dijadikan bahan soal oleh AI..."
+                  rows={4}
+                />
+                {aiConfig.context.trim() && (
+                  <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                    <span className={`text-sm font-medium ${
+                      validateWordCount(aiConfig.context) ? 'text-red-600' : 'text-slate-500'
+                    }`}>
+                      {getWordCount(aiConfig.context)} kata
+                    </span>
+                    {validateWordCount(aiConfig.context) && (
+                      <AlertCircle size={14} className="text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {aiConfig.context.trim() && validateWordCount(aiConfig.context) && (
+                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700">{validateWordCount(aiConfig.context)}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    💡 Tip: Gunakan {MIN_WORDS}-{MAX_WORDS} kata untuk hasil terbaik.
+                  </p>
+                </div>
+              )}
+              {!aiConfig.context.trim() && (
+                <p className="text-sm text-slate-500 mt-2">
+                  💡 Minimal {MIN_WORDS} kata, maksimal {MAX_WORDS} kata untuk kualitas soal yang optimal.
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={handleGenerateWithAI}
+              disabled={aiLoading}
+              className="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-xl text-base hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-3"
+            >
+              {aiLoading ? (
+                <><Loader2 size={18} className="animate-spin" /> Generating {aiConfig.count} soal...</>
+              ) : (
+                <><Sparkles size={18} /> Generate {aiConfig.count} Soal AI</>
+              )}
+            </button>
+          </div>
+
+          {/* Group-Based Generator */}
+          <div className="bg-white border border-indigo-200 rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
+                <Shuffle size={18} className="text-white" />
+              </div>
+              <span className="font-bold text-slate-900 text-lg">Ambil dari Bank Soal</span>
+            </div>
+            <p className="text-sm text-slate-500 mb-4">Pilih grup subtest atau gunakan filter kustom untuk mengambil soal</p>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+              <p className="text-sm text-blue-800">
+                <span className="font-bold">ℹ️ Info:</span> Soal diambil dari Bank Soal yang sudah ada. 
+                Jika tidak ada soal, gunakan AI Generator di atas untuk membuat soal baru terlebih dahulu.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <button
+                onClick={() => setShowGroupSelector(true)}
+                disabled={loadingGroups}
+                className="py-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl text-base hover:shadow-lg transition-all flex items-center justify-center gap-3"
+              >
+                <Shuffle size={18} />
+                Grup Cepat
+              </button>
+              <button
+                onClick={() => setShowBankSoalFilter(true)}
+                disabled={loadingGroups}
+                className="py-4 bg-white border-2 border-indigo-600 text-indigo-700 font-bold rounded-xl text-base hover:bg-indigo-50 transition-all flex items-center justify-center gap-3"
+              >
+                <Filter size={18} />
+                Filter Lanjutan
+              </button>
+            </div>
+            
+            {showGroupSelector && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-base font-semibold text-slate-700">Pilih Grup:</span>
+                  <button 
+                    onClick={() => setShowGroupSelector(false)}
+                    className="text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    Tutup
+                  </button>
+                </div>
+                {groups.map(group => (
+                  <button
+                    key={group.id}
+                    onClick={() => handleGenerateFromGroup(group)}
+                    disabled={aiLoading}
+                    className="w-full p-4 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl text-left transition-all disabled:opacity-50"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-slate-900 text-base">{group.name}</span>
+                      {group.isCustom && (
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded">Custom</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600">
+                      {group.totalQuestions} soal • {group.subtests.length} subtest
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {group.subtests.map(st => (
+                        <span key={st} className="px-2 py-1 bg-indigo-100 text-indigo-700 text-sm rounded">
+                          {st}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowGroupSelector(false)}
+                  className="w-full py-3 text-base text-slate-600 hover:text-slate-900 font-medium"
+                >
+                  Batal
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Manual Add */}
+          <button
+            onClick={handleAdd}
+            className="w-full bg-white border-2 border-dashed border-slate-300 hover:border-violet-400 hover:bg-violet-50/50 rounded-2xl p-6 text-center transition-all mb-6 flex items-center justify-center gap-3"
+          >
+            <Plus size={24} className="text-slate-400" />
+            <span className="text-base font-semibold text-slate-500">Tambah Soal Manual</span>
+          </button>
+
+          {/* Error */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+              <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Panel: Question Preview & Actions (40%) */}
+        <div className="lg:w-2/5 lg:pl-8 lg:border-l lg:border-slate-200">
+          <div className="lg:sticky lg:top-8 lg:flex lg:flex-col lg:h-[calc(100vh-4rem)]">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                  <BookOpen size={20} className="text-violet-600" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-slate-900 text-lg">Soal yang Sudah Ditambahkan</h2>
+                  <p className="text-sm text-slate-500">{questions.length} soal</p>
+                </div>
+              </div>
+
+              {questions.length === 0 && (
+                <div className="text-center py-8">
+                  <BookOpen size={48} className="text-slate-300 mx-auto mb-4" />
+                  <p className="text-sm text-slate-400">Belum ada soal. Generate dengan AI atau tambah manual.</p>
+                </div>
+              )}
+
+              {questions.length > 0 && (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {questions.map((q, i) => (
+                    <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                      <div className="flex items-start gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0 text-xs font-bold text-violet-700">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 line-clamp-2">{q.text}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-500">{q.subtest}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300" />
+                            <span className="text-xs text-slate-500">{q.difficulty}</span>
+                          </div>
+                        </div>
+                        <button onClick={() => handleDelete(i)} className="p-1 hover:bg-red-100 rounded-lg transition-colors">
+                          <Trash2 size={14} className="text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Start Battle Button */}
+            <div className="mt-auto">
+              <button
+                onClick={handleSaveAndStart}
+                disabled={questions.length === 0 || saving}
+                className="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-xl text-base hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-3"
+              >
+                {saving ? (
+                  <><Loader2 size={18} className="animate-spin" /> Memulai Battle...</>
+                ) : (
+                  <><Swords size={18} /> Mulai Battle ({questions.length} soal)</>
+                )}
+              </button>
+              <button
+                onClick={handleSaveAndWait}
+                disabled={questions.length === 0 || saving}
+                className="w-full py-3 text-sm text-slate-600 hover:text-slate-900 font-semibold transition-colors mt-3"
+              >
+                Simpan & Kembali ke Waiting Room
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Bottom CTA — sticky */}
       {questions.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-md border-t border-slate-200 px-4 py-4">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-md border-t border-slate-200 px-4 py-4">
           <div className="max-w-md mx-auto space-y-2">
             <button
               onClick={handleSaveAndStart}
@@ -1149,6 +1277,166 @@ const GenerateQuestion = ({ user }) => {
             >
               Simpan & Kembali ke Waiting Room
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Advanced Bank Soal Filter Modal */}
+      {showBankSoalFilter && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <Filter size={16} className="text-indigo-600" />
+                </div>
+                <h3 className="font-bold text-slate-900">Filter Bank Soal</h3>
+              </div>
+              <button 
+                onClick={() => setShowBankSoalFilter(false)}
+                className="p-2 hover:bg-slate-100 rounded-lg"
+              >
+                <span className="text-slate-500 text-lg">×</span>
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">
+                  Pilih Subtes (Bisa Lebih dari Satu)
+                </label>
+                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                  {SUBTESTS.map(subtest => (
+                    <label key={subtest.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={bankSoalConfig.subtests.includes(subtest.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setBankSoalConfig(prev => ({...prev, subtests: [...prev.subtests, subtest.id]}));
+                          } else {
+                            setBankSoalConfig(prev => ({...prev, subtests: prev.subtests.filter(s => s !== subtest.id)}));
+                          }
+                        }}
+                        className="w-4 h-4 text-indigo-600 rounded"
+                      />
+                      <span className="text-sm text-slate-700">{subtest.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">Level Kesulitan</label>
+                <select
+                  value={bankSoalConfig.level}
+                  onChange={(e) => setBankSoalConfig(prev => ({...prev, level: e.target.value}))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                >
+                  <option value="all">Semua Level</option>
+                  <option value={1}>Level 1 - Sangat Mudah</option>
+                  <option value={2}>Level 2 - Mudah</option>
+                  <option value={3}>Level 3 - Sedang</option>
+                  <option value={4}>Level 4 - Sulit</option>
+                  <option value={5}>Level 5 - Sangat Sulit</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">Rentang Waktu</label>
+                <select
+                  value={bankSoalConfig.timeRange}
+                  onChange={(e) => setBankSoalConfig(prev => ({...prev, timeRange: e.target.value}))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                >
+                  <option value="all">Semua Waktu</option>
+                  <option value="today">Hari Ini</option>
+                  <option value="yesterday">Kemarin</option>
+                  <option value="last_3_days">3 Hari Terakhir</option>
+                  <option value="last_week">Minggu Ini</option>
+                  <option value="last_2_weeks">2 Minggu Terakhir</option>
+                  <option value="last_month">Bulan Ini</option>
+                  <option value="last_3_months">3 Bulan Terakhir</option>
+                  <option value="last_6_months">6 Bulan Terakhir</option>
+                  <option value="last_year">Tahun Ini</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">Sumber Soal</label>
+                <select
+                  value={bankSoalConfig.source}
+                  onChange={(e) => setBankSoalConfig(prev => ({...prev, source: e.target.value}))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                >
+                  <option value="all">Semua Sumber (Publik & Pribadi)</option>
+                  <option value="public">Bank Soal Publik</option>
+                  <option value="private">Soal Saya (Pribadi)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-2 block">
+                  Jumlah Soal: {bankSoalConfig.questionCount}
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={bankSoalConfig.questionCount}
+                  onChange={(e) => setBankSoalConfig(prev => ({...prev, questionCount: parseInt(e.target.value)}))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>1</span>
+                  <span>25</span>
+                  <span>50</span>
+                </div>
+              </div>
+
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+                <p className="text-sm text-indigo-800">
+                  <span className="font-semibold">{availableQuestions}</span> soal tersedia dengan filter ini
+                </p>
+                <p className="text-xs text-indigo-600 mt-1">
+                  Klik "Cek Ketersediaan" untuk memperbarui
+                </p>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+                  <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+                  <p className="text-xs text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 space-y-2">
+              <button
+                onClick={handleGenerateFromBankSoal}
+                disabled={aiLoading || bankSoalConfig.subtests.length === 0}
+                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {aiLoading ? (
+                  <><Loader2 size={16} className="animate-spin" /> Mengambil Soal...</>
+                ) : (
+                  <><Shuffle size={16} /> Ambil {bankSoalConfig.questionCount} Soal</>
+                )}
+              </button>
+              <button
+                onClick={calculateAvailableQuestions}
+                disabled={aiLoading}
+                className="w-full py-2 bg-white border-2 border-indigo-200 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-all text-sm"
+              >
+                🔄 Cek Ketersediaan
+              </button>
+              <button
+                onClick={() => setShowBankSoalFilter(false)}
+                className="w-full py-2 text-slate-600 font-medium text-sm hover:text-slate-900"
+              >
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}
