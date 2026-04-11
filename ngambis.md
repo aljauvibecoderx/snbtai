@@ -1,16 +1,11 @@
-Pada tampilan live battle Ambis, khususnya bagian stimulus atau teks soal, tidak terdapat pengaturan spacing (jarak) yang memadai antar elemen teks. Ini menciptakan beberapa masalah serius:
+Pada tampilan live battle Ambis, khususnya bagian stimulus atau teks soal pada tampilan mobile, tidak terdapat pengaturan spacing (jarak) yang memadai antar elemen teks. Ini menciptakan beberapa masalah serius:
 
 Kepadatan Visual Berlebihan (Overcrowded Layout)
 Teks ditampilkan terlalu rapat tanpa padding dan line spacing yang cukup. Akibatnya, seluruh konten terlihat seperti satu blok padat tanpa struktur yang jelas.
 Otak user dipaksa “menyaring sendiri” mana bagian penting, yang seharusnya sudah dibantu oleh UI.
 
 Tidak Ada Hirarki Informasi yang Jelas
-Elemen seperti:
-
-Judul thread
-Nama penulis
-Tanggal
-Isi konten
+Elemen seperti
 
 semuanya tampil hampir dengan jarak dan gaya yang seragam.
 Hasilnya? Tidak ada pemisahan visual antar konteks informasi. User harus membaca ulang hanya untuk memahami “ini bagian apa sih?”
@@ -31,6 +26,7 @@ Untuk soal dengan format seperti:
 Diskusi multi-speaker
 Teks panjang
 Argumentasi berlapis
+Soal literasi
 
 Tanpa spacing yang jelas, user akan:
 

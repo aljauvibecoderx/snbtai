@@ -180,7 +180,8 @@ const QuestionRepresentation = ({ representation }) => {
                 {values[i]}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       </div>
     );
@@ -345,6 +346,7 @@ const QuestionRepresentation = ({ representation }) => {
     }
 
     console.log('Thread/Relation: Final nodes', nodes);
+    console.log('Thread/Relation: Total posts to render:', nodes.length);
 
     return (
       <div className="mb-6 p-4 lg:p-5 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl shadow-sm">
@@ -355,23 +357,52 @@ const QuestionRepresentation = ({ representation }) => {
           <span className="text-xs lg:text-sm font-bold text-purple-800 uppercase tracking-wide">Relasi Pernyataan</span>
         </div>
         <div className="pl-7 border-l-2 border-purple-200 space-y-3">
-          {nodes.map((node, i) => (
+          {nodes.map((node, i) => {
+            console.log(`Thread/Relation: Rendering post ${i + 1}/${nodes.length}`, node);
+            return (
             <div key={i} className="relative">
               <div className="flex items-start gap-3 p-3 lg:p-4 bg-white rounded-lg border border-purple-100 shadow-sm hover:shadow-md transition-shadow">
                 <span className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                   {i + 1}
                 </span>
-                <p className="text-xs lg:text-sm text-purple-900 leading-relaxed flex-1 font-medium">
-                  <LatexWrapper text={
-                    typeof node === 'string' ? node : 
-                    node.text || 
-                    node.content || 
-                    node.body || 
-                    node.message || 
-                    node.description ||
-                    JSON.stringify(node)
-                  } />
-                </p>
+                <div className="flex-1">
+                  {/* Post Header with Author and Date */}
+                  <div className="mb-2 pb-2 border-b border-purple-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                          <span className="text-xs font-bold text-purple-600">👤</span>
+                        </div>
+                        <span className="text-xs lg:text-sm font-semibold text-purple-800">
+                          {node.author || 
+                           node.username || 
+                           node.name || 
+                           node.user || 
+                           'Anonymous'}
+                        </span>
+                      </div>
+                      <span className="text-xs text-purple-600 font-medium">
+                        {node.date || 
+                         node.timestamp || 
+                         node.time || 
+                         node.createdAt || 
+                         new Date().toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Post Content */}
+                  <p className="text-xs lg:text-sm text-purple-900 leading-relaxed font-medium">
+                    <LatexWrapper text={
+                      typeof node === 'string' ? node : 
+                      node.text || 
+                      node.content || 
+                      node.body || 
+                      node.message || 
+                      node.description ||
+                      JSON.stringify(node)
+                    } />
+                  </p>
+                </div>
               </div>
               {i < nodes.length - 1 && (
                 <div className="flex justify-center my-2">
@@ -1107,18 +1138,6 @@ const LiveBattle = ({ user }) => {
                 </div>
                 <div className="pl-8 border-l-3 border-violet-200">
                   <p className="text-base lg:text-lg text-slate-800 leading-loose font-semibold">
-                     <LatexWrapper text={currentQuestion.text || ''} />
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Right Panel: Answers (40%) */}
-        <div className="lg:w-2/5 lg:h-full lg:overflow-y-auto lg:p-8 lg:bg-slate-50">
-          {currentQuestion && (
-            <div className="space-y-4">
               {/* Debug info for developers - remove in production */}
               {(!currentQuestion.options || currentQuestion.options.length === 0) && (
                 <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
