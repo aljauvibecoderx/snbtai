@@ -145,7 +145,7 @@ const MorphingTabBar = ({ activeTab, onTabChange }) => {
         </div>
 
         {/* Bottom Safe Area */}
-        <div className="h-safe-bottom bg-gray-900" />
+        <div className="h-safe-bottom bg-slate-200" />
       </div>
     </div>
   );

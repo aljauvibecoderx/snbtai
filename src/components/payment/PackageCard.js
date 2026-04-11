@@ -19,7 +19,7 @@ const PACKAGE_COLORS = {
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-600',
     badgeBg: 'bg-slate-600',
-    btn: 'bg-slate-800 hover:bg-slate-900 shadow-slate-200',
+    btn: 'bg-violet-600 hover:bg-violet-700 shadow-violet-200',
     discountBg: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     ring: 'ring-slate-300',
   },

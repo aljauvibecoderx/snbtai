@@ -133,7 +133,7 @@ const OrbitalNavigation = ({ activeTab, onTabChange }) => {
               {/* Label Tooltip */}
               <div className={`
                 absolute -top-8 left-1/2 transform -translate-x-1/2
-                px-2 py-1 bg-gray-900 text-white text-xs rounded-md
+                px-2 py-1 bg-slate-700 text-white text-xs rounded-md
                 transition-all duration-300 whitespace-nowrap
                 ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
               `}>
@@ -184,7 +184,7 @@ const OrbitalNavigation = ({ activeTab, onTabChange }) => {
         {/* Active Tab Indicator */}
         {!isExpanded && (
           <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
-            <div className="px-3 py-1 bg-gray-900/80 backdrop-blur-sm rounded-full">
+            <div className="px-3 py-1 bg-slate-700/80 backdrop-blur-sm rounded-full">
               <span className="text-white text-xs font-medium">
                 {tabs.find(tab => tab.id === activeTab)?.label}
               </span>

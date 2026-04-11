@@ -935,9 +935,9 @@ const LandingPage = () => {
         </section>
 
         {/* ══════════════════════════════════════════
-            FOOTER — bg-gray-900 (dark)
+            FOOTER — bg-slate-800 (light mode)
         ══════════════════════════════════════════ */}
-        <footer className="py-12 md:py-20 px-4 md:px-6 bg-gray-900">
+        <footer className="py-12 md:py-20 px-4 md:px-6 bg-slate-800">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-10 mb-10 md:mb-14">
               {/* Brand */}

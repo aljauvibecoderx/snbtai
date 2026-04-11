@@ -26,6 +26,138 @@ const switchGeminiKey = () => {
 };
 
 /**
+ * Fix unescaped quotes in JSON string
+ * This is the CRITICAL FIX for: Unterminated string error
+ */
+function fixUnescapedQuotes(text) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const prevChar = i > 0 ? text[i - 1] : '';
+    
+    if (char === '\\' && !escaped) {
+      escaped = true;
+      result += char;
+      continue;
+    }
+    
+    if (char === '"' && !escaped) {
+      inString = !inString;
+      result += char;
+    } else if (char === '"' && escaped) {
+      result += char;
+      escaped = false;
+    } else if (char === '"' && !inString && prevChar !== ':' && prevChar !== '[' && prevChar !== '{' && prevChar !== ',') {
+      result += char;
+    } else {
+      result += char;
+      escaped = false;
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Try to repair broken JSON and parse it
+ * Returns null if all repair attempts fail
+ */
+function tryRepairAndParse(text) {
+  // Attempt 1: Direct parse
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+  } catch (e) {
+    console.log('Direct parse failed:', e.message);
+  }
+  
+  // Attempt 2: Fix common issues
+  let repaired = text;
+  
+  // Fix over-escaped quotes: \\\\" → \\"
+  repaired = repaired.replace(/\\{3,}"/g, '\\"');
+  
+  // Fix trailing commas
+  repaired = repaired.replace(/,\s*([\]}])/g, '$1');
+  
+  // Fix newlines in strings
+  repaired = repaired.replace(/"([^"]*)\n([^"]*)"/g, '"$1\\n$2"');
+  
+  try {
+    const parsed = JSON.parse(repaired);
+    console.log('Repair successful!');
+    return parsed;
+  } catch (e) {
+    console.log('Repair parse failed:', e.message);
+  }
+  
+  // Attempt 3: Extract with regex (last resort)
+  console.log('Attempting regex extraction...');
+  return extractQuestionsWithRegex(text);
+}
+
+/**
+ * Extract questions from broken JSON using regex patterns
+ */
+function extractQuestionsWithRegex(text) {
+  const questions = [];
+  
+  // Extract text fields
+  const textPattern = /"text":\s*"((?:[^"\\]|\\.)*)"/g;
+  const texts = Array.from(text.matchAll(textPattern), m => m[1]);
+  
+  // Extract options arrays
+  const optionsPattern = /"options":\s*\[((?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*)\]/g;
+  const optionsArrays = Array.from(text.matchAll(optionsPattern), m => {
+    const inner = m[1];
+    const optionMatches = inner.match(/"((?:[^"\\]|\\.)*)"/g);
+    return optionMatches ? optionMatches.map(s => s.slice(1, -1)) : [];
+  });
+  
+  // Extract correctIndex
+  const indexPattern = /"correctIndex":\s*(\d+)/g;
+  const indices = Array.from(text.matchAll(indexPattern), m => parseInt(m[1]));
+  
+  // Extract explanation
+  const explanationPattern = /"explanation":\s*"((?:[^"\\]|\\.)*)"/g;
+  const explanations = Array.from(text.matchAll(explanationPattern), m => m[1]);
+  
+  // Extract subtest
+  const subtestPattern = /"subtest":\s*"([^"]+)"/g;
+  const subtests = Array.from(text.matchAll(subtestPattern), m => m[1]);
+  
+  // Extract topic
+  const topicPattern = /"topic":\s*"([^"]+)"/g;
+  const topics = Array.from(text.matchAll(topicPattern), m => m[1]);
+  
+  // Extract difficulty
+  const difficultyPattern = /"difficulty":\s*"([^"]+)"/g;
+  const difficulties = Array.from(text.matchAll(difficultyPattern), m => m[1]);
+  
+  // Build questions array
+  const count = Math.min(texts.length, optionsArrays.length, indices.length);
+  
+  for (let i = 0; i < count; i++) {
+    questions.push({
+      text: texts[i],
+      options: optionsArrays[i],
+      correctIndex: indices[i],
+      explanation: explanations[i] || '',
+      subtest: subtests[i] || '',
+      topic: topics[i] || '',
+      difficulty: difficulties[i] || ''
+    });
+  }
+  
+  return questions.length > 0 ? questions : null;
+}
+
+/**
  * Generate questions with full stimulus support using the App.js system
  * @param {string} subtest - Subtest ID (tps_pu, tps_ppu, tps_pbm, tps_pk, lit_ind, lit_ing, pm)
  * @param {string} topic - Topic description
@@ -104,10 +236,14 @@ export const generateEnhancedBattleQuestions = async (
       const response = await result.response;
       let text = response.text().trim();
 
-      // Multi-layer cleaning (same as App.js)
+      // Multi-layer cleaning (enhanced with quote normalization)
       text = text.replace(/```(?:json)?\s*/gi, '').replace(/```\s*/g, '');
       text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-      text = text.replace(/\\\\\\"/g, '\\"');
+      
+      // Layer 3: Normalize escaped quotes - CRITICAL FIX
+      text = text.replace(/\\{3,}"/g, '\\"');
+      text = fixUnescapedQuotes(text);
+      
       text = text.replace(/,\s*([\]}])/g, '$1').trim();
 
       // Extract JSON array if wrapped in text
@@ -116,37 +252,31 @@ export const generateEnhancedBattleQuestions = async (
         text = match[0];
       }
 
-      // Parse JSON
-      try {
-        const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          throw new Error('JSON array kosong atau tidak valid');
-        }
-
-        // Validate correct number of questions
-        if (parsed.length !== count) {
-          console.warn(`Expected ${count} questions, got ${parsed.length}`);
-          // If we got fewer questions, still return what we have but log the issue
-          // If we got more questions, take only the requested amount
-          const finalQuestions = parsed.slice(0, count);
-          if (finalQuestions.length < count) {
-            console.warn(`Only ${finalQuestions.length} questions generated out of ${count} requested`);
-          }
-          
-          // Validate and enhance questions
-          const validatedQuestions = finalQuestions.map(q => validateAndEnhanceQuestion(q, subtest, level, topic));
-          return validatedQuestions;
-        }
-
-        // Validate and enhance questions
-        const validatedQuestions = parsed.map(q => validateAndEnhanceQuestion(q, subtest, level, topic));
-        return validatedQuestions;
-
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError.message);
-        console.error('Raw text:', text);
-        throw new Error('AI gagal mengikuti format JSON. Silakan diregenerate.');
+      // Parse with repair fallback
+      const parsed = tryRepairAndParse(text);
+      
+      if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('No valid questions extracted after repair attempts');
       }
+
+      // Validate correct number of questions
+      if (parsed.length !== count) {
+        console.warn(`Expected ${count} questions, got ${parsed.length}`);
+        // If we got fewer questions, still return what we have but log the issue
+        // If we got more questions, take only the requested amount
+        const finalQuestions = parsed.slice(0, count);
+        if (finalQuestions.length < count) {
+          console.warn(`Only ${finalQuestions.length} questions generated out of ${count} requested`);
+        }
+        
+        // Validate and enhance questions
+        const validatedQuestions = finalQuestions.map(q => validateAndEnhanceQuestion(q, subtest, level, topic));
+        return validatedQuestions;
+      }
+
+      // Validate and enhance questions
+      const validatedQuestions = parsed.map(q => validateAndEnhanceQuestion(q, subtest, level, topic));
+      return validatedQuestions;
 
     } catch (error) {
       // Check for quota/limit errors

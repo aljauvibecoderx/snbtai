@@ -95,7 +95,7 @@ const PTNPediaMobileScreen = () => {
           </div>
 
           {/* CTA Button */}
-          <button className="w-full bg-slate-900 text-white rounded-xl py-3.5 px-4 flex items-center justify-between hover:bg-slate-800 transition-colors">
+          <button className="w-full bg-violet-600 text-white rounded-xl py-3.5 px-4 flex items-center justify-between hover:bg-violet-700 transition-colors">
             <span className="text-sm font-semibold">Mulai Jelajahi</span>
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -133,7 +133,7 @@ const PTNPediaMobileScreen = () => {
 
         {/* Home Indicator */}
         <div className="bg-white pb-2 flex justify-center">
-          <div className="w-32 h-1 bg-slate-900 rounded-full"></div>
+          <div className="w-32 h-1 bg-slate-300 rounded-full"></div>
         </div>
       </div>
     </div>

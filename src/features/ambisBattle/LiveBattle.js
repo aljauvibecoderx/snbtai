@@ -180,8 +180,7 @@ const QuestionRepresentation = ({ representation }) => {
                 {values[i]}
               </div>
             </div>
-          );
-        })}
+          ))}
         </div>
       </div>
     );
@@ -429,9 +428,17 @@ const getQuestionType = (question) => {
   }
   
   // Check if grid_boolean type (multiple statements to evaluate) - check this first
+  // Enhanced detection: check for representation data with array of statements
+  const hasStatementData = question.representation?.data && (
+    Array.isArray(question.representation.data) ||
+    (typeof question.representation.data === 'string' && question.representation.data.includes('\n')) ||
+    question.representation.data?.statements
+  );
+  
   if (question.representation?.type === 'grid_boolean' || 
       question.text?.toLowerCase().includes('berapa banyak pernyataan yang benar') ||
-      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5)) {
+      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5) ||
+      (hasStatementData && question.text?.toLowerCase().includes('pernyataan'))) {
     return 'grid_boolean';
   }
   

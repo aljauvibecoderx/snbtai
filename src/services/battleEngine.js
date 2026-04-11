@@ -21,13 +21,15 @@ export const getQuestionDuration = (question) => {
   
   // LBI (Literasi Bahasa Indonesia) -> 60 seconds
   if (subtest?.toLowerCase().includes('lbi') || 
-      subtest?.toLowerCase().includes('literasi bahasa indonesia')) {
+      subtest?.toLowerCase().includes('literasi bahasa indonesia') ||
+      subtest?.toLowerCase().includes('lit_ind')) {
     return 60;
   }
   
   // LBE (Literasi Bahasa Inggris) -> 60 seconds
   if (subtest?.toLowerCase().includes('lbe') || 
-      subtest?.toLowerCase().includes('literasi bahasa inggris')) {
+      subtest?.toLowerCase().includes('literasi bahasa inggris') ||
+      subtest?.toLowerCase().includes('lit_ing')) {
     return 60;
   }
   
