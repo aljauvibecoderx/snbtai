@@ -12,13 +12,13 @@ import SeamlessAudioPlayer from '../../components/SeamlessAudioPlayer';
 // ─── ResizeObserver Error Handler ─────────────────────────────────────────────
 const useResizeObserverErrorHandler = () => {
   const timeoutRef = useRef(null);
-  
+
   const handleError = useCallback((event) => {
     // Debounce the error to prevent console spam
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     timeoutRef.current = setTimeout(() => {
       console.warn('ResizeObserver loop detected - this is a harmless warning');
     }, 100);
@@ -27,17 +27,17 @@ const useResizeObserverErrorHandler = () => {
   useEffect(() => {
     // Override the default error handler for ResizeObserver
     const originalError = window.onerror;
-    
+
     window.onerror = (message, source, lineno, colno, error) => {
       if (message && message.includes('ResizeObserver loop completed with undelivered notifications')) {
         handleError(error);
         return true; // Prevent the error from showing in console
       }
-      
+
       if (originalError) {
         return originalError(message, source, lineno, colno, error);
       }
-      
+
       return false;
     };
 
@@ -171,7 +171,7 @@ const QuestionRepresentation = ({ representation }) => {
                 <LatexWrapper text={label} />
               </div>
               <div className="flex-1 bg-emerald-100 rounded-full h-5 lg:h-6 overflow-hidden shadow-inner">
-                <div 
+                <div
                   className="bg-gradient-to-r from-emerald-500 to-green-500 h-full rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${(values[i] / maxValue) * 100}%` }}
                 />
@@ -290,8 +290,8 @@ const QuestionRepresentation = ({ representation }) => {
         <div className="pl-7 border-l-2 border-indigo-200">
           {imageUrl ? (
             <div className="bg-white rounded-lg border border-indigo-100 p-2 shadow-sm">
-              <img 
-                src={imageUrl} 
+              <img
+                src={imageUrl}
                 alt={altText}
                 className="w-full h-auto rounded-lg"
                 onError={(e) => {
@@ -359,56 +359,56 @@ const QuestionRepresentation = ({ representation }) => {
           {nodes.map((node, i) => {
             console.log(`Thread/Relation: Rendering post ${i + 1}/${nodes.length}`, node);
             return (
-            <div key={i} className="relative">
-              <div className="flex items-start gap-3 p-3 lg:p-4 bg-white rounded-lg border border-purple-100 shadow-sm hover:shadow-md transition-shadow">
-                <span className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  {/* Post Header with Author and Date */}
-                  <div className="mb-2 pb-2 border-b border-purple-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-bold text-purple-600">👤</span>
+              <div key={i} className="relative">
+                <div className="flex items-start gap-3 p-3 lg:p-4 bg-white rounded-lg border border-purple-100 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white text-xs lg:text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1">
+                    {/* Post Header with Author and Date */}
+                    <div className="mb-2 pb-2 border-b border-purple-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-bold text-purple-600">👤</span>
+                          </div>
+                          <span className="text-xs lg:text-sm font-semibold text-purple-800">
+                            {node.author ||
+                              node.username ||
+                              node.name ||
+                              node.user ||
+                              'Anonymous'}
+                          </span>
                         </div>
-                        <span className="text-xs lg:text-sm font-semibold text-purple-800">
-                          {node.author || 
-                           node.username || 
-                           node.name || 
-                           node.user || 
-                           'Anonymous'}
+                        <span className="text-xs text-purple-600 font-medium">
+                          {node.date ||
+                            node.timestamp ||
+                            node.time ||
+                            node.createdAt ||
+                            new Date().toLocaleDateString()}
                         </span>
                       </div>
-                      <span className="text-xs text-purple-600 font-medium">
-                        {node.date || 
-                         node.timestamp || 
-                         node.time || 
-                         node.createdAt || 
-                         new Date().toLocaleDateString()}
-                      </span>
                     </div>
+                    {/* Post Content */}
+                    <p className="text-xs lg:text-sm text-purple-900 leading-relaxed font-medium">
+                      <LatexWrapper text={
+                        typeof node === 'string' ? node :
+                          node.text ||
+                          node.content ||
+                          node.body ||
+                          node.message ||
+                          node.description ||
+                          JSON.stringify(node)
+                      } />
+                    </p>
                   </div>
-                  {/* Post Content */}
-                  <p className="text-xs lg:text-sm text-purple-900 leading-relaxed font-medium">
-                    <LatexWrapper text={
-                      typeof node === 'string' ? node : 
-                      node.text || 
-                      node.content || 
-                      node.body || 
-                      node.message || 
-                      node.description ||
-                      JSON.stringify(node)
-                    } />
-                  </p>
                 </div>
+                {i < nodes.length - 1 && (
+                  <div className="flex justify-center my-2">
+                    <div className="w-1 h-6 bg-gradient-to-b from-purple-300 to-pink-300 rounded-full" />
+                  </div>
+                )}
               </div>
-              {i < nodes.length - 1 && (
-                <div className="flex justify-center my-2">
-                  <div className="w-1 h-6 bg-gradient-to-b from-purple-300 to-pink-300 rounded-full" />
-                </div>
-              )}
-            </div>
             );
           })}
         </div>
@@ -422,12 +422,12 @@ const QuestionRepresentation = ({ representation }) => {
 // Helper to detect question type and render appropriately
 const getQuestionType = (question) => {
   if (!question) return 'unknown';
-  
+
   // Check representation type first
   if (question.representation?.type && question.representation.type !== 'text') {
     return question.representation.type;
   }
-  
+
   // Check if grid_boolean type (multiple statements to evaluate) - check this first
   // Enhanced detection: check for representation data with array of statements
   const hasStatementData = question.representation?.data && (
@@ -435,14 +435,14 @@ const getQuestionType = (question) => {
     (typeof question.representation.data === 'string' && question.representation.data.includes('\n')) ||
     question.representation.data?.statements
   );
-  
-  if (question.representation?.type === 'grid_boolean' || 
-      question.text?.toLowerCase().includes('berapa banyak pernyataan yang benar') ||
-      (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5) ||
-      (hasStatementData && question.text?.toLowerCase().includes('pernyataan'))) {
+
+  if (question.representation?.type === 'grid_boolean' ||
+    question.text?.toLowerCase().includes('berapa banyak pernyataan yang benar') ||
+    (question.text?.toLowerCase().includes('pernyataan') && question.options?.length === 5) ||
+    (hasStatementData && question.text?.toLowerCase().includes('pernyataan'))) {
     return 'grid_boolean';
   }
-  
+
   // Check if boolean question (only 2 options, typically Benar/Salah or True/False)
   if (question.options?.length === 2) {
     const opts = question.options.map(o => o.toLowerCase());
@@ -452,20 +452,20 @@ const getQuestionType = (question) => {
       return 'boolean';
     }
   }
-  
+
   // Check if statement question (text mentions "pernyataan")
-  if (question.text?.toLowerCase().includes('pernyataan') || 
-      question.stimulus?.toLowerCase().includes('pernyataan')) {
+  if (question.text?.toLowerCase().includes('pernyataan') ||
+    question.stimulus?.toLowerCase().includes('pernyataan')) {
     return 'statement';
   }
-  
+
   return 'text';
 };
 
 // ─── Grid Boolean Evaluator Component ───────────────────────────────────────
 const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, handleAnswerSubmit, phase }) => {
   const [answers, setAnswers] = React.useState({});
-  
+
   // Parse statements from representation data
   const getStatements = () => {
     const data = currentQuestion.representation?.data;
@@ -473,9 +473,9 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
       console.log('GridBoolean: No data found', currentQuestion.representation);
       return [];
     }
-    
+
     console.log('GridBoolean: Raw data', data);
-    
+
     if (typeof data === 'string') {
       const statements = data.trim().split('\n').filter(s => s.trim());
       console.log('GridBoolean: Parsed statements from string', statements);
@@ -487,7 +487,7 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
       console.log('GridBoolean: Parsed statements from data.statements', data.statements);
       return data.statements;
     }
-    
+
     console.log('GridBoolean: Could not parse statements, returning empty array');
     return [];
   };
@@ -496,10 +496,10 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
 
   const handleStatementAnswer = (statementIndex, isTrue) => {
     if (hasMyAnswer || phase !== 'playing') return;
-    
+
     const newAnswers = { ...answers, [statementIndex]: isTrue };
     setAnswers(newAnswers);
-    
+
     // Convert to single answer format for compatibility
     const trueCount = Object.values(newAnswers).filter(Boolean).length;
     handleAnswerSubmit(trueCount);
@@ -507,10 +507,10 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
 
   const getStatementStatus = (index) => {
     if (!hasMyAnswer) return 'unanswered';
-    
+
     const userAnswer = answers[index];
     const isCorrect = userAnswer === true; // Assume all statements should be evaluated individually
-    
+
     if (userAnswer === undefined) return 'unanswered';
     return isCorrect ? 'correct' : 'incorrect';
   };
@@ -531,7 +531,7 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
               const status = getStatementStatus(index);
               const isSelected = answers[index] === true;
               const isFalseSelected = answers[index] === false;
-              
+
               return (
                 <tr key={index} className="border-b border-slate-100 last:border-b-0">
                   <td className="py-3 px-3 text-sm text-slate-700">
@@ -541,15 +541,14 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
                     <button
                       onClick={() => handleStatementAnswer(index, true)}
                       disabled={hasMyAnswer || phase !== 'playing'}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
-                        isSelected && status === 'correct'
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${isSelected && status === 'correct'
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : isSelected && status === 'incorrect'
-                          ? 'bg-red-500 border-red-500 text-white'
-                          : isSelected
-                          ? 'bg-slate-200 border-slate-300 text-slate-600'
-                          : 'bg-white border-slate-300 text-slate-400 hover:border-emerald-400 hover:text-emerald-600'
-                      } disabled:cursor-default disabled:opacity-50`}
+                            ? 'bg-red-500 border-red-500 text-white'
+                            : isSelected
+                              ? 'bg-slate-200 border-slate-300 text-slate-600'
+                              : 'bg-white border-slate-300 text-slate-400 hover:border-emerald-400 hover:text-emerald-600'
+                        } disabled:cursor-default disabled:opacity-50`}
                     >
                       ✓
                     </button>
@@ -558,15 +557,14 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
                     <button
                       onClick={() => handleStatementAnswer(index, false)}
                       disabled={hasMyAnswer || phase !== 'playing'}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
-                        isFalseSelected && status === 'correct'
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${isFalseSelected && status === 'correct'
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : isFalseSelected && status === 'incorrect'
-                          ? 'bg-red-500 border-red-500 text-white'
-                          : isFalseSelected
-                          ? 'bg-slate-200 border-slate-300 text-slate-600'
-                          : 'bg-white border-slate-300 text-slate-400 hover:border-red-400 hover:text-red-600'
-                      } disabled:cursor-default disabled:opacity-50`}
+                            ? 'bg-red-500 border-red-500 text-white'
+                            : isFalseSelected
+                              ? 'bg-slate-200 border-slate-300 text-slate-600'
+                              : 'bg-white border-slate-300 text-slate-400 hover:border-red-400 hover:text-red-600'
+                        } disabled:cursor-default disabled:opacity-50`}
                     >
                       ✗
                     </button>
@@ -577,13 +575,13 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
           </tbody>
         </table>
       </div>
-      
+
       {!hasMyAnswer && Object.keys(answers).length === 0 && (
         <p className="text-xs text-slate-500 text-center">
           Evaluasi setiap pernyataan dengan memilih Benar atau Salah
         </p>
       )}
-      
+
       {hasMyAnswer && (
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
           <p className="text-sm text-slate-600 text-center">
@@ -598,10 +596,10 @@ const GridBooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, han
 // ─── Boolean Evaluator Component ───────────────────────────────────────────
 const BooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, handleAnswerSubmit, phase }) => {
   const [selectedAnswer, setSelectedAnswer] = React.useState(null);
-  
+
   const handleBooleanAnswer = (isTrue) => {
     if (hasMyAnswer || phase !== 'playing') return;
-    
+
     setSelectedAnswer(isTrue);
     // Convert to option index (0 for Benar/True, 1 for Salah/False)
     const optionIndex = isTrue ? 0 : 1;
@@ -612,15 +610,14 @@ const BooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, handleA
     const isSelected = selectedAnswer === isTrue;
     const isCorrect = myAnswerIndex === currentQuestion.correctIndex;
     const actuallyCorrect = isTrue ? (currentQuestion.correctIndex === 0) : (currentQuestion.correctIndex === 1);
-    
+
     if (!hasMyAnswer) {
-      return `w-full py-3 px-4 rounded-xl border-2 transition-all font-semibold ${
-        isSelected 
-          ? 'bg-violet-100 border-violet-500 text-violet-700' 
+      return `w-full py-3 px-4 rounded-xl border-2 transition-all font-semibold ${isSelected
+          ? 'bg-violet-100 border-violet-500 text-violet-700'
           : 'bg-white border-slate-300 text-slate-700 hover:border-violet-300 hover:bg-violet-50'
-      }`;
+        }`;
     }
-    
+
     if (actuallyCorrect) {
       return 'w-full py-3 px-4 rounded-xl border-2 bg-emerald-100 border-emerald-500 text-emerald-700 font-semibold';
     } else if (isSelected && !actuallyCorrect) {
@@ -651,7 +648,7 @@ const BooleanEvaluator = ({ currentQuestion, myAnswerIndex, hasMyAnswer, handleA
           </button>
         </div>
       </div>
-      
+
       {hasMyAnswer && (
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
           <p className="text-sm text-slate-600 text-center">
@@ -733,7 +730,7 @@ const LiveBattle = ({ user }) => {
   const isCorrect = myAnswerIndex === currentQuestion?.correctIndex;
   const myScore = myPlayer?.score || 0;
   const opponentScore = opponent?.score || 0;
-  
+
   const currentQuestionDuration = getQuestionDuration(currentQuestion);
   const timerPercent = (timeLeft / currentQuestionDuration) * 100;
   const timerColor = timeLeft > 15 ? 'bg-emerald-500' : timeLeft > 7 ? 'bg-amber-400' : 'bg-red-500';
@@ -741,7 +738,7 @@ const LiveBattle = ({ user }) => {
   // --- Shared Audio Player - Seamless Across Phases ---
   const audioPlayer = (
     <div className="fixed top-4 right-4 z-50">
-      <SeamlessAudioPlayer 
+      <SeamlessAudioPlayer
         src="https://audio.jukehost.co.uk/0II8jxAjfhGHNaBaHUNOGgGrRuAcoqRy"
         shouldPlay={phase === 'countdown' || phase === 'playing'}
       />
@@ -783,7 +780,7 @@ const LiveBattle = ({ user }) => {
             {timeLeft}s
           </span>
         </div>
-        
+
         {/* Score Board */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
@@ -912,7 +909,7 @@ const LiveBattle = ({ user }) => {
                 </span>
               )}
             </div>
-            
+
             {/* Stimulus Section */}
             {currentQuestion.stimulus && (
               <div className="mb-8 p-5 lg:p-6 bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm">
@@ -934,7 +931,7 @@ const LiveBattle = ({ user }) => {
 
             {/* Representation Section (Table, Chart, Statement) */}
             <QuestionRepresentation representation={currentQuestion.representation} />
-            
+
             {/* Question Text */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
@@ -970,9 +967,9 @@ const LiveBattle = ({ user }) => {
               currentQuestion.options.map((option, i) => {
                 const isSelected = myAnswerIndex === i;
                 const isActuallyCorrect = i === currentQuestion.correctIndex;
-                const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
+                const isMissed = myAnswerIndex === -1 && isActuallyCorrect;
                 // Wait for answer explicitly to reveal the truth
-                const revealStatus = hasMyAnswer; 
+                const revealStatus = hasMyAnswer;
 
                 let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
                 if (revealStatus) {
@@ -993,7 +990,7 @@ const LiveBattle = ({ user }) => {
                     className={`w-full text-left border rounded-xl p-3.5 transition-all flex items-center gap-3 ${btnClass} disabled:cursor-default`}
                   >
                     <div className="flex-1 text-sm leading-snug">
-                       <LatexWrapper text={option || ''} />
+                      <LatexWrapper text={option || ''} />
                     </div>
                     {revealStatus && isActuallyCorrect && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
                     {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={16} className="text-red-500 shrink-0" />}
@@ -1004,7 +1001,7 @@ const LiveBattle = ({ user }) => {
               /* Fallback for missing options */
               <div className="p-4 bg-slate-100 border border-slate-300 rounded-xl text-center">
                 <p className="text-sm text-slate-600 mb-2">Tidak ada opsi jawaban untuk soal ini.</p>
-                <button 
+                <button
                   onClick={() => {
                     console.error('Question with missing options:', currentQuestion);
                     alert('Error: Opsi jawaban tidak ditemukan. Lihat console untuk detail.');
@@ -1021,26 +1018,25 @@ const LiveBattle = ({ user }) => {
         {/* -- UI: Post-Answer Feedback Block -- */}
         {hasMyAnswer && currentQuestion && (
           <div className="space-y-2 mt-auto animate-in fade-in slide-in-from-bottom-2 duration-300 lg:hidden">
-            <div className={`rounded-xl p-3 border shadow-sm ${
-              isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
-            }`}>
+            <div className={`rounded-xl p-3 border shadow-sm ${isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+              }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {isCorrect ? (
                     <><Zap size={16} className="text-emerald-600" />
-                    <span className="text-sm font-bold text-emerald-700">Tepat Sekali!</span></>
+                      <span className="text-sm font-bold text-emerald-700">Tepat Sekali!</span></>
                   ) : myAnswerIndex === -1 ? (
                     <><Clock size={16} className="text-red-500" />
-                    <span className="text-sm font-bold text-red-700">Waktu Habis!</span></>
+                      <span className="text-sm font-bold text-red-700">Waktu Habis!</span></>
                   ) : (
                     <><XCircle size={16} className="text-red-500" />
-                    <span className="text-sm font-bold text-red-700">Salah Jawaban!</span></>
+                      <span className="text-sm font-bold text-red-700">Salah Jawaban!</span></>
                   )}
                 </div>
-                
+
                 {/* View Explanation Button Requirement Met */}
                 {currentQuestion.explanation && (
-                  <button 
+                  <button
                     onClick={() => setShowExplanation(!showExplanation)}
                     className="flex items-center gap-1 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
                   >
@@ -1113,7 +1109,7 @@ const LiveBattle = ({ user }) => {
                   </span>
                 )}
               </div>
-              
+
               {/* Stimulus Section */}
               {currentQuestion.stimulus && (
                 <div className="mb-8 p-5 lg:p-7 bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm">
@@ -1135,7 +1131,7 @@ const LiveBattle = ({ user }) => {
 
               {/* Representation Section (Table, Chart, Statement) */}
               <QuestionRepresentation representation={currentQuestion.representation} />
-              
+
               {/* Question Text */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -1173,8 +1169,8 @@ const LiveBattle = ({ user }) => {
                 <div className="mb-6 p-4 lg:p-6 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-sm lg:text-base font-semibold text-amber-800 mb-3">📋 Pernyataan yang perlu dievaluasi:</p>
                   <div className="text-sm lg:text-base text-amber-900 whitespace-pre-wrap leading-relaxed mb-4">
-                    {typeof currentQuestion.representation.data === 'string' 
-                      ? currentQuestion.representation.data 
+                    {typeof currentQuestion.representation.data === 'string'
+                      ? currentQuestion.representation.data
                       : JSON.stringify(currentQuestion.representation.data, null, 2)}
                   </div>
                   <p className="text-sm lg:text-base font-semibold text-amber-800 mb-3">
@@ -1185,7 +1181,7 @@ const LiveBattle = ({ user }) => {
 
               {/* Custom boolean evaluation interfaces */}
               {getQuestionType(currentQuestion) === 'grid_boolean' ? (
-                <GridBooleanEvaluator 
+                <GridBooleanEvaluator
                   currentQuestion={currentQuestion}
                   myAnswerIndex={myAnswerIndex}
                   hasMyAnswer={hasMyAnswer}
@@ -1193,7 +1189,7 @@ const LiveBattle = ({ user }) => {
                   phase={phase}
                 />
               ) : getQuestionType(currentQuestion) === 'boolean' ? (
-                <BooleanEvaluator 
+                <BooleanEvaluator
                   currentQuestion={currentQuestion}
                   myAnswerIndex={myAnswerIndex}
                   hasMyAnswer={hasMyAnswer}
@@ -1206,8 +1202,8 @@ const LiveBattle = ({ user }) => {
                   currentQuestion.options.map((option, i) => {
                     const isSelected = myAnswerIndex === i;
                     const isActuallyCorrect = i === currentQuestion.correctIndex;
-                    const isMissed = myAnswerIndex === -1 && isActuallyCorrect; 
-                    const revealStatus = hasMyAnswer; 
+                    const isMissed = myAnswerIndex === -1 && isActuallyCorrect;
+                    const revealStatus = hasMyAnswer;
 
                     let btnClass = 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]';
                     if (revealStatus) {
@@ -1228,7 +1224,7 @@ const LiveBattle = ({ user }) => {
                         className={`w-full text-left border rounded-xl p-4 lg:p-6 min-h-[60px] transition-all flex items-center gap-3 lg:gap-4 text-sm lg:text-base ${btnClass} disabled:cursor-default`}
                       >
                         <div className="flex-1 leading-snug">
-                           <LatexWrapper text={option || ''} />
+                          <LatexWrapper text={option || ''} />
                         </div>
                         {revealStatus && isActuallyCorrect && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
                         {revealStatus && isSelected && !isActuallyCorrect && <XCircle size={16} className="text-red-500 shrink-0" />}
@@ -1239,7 +1235,7 @@ const LiveBattle = ({ user }) => {
                   /* Fallback for missing options */
                   <div className="p-4 bg-slate-100 border border-slate-300 rounded-xl text-center">
                     <p className="text-base text-slate-600 mb-3">Tidak ada opsi jawaban untuk soal ini.</p>
-                    <button 
+                    <button
                       onClick={() => {
                         console.error('Question with missing options:', currentQuestion);
                         alert('Error: Opsi jawaban tidak ditemukan. Lihat console untuk detail.');
@@ -1255,26 +1251,25 @@ const LiveBattle = ({ user }) => {
               {/* Post-Answer Feedback Block */}
               {hasMyAnswer && (
                 <div className="space-y-4 pt-4 mt-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className={`rounded-xl p-4 lg:p-6 border shadow-sm ${
-                    isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
-                  }`}>
+                  <div className={`rounded-xl p-4 lg:p-6 border shadow-sm ${isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+                    }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 lg:gap-3">
                         {isCorrect ? (
                           <><Zap size={20} className="text-emerald-600" />
-                          <span className="text-sm lg:text-base font-bold text-emerald-700">Tepat Sekali!</span></>
+                            <span className="text-sm lg:text-base font-bold text-emerald-700">Tepat Sekali!</span></>
                         ) : myAnswerIndex === -1 ? (
                           <><Clock size={20} className="text-red-500" />
-                          <span className="text-sm lg:text-base font-bold text-red-700">Waktu Habis!</span></>
+                            <span className="text-sm lg:text-base font-bold text-red-700">Waktu Habis!</span></>
                         ) : (
                           <><XCircle size={20} className="text-red-500" />
-                          <span className="text-sm lg:text-base font-bold text-red-700">Salah Jawaban!</span></>
+                            <span className="text-sm lg:text-base font-bold text-red-700">Salah Jawaban!</span></>
                         )}
                       </div>
-                      
+
                       {/* View Explanation Button */}
                       {currentQuestion.explanation && (
-                        <button 
+                        <button
                           onClick={() => setShowExplanation(!showExplanation)}
                           className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm lg:text-base font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
                         >
