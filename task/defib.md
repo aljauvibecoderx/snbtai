@@ -1,34 +1,31 @@
-Act as an Expert Next.js and Tailwind CSS Developer. We are going to refactor the main dashboard layout based on the provided reference image, but strictly following these rules:
+Act as an expert React, Next.js, and Tailwind CSS developer. We are redesigning the main dashboard page. 
+I want you to completely replace the current static form layout with the new 3-column conversational layout shown in the attached image.
 
-**CRITICAL CONSTRAINTS:**
-1. DO NOT touch, modify, or remove the existing Top Navbar component. Leave it exactly as it is.
-2. DO NOT modify any existing database schemas, API calls, or routing logic.
-3. This phase is STRICTLY for UI/Frontend layout scaffolding. Do not change the underlying state logic yet.
+PHASE 1 GOAL: Focus STRICTLY on the Frontend/UI structural changes. Do not alter the database schema or the core generation logic yet.
 
-**LAYOUT REFACTORING INSTRUCTIONS:**
-Below the existing Navbar, create a responsive 3-column grid layout for desktop (hidden/stacked on mobile):
+Strict Constraints:
+1. DO NOT touch or modify the existing Top Navbar component. Keep it exactly as it is.
+2. Ensure the layout is responsive, but prioritize the 3-column desktop view (Left Sidebar, Center Chat, Right Sidebar).
+3. Use light theme: bg-slate-50 for the main background. Primary accent color is deep purple (#7C3AED or similar).
 
-**Column 1: Left Sidebar (w-64, sticky)**
-- Minimalist white background.
-- "Mulai Belajar" solid purple button at the top.
-- Section "RIWAYAT LATIHAN": List items with icons (e.g., "Literasi Bahasa Indone...", "Curhatan overthinking..."). Active item has a subtle purple background.
-- Section "SOAL TERSIMPAN": Bookmark list.
-- Bottom area: "Pengaturan" and "Bantuan" links with icons.
+Column 1: Left Sidebar (Fixed/Sticky)
+- Remove the Top Navbar's logo if it exists, move "SNBT AI" logo here (top left).
+- Add a large primary button "Mulai Belajar".
+- Create sections for "Riwayat Latihan" (with history items) and "Soal Tersimpan" (with bookmark items). Include bottom links for Pengaturan and Bantuan.
 
-**Column 2: Center Main Chat Area (flex-1, max-w-3xl, scrollable)**
-- Background: Very light gray/off-white.
-- Date badge ("Hari ini") in the center.
-- Hardcode a mock conversation flow to build the UI components:
-  - User Bubble (Purple bg, white text, align right).
-  - AI Bubble 1: "Tentu! Mau latihan subtes apa?" with a grid of clickable outlined chips for subtests (e.g., Penalaran Umum, Literasi Bahasa Indonesia). The active chip has a purple text/border.
-  - AI Bubble 2: "Sip! Ini paket soal..." containing a Premium Result Card (White bg, icon, title, "15 Soal • Estimasi 20 Menit").
-  - Inside the Result Card, place the "Mulai Mengerjakan" button. Give this button an ID or clear class so we can attach the existing CBT logic to it in Phase 2.
-- Bottom Input Area: Fixed/sticky rounded-full text input with a placeholder "Ketik keluh kesahmu di sini..." and a purple send icon button on the right.
+Column 2: Center Chat Area (Main flex-1 container)
+- Create a scrollable chat interface. 
+- Mock the following chat elements: 
+  a. User Bubble (Purple bg, right-aligned).
+  b. AI Bubble (White bg, left-aligned) asking "Tentu! Mau latihan subtes apa?".
+  c. Interactive Quick Replies: Render clickable chips for subtests (e.g., Penalaran Umum, Literasi Bahasa Indonesia). The active one gets a purple border.
+  d. Final Result Card: A white card showing the generated package (e.g., "Literasi Bahasa Indonesia, 15 Soal") with a solid purple "Mulai Mengerjakan" button.
+- Bottom Input: A sticky floating text input with a "+" icon on the left, "Ketik keluh kesahmu di sini..." placeholder, and a purple send button on the right. Add a disclaimer text below it.
 
-**Column 3: Right Sidebar (w-[300px], sticky)**
-- User Profile dropdown at the top (if not already in the preserved Navbar).
-- Card 1 "Statistik Kamu": Daily Streak (fire icon), Coin count, and a mock bar chart for "Prediksi Skor IRT".
-- Card 2 "Target Jurusan": Show "Sistem Informasi ITS" with a progress bar (e.g., 65% Ready).
-- Card 3 "Leaderboard": List of top users with avatars and IRT scores.
+Column 3: Right Sidebar (Fixed/Sticky)
+- User Profile dropdown at the top.
+- "Statistik Kamu" card: Show Daily Streak (fire icon) and Coin balance, plus a mock bar chart for "Prediksi Skor IRT".
+- "Target Jurusan" card: Show "Sistem Informasi ITS" with a progress bar.
+- "Leaderboard" card: Show a mock list of top 3 users.
 
-Use clean Tailwind classes (rounded-2xl, shadow-sm, text-slate-800, etc.). Keep the code modular.
+Please provide the updated page layout code using Tailwind CSS. Use placeholder data for the UI components for now.
