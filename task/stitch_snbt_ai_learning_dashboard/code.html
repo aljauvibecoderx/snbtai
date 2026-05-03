@@ -1,0 +1,399 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SNBT AI - Chatbot Interface</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed-dim": "#c6c6c7",
+                      "surface-container-high": "#dce9ff",
+                      "inverse-primary": "#d2bbff",
+                      "on-secondary-fixed-variant": "#444749",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#d3e4fe",
+                      "outline-variant": "#ccc3d8",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface-container-low": "#eff4ff",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed": "#e0e3e5",
+                      "on-surface": "#0b1c30",
+                      "on-secondary-fixed": "#191c1e",
+                      "secondary-fixed-dim": "#c4c7c9",
+                      "on-primary-fixed": "#25005a",
+                      "on-error": "#ffffff",
+                      "surface-container": "#e5eeff",
+                      "primary-fixed": "#eaddff",
+                      "outline": "#7b7487",
+                      "primary-fixed-dim": "#d2bbff",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-fixed-variant": "#454747",
+                      "tertiary": "#4d4f4f",
+                      "surface-bright": "#f8f9ff",
+                      "inverse-surface": "#213145",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-container": "#ede0ff",
+                      "on-tertiary-container": "#e5e6e6",
+                      "on-tertiary-fixed": "#1a1c1c",
+                      "secondary-container": "#e0e3e5",
+                      "secondary": "#5c5f61",
+                      "primary-container": "#7c3aed",
+                      "on-primary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-primary-fixed-variant": "#5a00c6",
+                      "on-secondary-container": "#626567",
+                      "primary": "#630ed4",
+                      "surface": "#f8f9ff",
+                      "background": "#f8f9ff",
+                      "surface-tint": "#732ee4",
+                      "tertiary-container": "#656767",
+                      "surface-variant": "#d3e4fe",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#4a4455",
+                      "surface-dim": "#cbdbf5",
+                      "tertiary-fixed": "#e2e2e2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "0.5rem",
+                      "gutter": "1.5rem",
+                      "container-max": "1200px",
+                      "md": "1rem",
+                      "2xl": "3rem",
+                      "lg": "1.5rem",
+                      "xs": "0.25rem",
+                      "xl": "2rem"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "caption": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "h1": [
+                              "Inter"
+                      ],
+                      "h2": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "caption": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md h-screen flex overflow-hidden">
+<!-- Top Navigation (Mobile) -->
+<nav class="md:hidden fixed top-0 w-full z-50 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm border-b border-slate-100 dark:border-slate-800 flex justify-between items-center px-6">
+<div class="text-xl font-black text-violet-600 dark:text-violet-400 font-h1">SNBT AI</div>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications</span>
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">account_circle</span>
+</div>
+</nav>
+<!-- Left Sidebar (Desktop) -->
+<aside class="hidden md:flex flex-col sticky top-0 h-screen p-6 space-y-8 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 w-72 shadow-[20px_0_40px_-15px_rgba(0,0,0,0.05)] font-['Inter'] text-sm antialiased shrink-0 z-10">
+<div class="text-2xl font-bold tracking-tight text-violet-600 dark:text-violet-400 font-h1">
+            SNBT AI
+        </div>
+<button class="w-full bg-primary-container text-on-primary font-label-md text-label-md py-3 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+            Mulai Belajar
+        </button>
+<div class="flex-1 overflow-y-auto space-y-6">
+<div>
+<h3 class="font-label-md text-label-md text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider text-xs">Riwayat Latihan</h3>
+<div class="space-y-1">
+<button class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-semibold transition-all scale-95 duration-150 ease-in-out">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">history</span>
+<span class="truncate">Literasi Bahasa Indonesia</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-violet-600 transition-all">
+<span class="material-symbols-outlined">history</span>
+<span class="truncate">Curhatan overthinking...</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-violet-600 transition-all">
+<span class="material-symbols-outlined">history</span>
+<span class="truncate">Bacaan berita X...</span>
+</button>
+</div>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider text-xs">Soal Tersimpan</h3>
+<div class="space-y-1">
+<button class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-violet-600 transition-all">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="truncate">Soal Sulit PK</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
+<button class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-violet-600 transition-all">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Pengaturan</span>
+</button>
+<button class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-violet-600 transition-all">
+<span class="material-symbols-outlined">help</span>
+<span class="">Bantuan</span>
+</button>
+</div>
+</aside>
+<!-- Center Main Area (Chat Canvas) -->
+<main class="flex-1 flex flex-col h-full bg-slate-50 pt-16 md:pt-0 relative">
+<div class="flex-1 overflow-y-auto px-4 md:px-8 pb-32">
+<div class="max-w-3xl mx-auto py-8 space-y-8">
+<!-- Date/Time separator -->
+<div class="flex justify-center">
+<span class="text-caption font-caption text-slate-400 bg-white px-3 py-1 rounded-full shadow-sm">Hari ini</span>
+</div>
+<!-- User Bubble -->
+<div class="flex justify-end">
+<div class="bg-primary-container text-on-primary px-6 py-4 rounded-2xl rounded-tr-sm max-w-[85%] shadow-sm">
+<p class="font-body-md text-body-md">Halo, saya mau latihan soal Literasi Bahasa Indonesia.</p>
+</div>
+</div>
+<!-- AI Bubble -->
+<div class="flex justify-start">
+<div class="bg-white px-6 py-4 rounded-2xl rounded-tl-sm max-w-[85%] shadow-[0_4px_20px_rgba(124,58,237,0.08)] border border-slate-50">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary-container text-lg">smart_toy</span>
+<span class="font-label-md text-label-md text-primary-container">SNBT AI</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">Tentu! Mau latihan subtes apa?</p>
+<!-- Interactive Chips -->
+<div class="flex flex-wrap gap-2 mt-4">
+<button class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-label-md text-caption hover:bg-slate-50 transition-colors">Penalaran Umum</button>
+<button class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-label-md text-caption hover:bg-slate-50 transition-colors">Pengetahuan dan Pemahaman Umum</button>
+<button class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-label-md text-caption hover:bg-slate-50 transition-colors">Pemahaman Bacaan &amp; Menulis</button>
+<button class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-label-md text-caption hover:bg-slate-50 transition-colors">Pengetahuan Kuantitatif</button>
+<button class="px-4 py-2 rounded-full border-2 border-primary-container bg-violet-50 text-primary-container font-label-md text-caption transition-colors">Literasi Bahasa Indonesia</button>
+<button class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-label-md text-caption hover:bg-slate-50 transition-colors">Literasi Bahasa Inggris</button>
+<button class="px-4 py-2 rounded-full border border-slate-200 text-slate-600 font-label-md text-caption hover:bg-slate-50 transition-colors">Penalaran Matematika</button>
+</div>
+</div>
+</div>
+<!-- AI Bubble with Result Card -->
+<div class="flex justify-start">
+<div class="bg-white p-6 rounded-2xl rounded-tl-sm w-full max-w-[85%] shadow-[0_4px_20px_rgba(124,58,237,0.08)] border border-slate-50">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary-container text-lg">smart_toy</span>
+<span class="font-label-md text-label-md text-primary-container">SNBT AI</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6">Sip! Ini paket soal Literasi Bahasa Indonesia yang sudah kusiapkan buat kamu.</p>
+<!-- Premium Card -->
+<div class="bg-surface-bright border border-slate-100 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div>
+<h4 class="font-h2 text-h2 text-on-surface text-lg">Literasi Bahasa Indonesia</h4>
+<p class="font-caption text-caption text-slate-500 mt-1">15 Soal • Estimasi 20 Menit</p>
+</div>
+</div>
+<button class="w-full md:w-auto bg-primary-container text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:bg-primary transition-colors shadow-sm whitespace-nowrap">
+                                Mulai Mengerjakan
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Input Area -->
+<div class="absolute bottom-0 w-full bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-10 pb-6 px-4 md:px-8 z-20">
+<div class="max-w-3xl mx-auto">
+<div class="relative bg-white rounded-full shadow-[0_8px_30px_rgba(124,58,237,0.12)] border border-slate-100 flex items-center p-2">
+<button class="p-3 text-slate-400 hover:text-primary-container transition-colors rounded-full hover:bg-slate-50">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 font-body-md text-body-md placeholder-slate-400 px-4" placeholder="Ketik keluh kesahmu di sini..." type="text">
+<button class="p-3 bg-primary-container text-on-primary rounded-full hover:bg-primary transition-colors shadow-sm ml-2">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">send</span>
+</button>
+</div>
+<div class="text-center mt-3">
+<span class="font-caption text-caption text-slate-400">SNBT AI dapat membuat kesalahan. Harap verifikasi info penting.</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Right Sidebar (Desktop) -->
+<aside class="hidden xl:flex flex-col h-screen p-6 space-y-6 bg-white border-l border-slate-100 w-80 shadow-[-20px_0_40px_-15px_rgba(0,0,0,0.02)] shrink-0 overflow-y-auto z-10">
+<!-- User Profile Dropdown snippet -->
+<div class="flex items-center justify-end gap-3 cursor-pointer group">
+<div class="text-right">
+<div class="font-label-md text-label-md text-on-surface">Budi Santoso</div>
+<div class="font-caption text-caption text-slate-500">Pejuang PTN</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-100">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgUj4YXcYEIgwsd88uf5O-4EFQsZiJ0XEJKTMg7xIj8SrImjYnhp1FXZ4NwvMdG6b72i9T4EDXKbpQAVyop_PSsl5W_uo9_lx3PMzOuRAxyU8nVNXLQyHniUQegcIS5G45tJQu3pTxiA4iBU3KHChFb8OPzSQibTTVcD4OW_IQ943C3mwYCqES3JVaKInA1bGlFh3WvU8cXwdkIAZj2MNxiWWx6xncWCtXkE0OOcXZGfCmCtVHynRLu8DyPYYxAFaP-P9ZU7uD7WiP">
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary-container transition-colors">expand_more</span>
+</div>
+<!-- Statistik Kamu Card -->
+<div class="bg-surface-bright rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+<h3 class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: &quot;FILL&quot; 1;">bar_chart</span>
+                Statistik Kamu
+            </h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-white p-3 rounded-xl border border-slate-100 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-orange-500 text-3xl mb-1" style="font-variation-settings: &quot;FILL&quot; 1;">local_fire_department</span>
+<span class="font-h2 text-h2 text-on-surface text-lg">2 Hari</span>
+<span class="font-caption text-caption text-slate-500">Streak</span>
+</div>
+<div class="bg-white p-3 rounded-xl border border-slate-100 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-yellow-500 text-3xl mb-1" style="font-variation-settings: &quot;FILL&quot; 1;">monetization_on</span>
+<span class="font-h2 text-h2 text-on-surface text-lg">2497</span>
+<span class="font-caption text-caption text-slate-500">Coin</span>
+</div>
+</div>
+<div class="bg-white p-4 rounded-xl border border-slate-100 mt-2">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-md text-caption text-slate-600">Prediksi Skor IRT</span>
+<span class="font-h2 text-caption text-primary-container">650</span>
+</div>
+<!-- Visual graphic placeholder -->
+<div class="h-16 w-full rounded bg-slate-50 relative overflow-hidden flex items-end px-2 gap-1 pb-2">
+<div class="w-1/6 bg-violet-200 h-[30%] rounded-t-sm"></div>
+<div class="w-1/6 bg-violet-300 h-[45%] rounded-t-sm"></div>
+<div class="w-1/6 bg-violet-400 h-[60%] rounded-t-sm"></div>
+<div class="w-1/6 bg-primary-container h-[85%] rounded-t-sm"></div>
+<div class="w-1/6 bg-violet-200 h-[70%] rounded-t-sm"></div>
+<div class="w-1/6 bg-violet-200 h-[50%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+<!-- Target Jurusan Card -->
+<div class="bg-surface-bright rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+<h3 class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: &quot;FILL&quot; 1;">flag</span>
+                Target Jurusan
+            </h3>
+<div class="bg-white p-4 rounded-xl border border-slate-100">
+<h4 class="font-label-md text-label-md text-on-surface">Sistem Informasi</h4>
+<p class="font-caption text-caption text-slate-500 mb-3">Institut Teknolgi Sepuluh Nopember</p>
+<div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full w-[65%]"></div>
+</div>
+<div class="flex justify-between mt-2 font-caption text-caption">
+<span class="text-slate-500">Progress</span>
+<span class="text-primary-container font-medium">65% Ready</span>
+</div>
+</div>
+</div>
+<!-- Community Snippet -->
+<div class="bg-surface-bright rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4 flex-1">
+<div class="flex justify-between items-center">
+<h3 class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: &quot;FILL&quot; 1;">groups</span>
+                    Leadrboard
+                </h3>
+<span class="text-xs text-primary-container cursor-pointer hover:underline">Lihat Semua</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-50">
+<div class="w-6 text-center font-h2 text-caption text-amber-500">1</div>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1xlXKaTGxNvmKclPgL-Ne1T1RWfwxw22IXkYEdPX5Fu_y0IyZbVJk3MXM6RNDs47SmTuUPb2Y8uvoIr9onUJyCATSDKelieFovqYBcLDsWLPqJDBGJacSyuY50HP-R_xh8eGEvp2QLKKGWUAkHWWVVRzj-sJQD0odKjxayzI44KrUjJ8Y--B_X3sidl-Hyw61ueO2-0UHlqcf8BWgtVXZPBnPc7ETXrVisSdBxspI2_WiMgGm4MQoV_egZZscuxiAYp-hP_g0zgVZ">
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-label-md text-caption text-on-surface truncate">SiskaM.</div>
+<div class="font-caption text-[10px] text-slate-500">850 IRT</div>
+</div>
+</div>
+<div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-50">
+<div class="w-6 text-center font-h2 text-caption text-slate-400">2</div>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBO5csNnkskVKV9Mde7cpG9OeoHnR5RqwCIF9-cIoAIhaqMlgKJPsK1PCcpX_yAV5V-SwQv3yd08itjVtXCNHPNf8iB9ZF6tMi6LbZldjbzw2NcvMzEwdop4xjCmJSa_VaX368_vuaJi2yl_CtPZKJKuh4Hbv3VlrNJjamLiWQs8oh5M9PDS3CJk78H9Pg3H3y9m9ZZZTqmq0vLg_24GxaSSQJd3EJQE00WOtNz4AlhoBsuVsnu-1X50p6aH1c_boZVxLaw2gg8UWjx">
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-label-md text-caption text-on-surface truncate">Andi P.</div>
+<div class="font-caption text-[10px] text-slate-500">820 IRT</div>
+</div>
+</div>
+<div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-50">
+<div class="w-6 text-center font-h2 text-caption text-amber-700">3</div>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIwsXQGR2S3V3qHG_hcgH0Dn34xKN8IfCya-NrMiEv_N0J1NtJVTcxFHjDNgsFzdd0y_4ki0LO0rN1kYBhKfAE78EbEKm0RbgsuaWNc3NIUNpnLOThJzVXH336YkglfbOI7u1KounHwB07Ekj29fCJTmhmqJnoYLAcGMLyr_dAiNNEJn1dF94BOMkxZOAk_K6_xsYkCugUpvl9jDN68fohjA07z4YT_j4mdCRGsMZLtiidNI4JniYsSxeJitoVfhfUOP4-RKSgyyUi">
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-label-md text-caption text-on-surface truncate">Rina S.</div>
+<div class="font-caption text-[10px] text-slate-500">815 IRT</div>
+</div>
+</div>
+</div>
+<div class="mt-4 rounded-xl overflow-hidden shadow-sm">
+<img alt="A minimalist digital illustration showing abstract interconnected geometric shapes and nodes representing a vibrant learning community. Soft ambient lighting creates an airy aesthetic with deep purple accents on a clean white background. The mood is collaborative, modern, and supportive." class="w-full h-24 object-cover" data-alt="A minimalist digital illustration showing abstract interconnected geometric shapes and nodes representing a vibrant learning community. Soft ambient lighting creates an airy aesthetic with deep purple accents on a clean white background. The mood is collaborative, modern, and supportive." src="https://lh3.googleusercontent.com/aida/ADBb0uiYX83BdbBvfodaOQz7-Elfgmtq0TI0KxrkKjNNA1kHOUdXvXaDvT7TQhnayJFRK65PdU4bisCeNOzq1WZLiXmMpk7-3f4RLejWtn2-S_UBg0GQi-kxl5RX1GUGTm0woTKplgAvpXHs0jLnL-X_GffLeTF_rj7GURWTM9me3ZJ7e791b3KKFVa_l7yFqbhGYvtBbetQOe7r21wYZc8UFSdsEzwsDr5CAm4iHGob-yjqGOBgvWIfIABHq9OslPzyJo0VFc6-DcI1Tw">
+</div>
+</div>
+</aside>
+
+
+</body></html>
